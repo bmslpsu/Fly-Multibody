@@ -7,9 +7,15 @@ imaqreset
 %% Set directories & experimental parameters
 root = 'C:\BC\Experiment_SOS';
 
-% Spin(Fn,root,16)
+%% Spin Trial
+% Pick random direction
+dir = 0;
+while dir==0
+    dir = randi([-1,1],1);
+end
+Spin(Fn,root,dir*16);
 
-% EXPERIMENTAL PARAMETERS
+%% EXPERIMENTAL PARAMETERS
 n_tracktime = 21;           % length(func)/fps; seconds for each EXPERIMENT
 n_resttime = 1;             % seconds for each REST
 n_pause = 0.2;              % seconds for each pause between panel commands
@@ -18,22 +24,23 @@ patID = 2;                  % Spatial frequency grating pattern
 yPos  = 5;                  % 30 deg spatial frequency
 funcX = 1;                  % SOS replay (20s)
 xUpdate = 200;              % function update rate
-FPS = 2*100;             	% camera frame rate
+FPS = 100;                  % camera frame rate
 nFrame = FPS*n_tracktime;   % # of frames to log
-Gain = 5;                	% camera gain
+Gain = 11.993167134727036; 	% camera gain
 Fs = 5000;                  % DAQ sampling rate [Hz]
 AI = 0:2;                	% Analog input channels
 AO = 1;                     % Analog output channels
 
 %% Set up data acquisition on NiDAQ (session mode)
-
+% DAQ Setup
 [s,~] = MC_USB_1208FS_PLUS(Fs,AI,AO);
 
 % Camera Trigger Signal
 t = 0:1/s.Rate:n_tracktime;
-TRIG = ((1/2)*(square(2*pi*FPS*t,50) - 1)');
+TRIG = ((1/2)*(square(2*pi*FPS*t,5) - 1)');
 TRIG(TRIG==-1) = 4;
 
+% Camera Setup
 [vid,src] = Basler_acA640_750um(FPS,Gain,nFrame);
 
 %% EXPERIMENT LOOP
@@ -88,5 +95,4 @@ delete(vid)
 disp('Done');
 daqreset
 imaqreset
-PControl
 end

@@ -4,33 +4,38 @@ function [] = Spin(Fn,root,gain)
 daqreset
 imaqreset
 
+spinroot = fullfile(root,'spin');
+vel = 3.75*gain; % spin velocity [deg/s]
+
 % PARAMETERS
-n_tracktime = 10;           % length(func)/fps; seconds for each EXPERIMENT
+n_tracktime = 11;       	% length(func)/fps; seconds for each EXPERIMENT
 n_pause = 0.2;              % seconds for each pause between panel commands
 n_trial = 1;                % # of repetitions
 patID = 2;                  % Spatial frequency grating pattern
-yPos  = 5;                  % 30 deg spatial frequency
-FPS = 2*100;             	% camera frame rate
+yPos  = 7;                  % 30 deg spatial frequency
+FPS = 100;                  % camera frame rate
 nFrame = FPS*n_tracktime;   % # of frames to log
-Gain = 5;                	% camera gain
+Gain = 11.993167134727036;	% camera gain
 Fs = 5000;                  % DAQ sampling rate [Hz]
 AI = 0:2;                	% Analog input channels
 AO = 1;                     % Analog output channels
 
 %% Set up data acquisition on NiDAQ (session mode)
+% DAQ Setup
 [s,~] = MC_USB_1208FS_PLUS(Fs,AI,AO);
 
 % Camera Trigger Signal
 t = 0:1/s.Rate:n_tracktime;
-TRIG = ((1/2)*(square(2*pi*FPS*t,50) - 1)');
+TRIG = ((1/2)*(square(2*pi*FPS*t,5) - 1)');
 TRIG(TRIG==-1) = 4;
 
+% Camera Setup
 [vid,src] = Basler_acA640_750um(FPS,Gain,nFrame);
 
 %% SPIN LOOP
 disp('Start Spin:')
 for ii = 1:n_trial   
-    disp('Trial')
+    disp('Spin Trial')
     disp(num2str(ii));  % print counter to command line
     preview(vid);       % open video preview window
 	    
@@ -43,7 +48,7 @@ for ii = 1:n_trial
 	Panel_com('set_funcX_freq', 50); pause(n_pause)             % update rate for x-channel
     Panel_com('set_funcY_freq', 50); pause(n_pause)             % update rate for y-channel
     Panel_com('set_mode',       [0,0]); pause(n_pause)         	% 0=open,1=closed,2=fgen,3=vmode,4=pmode
-	Panel_com('send_gain_bias',  [gain,0]); pause(n_pause)     	% set gain
+	Panel_com('send_gain_bias',	[gain,0,0,0]); pause(n_pause) 	% set gain
 
     % START EXPERIMENT & DATA COLLECTION
     start(vid) % start video buffer
@@ -65,13 +70,12 @@ for ii = 1:n_trial
     % SAVE DATA
     disp('Saving...')
     disp('-----------------------------------------------------------------')
-    fname = ['fly_' num2str(Fn) '_trial_' num2str(ii) '_Spin.mat'];
-    save(fullfile(root,fname),'-v7.3','data','t_p','vidData','t_v');
+    fname = ['fly_' num2str(Fn) '_trial_' num2str(ii) '_vel_' num2str(vel) '_Spin.mat'];
+    save(fullfile(spinroot,fname),'-v7.3','data','t_p','vidData','t_v');
 end
 
 delete(vid)
 disp('Done')
 daqreset
 imaqreset
-PControl
 end
