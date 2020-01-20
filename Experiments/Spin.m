@@ -13,7 +13,7 @@ n_pause = 0.2;              % seconds for each pause between panel commands
 n_trial = 1;                % # of repetitions
 patID = 2;                  % Spatial frequency grating pattern
 yPos  = 7;                  % 30 deg spatial frequency
-FPS = 2*100;             	% camera frame rate
+FPS = 100;                  % camera frame rate
 nFrame = FPS*n_tracktime;   % # of frames to log
 Gain = 11.993167134727036;	% camera gain
 Fs = 5000;                  % DAQ sampling rate [Hz]
@@ -26,7 +26,7 @@ AO = 1;                     % Analog output channels
 
 % Camera Trigger Signal
 t = 0:1/s.Rate:n_tracktime;
-TRIG = ((1/2)*(square(2*pi*FPS*t,50) - 1)');
+TRIG = ((1/2)*(square(2*pi*FPS*t,5) - 1)');
 TRIG(TRIG==-1) = 4;
 
 % Camera Setup

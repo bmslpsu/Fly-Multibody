@@ -13,7 +13,7 @@ dir = 0;
 while dir==0
     dir = randi([-1,1],1);
 end
-Spin(Fn,root,dir*8);
+Spin(Fn,root,dir*16);
 
 %% EXPERIMENTAL PARAMETERS
 n_tracktime = 21;           % length(func)/fps; seconds for each EXPERIMENT
@@ -24,7 +24,7 @@ patID = 2;                  % Spatial frequency grating pattern
 yPos  = 5;                  % 30 deg spatial frequency
 funcX = 1;                  % SOS replay (20s)
 xUpdate = 200;              % function update rate
-FPS = 200;                  % camera frame rate
+FPS = 100;                  % camera frame rate
 nFrame = FPS*n_tracktime;   % # of frames to log
 Gain = 11.993167134727036; 	% camera gain
 Fs = 5000;                  % DAQ sampling rate [Hz]
@@ -37,7 +37,7 @@ AO = 1;                     % Analog output channels
 
 % Camera Trigger Signal
 t = 0:1/s.Rate:n_tracktime;
-TRIG = ((1/2)*(square(2*pi*FPS*t,90) - 1)');
+TRIG = ((1/2)*(square(2*pi*FPS*t,5) - 1)');
 TRIG(TRIG==-1) = 4;
 
 % Camera Setup
