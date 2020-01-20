@@ -19,14 +19,15 @@ optimizer.MinimumStepLength = 0.0002;
 vid = fliplr(squeeze(vid)); % In case it's 4D
 dim = size(vid); % Used often
 
-fixed = vid(:,:,1); % initial frame
 
 % Get intial orientation
-v2 = medfilt2(imopen(fixed,strel('disk',15)),[7 7]);
+v1 = vid(:,:,1); % initial frame
+v2 = medfilt2(imopen(v1,strel('disk',15)),[7 7]);
 % v3 = im2bw(v2,graythresh(v2));
 v3 = imbinarize(v2);
 L = regionprops(v3,'Orientation'); % intial angle
 
+% refangle = L.Orientation;
 [yy,~] = find(v3==1);
 cent_y = mean(yy);
 if cent_y<=(dim(1)/2) % fly pointing up
@@ -35,14 +36,15 @@ else % fly pointing down
     refangle = 180 + L.Orientation;
 end
 
-trf = cell(1,dim(3)); % store 2D affine transformations here
-sz = imref2d(size(fixed));
+trf     = cell(dim(3),1); % store 2D affine transformations here
+fixed   = double(squeeze(vid(:,:,1)));
+sz      = imref2d(size(fixed));
 
 % Register each frame with respect to the first frame
 tic
 for kk = 1:dim(3)
     fprintf([int2str(kk) '\n']);
-    z = vid(:,:,kk); % take one frame
+    z = double(vid(:,:,kk)); % take one frame
     if kk==1
         trf{kk} = imregtform(z,fixed,'rigid',optimizer,metric);
     else
@@ -52,12 +54,13 @@ for kk = 1:dim(3)
             end
         end
         trf{kk} = imregtform(z,fixed,'rigid',optimizer,metric,...
-                            'InitialTransformation',trf{kk-1},'PyramidLevels',5);
+                            'InitialTransformation',trf{jj});
+                        %,'PyramidLevels',5);
     end
     reg = imwarp(z,trf{kk},'OutputView',sz);
     vid(:,:,kk) = imrotate(reg,90-refangle,'crop');
     fixed = (fixed*kk + reg)/(kk+1);
 end
-disp('FINAL:')
+disp('DONE')
 toc
 end
