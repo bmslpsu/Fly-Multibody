@@ -19,7 +19,6 @@ optimizer.MinimumStepLength = 0.0002;
 vid = fliplr(squeeze(vid)); % In case it's 4D
 dim = size(vid); % Used often
 
-
 % Get intial orientation
 v1 = vid(:,:,1); % initial frame
 v2 = medfilt2(imopen(v1,strel('disk',15)),[7 7]);
