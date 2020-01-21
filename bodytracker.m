@@ -11,14 +11,13 @@ function [] = bodytracker(vid)
 %
 
 vid = flipvid(vidData,'lr');
-%%
 [yp,xp,nframe] = size(vid);
 
 body_angle = nan(nframe,1);
 SE_erode = strel('disk',8,4);
 SE_dilate = strel('disk',12,4);
 offset = 0;
-dthresh = 10;
+% dthresh = 10;
 tic
 disp(1)
 for idx = 1:nframe
@@ -32,14 +31,14 @@ for idx = 1:nframe
     [yfly,xfly] = find(bnframe==1);
     yfly = -yfly;
     
-    figure (1); clf
-    ax(1) = subplot(1,2,1); hold on ; cla ; axis square
-        imshow(frame)
-   	ax(2) = subplot(1,2,2); hold on ; cla ; axis square
-        plot(xfly,yfly,'.')
-        axis([1 xp -yp -1])
+%     figure (1); clf
+%     ax(1) = subplot(1,2,1); hold on ; cla ; axis square
+%         imshow(frame)
+%    	ax(2) = subplot(1,2,2); hold on ; cla ; axis square
+%         plot(xfly,yfly,'.')
+%         axis([1 xp -yp -1])
 
-    ellipse_t = fit_ellipse(xfly,yfly,ax(2));
+    ellipse_t = fit_ellipse(xfly,yfly);
     body_angle(idx) = rad2deg(ellipse_t.phi) + offset;
     
 %     if idx>1
