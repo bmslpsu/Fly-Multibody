@@ -8,15 +8,11 @@ function [] = batch_flipvid(root,varname,method,checkframe)
 %                           'ud'    - flip vertically
 %                           'lr'    - flip horizontally
 %                           'udlr'	- flip vertically & horizontally
-%       checkframe	:   visualize frame to determine if we flip the video
+%       checkframe	:   visualize frame to determine if we flip the video (boolean)
 %
 %   OUTPUT:
 %       -
 %
-
-% root = 'H:\EXPERIMENTS\MAGNO\Experiment_SOS\registered';
-% varname = 'regvid';
-% method = 'ud';
 
 if nargin<4
     checkframe = true; % default
