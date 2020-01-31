@@ -1,6 +1,6 @@
 function [MOV] = MagnoMontage_SOS_v1(rootdir,rootpat,vidFs,export)
 %% MagnoMontage_SOS_v1:  makes movie for fly in magnetic tether
-% 	Includes fly video, head tracking, wing tracking,pattern position and plots of data
+% 	Includes fly video, head tracking, wing tracking, pattern position and plots of data
 %   INPUT:
 %       rootdir     : directory containing BENIFLY file
 %       rootpat     : directory containing PATTERN file
@@ -10,14 +10,15 @@ function [MOV] = MagnoMontage_SOS_v1(rootdir,rootpat,vidFs,export)
 %       MOV         : structure containing movie 
 %
 % Example Input %
-% clear ; clc ; close all
-% export = true;
-% vidFs = 50;
+clear ; clc ; close all 
+export = false;
+vidFs = 50;
 % rootdir = 'Q:\magno\Experiment_SOS';
+rootdir = 'H:\EXPERIMENTS\MAGNO\Experiment_SOS';
 % rootpat = 'Q:\Box Sync\Git\Arena\Patterns';
-
+rootpat = 'C:\Users\boc5244\Documents\GitHub\Arena\Patterns';
+%%
 % Create data paths
-PATH.pat    = rootpat;
 PATH.raw 	= rootdir;
 PATH.reg  	= fullfile(PATH.raw,'registered');
 PATH.track	= fullfile(PATH.reg,'tracked');
@@ -31,8 +32,8 @@ mkdir(PATH.mov) % create directory for export images
     'Select ANGLE file', PATH.track, 'MultiSelect','off');
 
 % Select pattern file
-[FILE.pat, ~] = uigetfile({'*.mat', 'DAQ-files'}, ...
-    'Select PATTERN file', PATH.pat, 'MultiSelect','off');
+[FILE.pat, PATH.pat] = uigetfile({'*.mat', 'DAQ-files'}, ...
+    'Select PATTERN file', rootpat, 'MultiSelect','off');
 
 % Set file names
 [~,FILE.basename,~] = fileparts(FILE.track);
@@ -73,7 +74,7 @@ FLY.time    = raw_data.t_v - Pat.sync_time; % video time
 FLY.Fs      = round(1/mean(diff(FLY.time))); % video sampling rate
 FLY.Fc      = 15; % cut off frequency for lpf
 [b,a]       = butter(2,FLY.Fc/(FLY.Fs/2),'low'); % make lpf
-FLY.body    = cellfun(@(x) acos(x.T(1,1)),reg_data.trf);
+FLY.body    = rad2deg(cellfun(@(x) acos(x.T(1,1)),reg_data.trf));
 FLY.head    = filtfilt(b,a,rad2deg(benifly_data.Head)); % head angles [deg]
 FLY.lwing   = rad2deg(hampel(FLY.time,benifly_data.LWing)); % left wing angles [deg]
 FLY.rwing   = rad2deg(hampel(FLY.time,benifly_data.RWing)); % right wing angles [deg]
@@ -82,6 +83,7 @@ FLY.wba     = filtfilt(b,a,FLY.wba - mean(FLY.wba));
 
 % Normalize fly kinematics for experimental window
 FLY.int_time    = 0:(1/FLY.Fs):Pat.total_time; % video time
+FLY.int_body   = interp1(FLY.time, FLY.body,  FLY.int_time, 'nearest'); % interpolate head to match fly video
 FLY.int_head    = interp1(FLY.time, FLY.head,  FLY.int_time, 'nearest'); % interpolate head to match fly video
 FLY.int_lwing   = interp1(FLY.time, FLY.lwing, FLY.int_time, 'nearest'); % interpolate left wing to match fly video
 FLY.int_rwing   = interp1(FLY.time, FLY.rwing, FLY.int_time, 'nearest'); % interpolate head to match fly video
@@ -95,7 +97,7 @@ Pat.int_pos_deg = 3.75*(Pat.int_pos - mean(Pat.int_pos)); % interpolate pattern 
 FLY.vid_sync = find(FLY.time>0,1,'first');
 FLY.vid_frames = (FLY.vid_sync:(FLY.Fs*(Pat.total_time+(1./FLY.Fs)*FLY.vid_sync)))';
 FLY.nframe = length(FLY.vid_frames);
-FLY.raw = squeeze(raw_data.vidData); % raw video data
+FLY.raw = flipvid(squeeze(raw_data.vidData),'lr'); % raw video data
 FLY.reg = squeeze(reg_data.regvid); % registered video data
 figure
 [FLY.raw_crop,FLY.raw_crop_area] = imcrop(FLY.raw(:,:,1,1));
@@ -130,7 +132,7 @@ FLY.reg_center = [round(FLY.reg_yP/2) , round(FLY.reg_xP/2)]; % center point for
 
 radius = floor(max([FLY.raw_yP FLY.raw_xP])/1.8); % radius of pattern
 thickness = 15; % radius display width
-
+%%
 % Create structure to store frames
 MOV(1:FLY.nframe) = struct('cdata', [], 'colormap',[]);
 
@@ -166,13 +168,13 @@ set(ax(end),'XTick', 0:2:round(FLY.time(end)))
 set(ax(3:end-1), 'XTick', [])
 set(ax(3), 'YLim', 20*[-1 1], 'YTick', 15*[-1 0 1])
 set(ax(4), 'YLim', 6 *[-1 1], 'YTick', 5 *[-1 0 1])
-set(ax(5), 'YLim', 15*[-1 1], 'YTick', 10*[-1 0 1])
+set(ax(5), 'YLim', 40*[-1 1], 'YTick', 30*[-1 0 1])
 linkaxes(ax(3:end),'x')
 align_Ylabels_ax(ax(3:end)')
 
 pp = 1;
 iter = round(FLY.Fs/vidFs); % how many frames to skip per iteration to acheive desired frame rate
-expframe = circshift(mod(1:FLY.nframe,iter)==0,1); % logical to tell which frames to export
+expframe = circshift(mod(1:FLY.nframe,iter)==0,2); % logical to tell which frames to export
 disp('Exporting Video...')
 for jj = 1:FLY.nframe % for each frame
     if expframe(jj) % if we want to display this frame
@@ -186,11 +188,14 @@ for jj = 1:FLY.nframe % for each frame
         subplot(14,2,1:2:15); cla; hold on; axis square
             imshow(Disp.raw)
             
+            plot([FLY.raw_center(1) FLY.raw_center(1) + 50*sind(-FLY.int_body(jj))], ...
+                [FLY.raw_center(2)  FLY.raw_center(2) + 50*cosd(-FLY.int_body(jj))],'*r-')
+        
         % Make pattern ring
         make_pattern_ring(pattern_data.pattern,[Pat.int_pos(jj),5],FLY.raw_center,...
                                     radius,thickness,'g');
-                                
-        % Display reistered video
+     	
+        % Display registered video
         subplot(14,2,2:2:16); cla; hold on; axis square
             imshow(Disp.reg)
             
@@ -210,8 +215,9 @@ for jj = 1:FLY.nframe % for each frame
     
    	% Wing plot
     subplot(14,2,(16+2*4+1):(16+3*4)); hold on
-    addpoints(h.wba, FLY.int_time(jj), FLY.int_wba(jj))
-    
+    % addpoints(h.wba, FLY.int_time(jj), FLY.int_wba(jj))
+ 	addpoints(h.wba, FLY.int_time(jj), FLY.int_body(jj))
+
     drawnow
     
     if expframe(jj)
