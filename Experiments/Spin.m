@@ -15,7 +15,6 @@ patID = 2;                  % Spatial frequency grating pattern
 yPos  = 7;                  % 30 deg spatial frequency
 FPS = 100;                  % camera frame rate
 nFrame = FPS*n_tracktime;   % # of frames to log
-Gain = 11.993167134727036;	% camera gain
 Fs = 5000;                  % DAQ sampling rate [Hz]
 AI = 0:2;                	% Analog input channels
 AO = 1;                     % Analog output channels
@@ -30,7 +29,7 @@ TRIG = ((1/2)*(square(2*pi*FPS*t,5) - 1)');
 TRIG(TRIG==-1) = 4;
 
 % Camera Setup
-[vid,src] = Basler_acA640_750um(FPS,Gain,nFrame);
+[vid,src] = Basler_acA640_750um(nFrame);
 
 %% SPIN LOOP
 disp('Start Spin:')

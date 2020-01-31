@@ -3,7 +3,7 @@ function [] = Experiment_SOS(Fn)
 % Fn is the fly number
 daqreset
 imaqreset
-
+% Fn = 9;
 %% Set directories & experimental parameters
 root = 'C:\BC\Experiment_SOS';
 
@@ -26,7 +26,6 @@ funcX = 1;                  % SOS replay (20s)
 xUpdate = 200;              % function update rate
 FPS = 100;                  % camera frame rate
 nFrame = FPS*n_tracktime;   % # of frames to log
-Gain = 11.993167134727036; 	% camera gain
 Fs = 5000;                  % DAQ sampling rate [Hz]
 AI = 0:2;                	% Analog input channels
 AO = 1;                     % Analog output channels
@@ -41,7 +40,7 @@ TRIG = ((1/2)*(square(2*pi*FPS*t,5) - 1)');
 TRIG(TRIG==-1) = 4;
 
 % Camera Setup
-[vid,src] = Basler_acA640_750um(FPS,Gain,nFrame);
+[vid,src] = Basler_acA640_750um(nFrame);
 
 %% EXPERIMENT LOOP
 disp('Start Experiment:')
