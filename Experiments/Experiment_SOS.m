@@ -8,12 +8,12 @@ imaqreset
 root = 'C:\BC\Experiment_SOS';
 
 %% Spin Trial
-% Pick random direction
-dir = 0;
-while dir==0
-    dir = randi([-1,1],1);
-end
-Spin(Fn,root,dir*16);
+% % Pick random direction
+% dir = 0;
+% while dir==0
+%     dir = randi([-1,1],1);
+% end
+% Spin(Fn,root,dir*16);
 
 %% EXPERIMENTAL PARAMETERS
 n_tracktime = 21;           % length(func)/fps; seconds for each EXPERIMENT
