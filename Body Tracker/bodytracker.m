@@ -99,8 +99,10 @@ for idx = 1:nframe
     bnframe = bnvid(:,:,idx); % processed frame
     
   	% Calculate angle
-    imgstats(idx) = regionprops(bnframe,'Centroid','Area','BoundingBox','Orientation', ...
+    tempstats = regionprops(bnframe,'Centroid','Area','BoundingBox','Orientation', ...
         'MajorAxisLength','MinorAxisLength'); % image reigon properties
+    
+    imgstats(idx) = tempstats(1);
     
     centroid = imgstats(idx).Centroid;
     L = imgstats(idx).MajorAxisLength / 2;

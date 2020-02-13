@@ -10,7 +10,7 @@ function [] = batch_bodytrack(root, playback)
 %
 
 % playback = 10;
-% root = 'H:\EXPERIMENTS\MAGNO\Experiment_SOS';
+% root = 'H:\EXPERIMENTS\MAGNO\Experiment_SOS\registered';
 
 [FILES, PATH] = uigetfile({'*.mat', 'MAT-files'},'Select videos', root, 'MultiSelect','on');
 FILES = string(FILES);

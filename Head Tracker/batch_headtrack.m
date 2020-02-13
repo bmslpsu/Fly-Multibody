@@ -3,7 +3,10 @@ function [] = batch_headtrack(root, npoints, playback, showpoint)
 %
 %   INPUT:
 %       root        :   root directory
-%       playback    :   playback rate
+%       npoint      :   # of points for tracker
+%       playback    :   playback rate (show a frame in increments of "playback")
+%                       If false, then don't show anything (default = 1)
+%       showpoint 	:  	logical >>> true = debug mode
 %
 %   OUTPUT:
 %       -

@@ -8,8 +8,8 @@ function [hAngles,cPoint,validity,ROI,initframe,finalframe] = headtracker(vid, n
 % Sign convention for angle outputs: [CW = + , CCW = -]
 %
 % INPUTS:
-%   vidData     :   4D video matrix
-%   npoint      :   # of points for tracker
+% 	vidData     :   4D video matrix
+%	npoint      :   # of points for tracker
 %   playback    :   playback rate (show a frame in increments of "playback")
 %                 	If false, then don't show anything (default = 1)
 %   showpoint  	:   logical >>> true = debug mode
