@@ -31,7 +31,7 @@ vid = flipvid(vid,'lr'); % flip video to arena reference frame
 [yp,xp,nframe] = size(vid);  % get size & # of frames of video
 
 % Use the inital frame to find the heading
-[~,flip] = findheading(vid(:,:,1), logical(playback));
+[~,flip] = findheading(vid(:,:,1), false);
 
 % Preprocess raw video
 disp('Video preprocessing...')
@@ -144,6 +144,11 @@ for idx = 1:nframe
             % Show images with tracking annotation
             ax(1) = subplot(3,2,[1,3]); cla % raw
                 imshow(frame);
+                h.heading = semi_ellipse(centroid, -L, 0.5, 0.90, -norm_ang(idx), 'r');
+                delete([h.heading{2:4}])
+                alpha(h.heading{1},0.3)
+                h.heading{1}.LineStyle = 'none';
+                
             ax(2) = subplot(3,2,[2,4]); cla % processed
                 imshow(bnframe) % frame
 
@@ -156,7 +161,11 @@ for idx = 1:nframe
                 delete([h.ellps{[1,3:6]}])
                 h.ellps{2}.Color = 'r';
                 h.ellps{2}.LineWidth = 1;
-                hold on
+                
+                h.heading = semi_ellipse(centroid, -L, 0.5, 0.90, -norm_ang(idx), 'r');
+                delete([h.heading{2:4}])
+                alpha(h.heading{1},0.3)
+                h.heading{1}.LineStyle = 'none';
 
                 % Show centroid & heading
                 plot(heading(:,1), heading(:,2), '-r', 'LineWIdth', 1) % centroid

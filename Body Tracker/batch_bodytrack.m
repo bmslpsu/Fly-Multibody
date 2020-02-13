@@ -10,7 +10,7 @@ function [] = batch_bodytrack(root, playback)
 %
 
 % playback = 10;
-% root = 'H:\EXPERIMENTS\MAGNO\Experiment_SOS\registered';
+% root = 'H:\EXPERIMENTS\MAGNO\Experiment_SOS';
 
 [FILES, PATH] = uigetfile({'*.mat', 'MAT-files'},'Select videos', root, 'MultiSelect','on');
 FILES = string(FILES);
@@ -25,7 +25,7 @@ for file = 1:nfile
 
     [bAngles,imgstats,initframe] = bodytracker(vidData, playback);
 
-    save(fullfile(bodydir,FILES{file}),'-v7.3','bAngles','imgstats','initframe','t_v')
+    % save(fullfile(bodydir,FILES{file}),'-v7.3','bAngles','imgstats','initframe','t_v')
     
     close all
 end
