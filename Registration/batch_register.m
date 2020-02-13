@@ -14,7 +14,7 @@ function [] = batch_register(root)
 FILES = string(FILES);
 nfile = length(FILES);
 
-regdir = fullfile(root,'registered');
+regdir = fullfile(PATH,'registered');
 
 for file = 1:nfile
     disp(FILES(file))

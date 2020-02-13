@@ -1,5 +1,11 @@
-function [norm_ang,imgstats] = bodytracker(vid, playback)
+function [norm_ang,imgstats,initframe] = bodytracker(vid, playback)
 %% bodytracker: tracks the body angle of an insect in a magnetic tether
+%
+% Fits an ellipse to the 'on' reigon in each frame (insect body). Blurs the
+% image to get rid of head movements and wraps the angle. Can debug by
+% displaying a tracking animation.
+%
+% Sign convention for angle outputs: [CW = + , CCW = -]
 %
 %   INPUT:
 %       vid         :   input video matrix
@@ -7,8 +13,9 @@ function [norm_ang,imgstats] = bodytracker(vid, playback)
 %                       If false, then don't show anything.
 %                           default = 1
 %   OUTPUT:
-%       norm_ang 	:   normalized, unwrapped angle [°]
+%       norm_ang 	:   normalized & unwrapped body angle [°]
 %       imgstats 	:   structure containing some basic image statistics (orientation, centroid, etc.)
+%       initframe   :   initial (1st) frame image
 %
 
 if nargin < 2
@@ -18,66 +25,52 @@ end
 vid = flipvid(vid,'lr'); % flip video to arena reference frame
 [yp,xp,nframe] = size(vid);  % get size & # of frames of video
 
+% Use the inital frame to find the heading
+[~,flip] = findheading(vid(:,:,1), logical(playback));
+
 % Preprocess raw video
 disp('Video preprocessing...')
 bnvid = false(yp,xp,nframe); % stores the processed video
-SE_erode = strel('disk',8,4);   % erosion mask
+SE_erode = strel('disk',8,4); % erosion mask
 SE_dilate = strel('disk',12,4); % dilation mask
 tic
 parfor idx = 1:nframe
     % disp(idx)
-    frame = vid(:,:,idx);
-    bnframe = imbinarize(frame);
-    bnframe = imerode(bnframe,  SE_erode);
-    bnframe = imdilate(bnframe, SE_dilate);
-    bnvid(:,:,idx) = logical(bnframe);
+    frame = vid(:,:,idx); % get raw frame
+    bnframe = imbinarize(frame); % binarize
+    bnframe = imerode(bnframe,  SE_erode); % erode
+    bnframe = imdilate(bnframe, SE_dilate); % dilate
+    bnvid(:,:,idx) = logical(bnframe); % store bianary frame
 end
 toc
 
-% Use 1st image to find intial heading
-first_stats = regionprops(bnvid(:,:,1000),'Centroid','Area','BoundingBox','Orientation','Image', ...
-    'MajorAxisLength','MinorAxisLength'); % image reigon properties
-
-init_frame = first_stats.Image;
-check_frame = imrotate(init_frame, 90 - first_stats.Orientation, 'loose');
-check_frame = imerode(check_frame, strel('disk',20,8));
-
-top_ratio = sum(check_frame(1:fix(numel(check_frame)/2))) ./ ...
-                sum(check_frame(fix(numel(check_frame)/2)+1:numel(check_frame)));
-            
-if top_ratio < 1
-    flip = true
-else
-    flip = false
-end
-            
-% figure (1) ; clf
-% montage({init_frame,check_frame})
+pause(2)
+close all
 
 % Create display
-if playback
-    fig(1) = figure; clf
-    fColor = 'k'; % figure and main axis color
-    aColor = 'w'; % axis line color
-    set(fig,'Color',fColor,'Units','inches','Position',[2 2 9 7])
-    fig(1).Position(3:4) = [9 7];
-    % movegui(fig,'center')
-        % Raw image window
-        ax(1) = subplot(3,2,[1,3]); hold on ; cla ; axis image
+fig(1) = figure (100); clf
+set(fig, 'Visible', 'off')
+fColor = 'k'; % figure and main axis color
+aColor = 'w'; % axis line color
+set(fig,'Color',fColor,'Units','inches','Position',[2 2 9 7])
+fig(1).Position(3:4) = [9 7];
+% movegui(fig,'center')
+figure (100)
+    % Raw image window
+    ax(1) = subplot(3,2,[1,3]); hold on ; cla ; axis image
 
-        % Processed video window
-        ax(2) = subplot(3,2,[2,4]); hold on ; cla ; axis image
+    % Processed video window
+    ax(2) = subplot(3,2,[2,4]); hold on ; cla ; axis image
 
-        % Body angle window
-        ax(3) = subplot(3,2,5:6); hold on ; cla ; xlim([0 nframe])
-            xlabel('Frame')
-            ylabel('Angle (°)')
-            h.raw_angle  = animatedline(ax(3),'Color','b','LineWidth',1); % debugging
-            h.norm_angle = animatedline(ax(3),'Color','r','LineWidth',1);
+    % Body angle window
+    ax(3) = subplot(3,2,5:6); hold on ; cla ; xlim([0 nframe])
+        xlabel('Frame')
+        ylabel('Angle (°)')
+        h.raw_angle  = animatedline(ax(3),'Color','b','LineWidth',1); % debugging
+        h.norm_angle = animatedline(ax(3),'Color','r','LineWidth',1);
 
-    set(ax, 'Color', fColor, 'LineWidth', 1.5, 'FontSize', 12, 'FontWeight', 'bold', ...
-        'YColor', aColor, 'XColor',aColor)
-end
+set(ax, 'Color', fColor, 'LineWidth', 1.5, 'FontSize', 12, 'FontWeight', 'bold', ...
+    'YColor', aColor, 'XColor',aColor)
 
 raw_ang  = nan(nframe,1); % stores raw angles calulated by ellipse fit [°]
 norm_ang = nan(nframe,1); % stores normalized/unwrapped angles [°]
@@ -99,7 +92,7 @@ for idx = 1:nframe
     bnframe = bnvid(:,:,idx); % processed frame
     
   	% Calculate angle
-    imgstats(idx) = regionprops(bnframe,'Centroid','Area','BoundingBox','Orientation','Image', ...
+    imgstats(idx) = regionprops(bnframe,'Centroid','Area','BoundingBox','Orientation', ...
         'MajorAxisLength','MinorAxisLength'); % image reigon properties
     
     centroid = imgstats(idx).Centroid;
@@ -108,7 +101,7 @@ for idx = 1:nframe
     raw_ang(idx)  = -(imgstats(idx).Orientation + offset); % raw angle [°]
     norm_ang(idx) = -(imgstats(idx).Orientation + offset + shift); % normalized, unwrapped angle [°]
     
-    if flip
+    if ~flip
         norm_ang(idx) = norm_ang(idx) + 180;
     end
  	
@@ -129,7 +122,8 @@ for idx = 1:nframe
         end
     end
 
-    if playback
+    if playback || idx==1
+        set(fig, 'Visible', 'on')
         % Display images
         if (idx==1) || (~mod(idx,playback)) || (idx==nframe) % display at playback rate
             % Get approximate location of head
@@ -139,9 +133,9 @@ for idx = 1:nframe
             reverse = [centroid ; abdomen];
 
             % Show images with tracking annotation
-            subplot(3,2,[1,3]); cla % raw
-                imshow(1.5*frame)
-            subplot(3,2,[2,4]); cla % processed
+            ax(1) = subplot(3,2,[1,3]); cla % raw
+                imshow(frame);
+            ax(2) = subplot(3,2,[2,4]); cla % processed
                 imshow(bnframe) % frame
 
                 % Show bounding box
@@ -162,13 +156,17 @@ for idx = 1:nframe
         end
     
         % Display angle
-        subplot(3,2,5:6)
+        ax(3) = subplot(3,2,5:6);
             % addpoints(h.raw_angle,  idx, raw_angle(idx)) % debugging
             addpoints(h.norm_angle, idx, norm_ang(idx))
-
+            
+        if idx==1
+           initframe = getframe(fig);
+           initframe = initframe.cdata;
+        end
+        
         pause(0.0005) % give time for images to display
     end
 end
 toc
-
 end
