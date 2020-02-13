@@ -27,10 +27,17 @@ for file = 1:nfile
 
     [hAngles,cPoint,validity,ROI,initframe,finalframe] = headtracker(regvid, npoints, playback, showpoint);
     
-    save(fullfile(headdir,FILES{file}),'-v7.3','hAngles','cPoint','validity',...
-                                            'ROI','initframe','finalframe','t_v')
+    close all
+    
+    imagesc(validity)
+    
+    pause
     
     close all
+    
+ 	save(fullfile(headdir,FILES{file}),'-v7.3','hAngles','cPoint','validity',...
+                                            'ROI','initframe','finalframe','t_v')
+                                                                       
 end
 disp('ALL DONE')
 end
