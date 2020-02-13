@@ -1,141 +1,185 @@
-function [hAngles,centerPoint] = headtracker(vid, nPoints, playBack, debug)
-%% HeadTracker: tracks insect head movments in a rigid terher
+function [hAngles,cPoint,validity,ROI,initframe,finalframe] = headtracker(vid, npoint, playback, showpoint)
+% HeadTracker: tracks insect head movments in a rigid terher
 %
 % Tracks feature on fly head (ususally antenna) & calculates the angle with 
 % respect to a specififed center point. Kanade–Lucas–Tomasi feature tracker.
+% https://www.mathworks.com/help/vision/ref/vision.pointtracker-system-object.html
 %
 % Sign convention for angle outputs: [CW = + , CCW = -]
 %
 % INPUTS:
-%   vidData     : 4D video matrix
-%   t_v         : time vector
-%   nPoints     : # of points for tracker
-%   playBack    : 0 = none , 1 = all frames, else = playback factor (must be integer less than nFrames)
-%   debug:       logical >>> 1 = debug mode
+%   vidData     :   4D video matrix
+%   npoint      :   # of points for tracker
+%   playback    :   playback rate (show a frame in increments of "playback")
+%                 	If false, then don't show anything (default = 1)
+%   showpoint  	:   logical >>> true = debug mode
 %
 % OUTPUTS:
-%   hAngles: head angles
+%   hAngles     :   head angles
+%   cPoint      :   head rotation center point
+%   validity   	:   validity matrix (nframe x npoint)
+%   ROI         :   rectangualr reigon in image used to fid initial
+%                   features
+%   initframe  	:   first frame of display
+%   finalframe 	:   final frame of display
 %
 
+if ~rem(playback,1)==0
+    warning('Warning: "playback" roundes to nearest integer')
+    playback = round(playback);
+end
 
-vid = squeeze(vid);
-[~,~,nFrame] = size(vid); % get dimensions  of video data
+vid = squeeze(vid); % remove singleton dimensions
+[~,~,nframe] = size(vid); % get size of video
 
-% if ~rem(playBack,1)==0
-%     warning('Warning: "playBack" roundeds to nearest integer')
-% end
-% 
-% if playBack>nFrame
-%     error(['Error: playBack rate must be less than # of frames: ' num2str(nFrame)])
-% end
+trackFrame = vid(:,:,1); % get 1st frame to start tracker
+displayFrame = vid(:,:,1); % get 1st frame for display
 
-% Define Feature Detection Area & Centerline
-objectFrame     = vid(:,:,1); % get 1st frame to start tracker
-displayFrame    = vid(:,:,1); % get 1st frame for display
-
-fig = figure; clf ; title('Pick area of interest & draw head midline') % show frame
-imshow(displayFrame)
-
-objectRegion = round(getPosition(imrect)); % draw box around tracking point (antenna)
-centerLine  = round(getPosition(imline)); % draw line through head rotation point and head midline
-
-close(fig)
+% Prompt user to define feature detection area & centerline
+fig = figure; clf
+set(fig, 'Color', 'w', 'Units', 'inches')
+fig.Position(3:4) = [8 7];
+title('Pick area of interest & draw head midline', 'FontWeight', 'bold', 'FontSize',12)
+xlabel('Click to continue', 'FontWeight', 'bold', 'FontSize',12)
+ax(1) = subplot(1,1,1) ; axis image ; hold on
+    imshow(displayFrame) % show frame
+    roi = drawrectangle(ax(1)); % draw box around tracking point (antenna)
+    centline = drawline(ax(1)); % draw line through head rotation point and head midline
+    pause % wait for click to continue
+    ROI = round(roi.Position); % get head ROI to detect feature points
+    cLine = (centline.Position); % get head center line
+close(fig) % close figure
 
 % Coordinates for head rotation point
-centerPoint.Y = max(centerLine(:,2)); % lower y-coordinate is the neck joint
-centerPoint.X = centerLine((centerLine(:,2) == centerPoint.Y)); % get corrsponding x-coordinate
+cPoint.Y = max(cLine(:,2)); % lower y-coordinate is the neck joint
+cPoint.X = cLine((cLine(:,2) == cPoint.Y)); % get corrsponding x-coordinate
 
 % Coordinates for initial angle of head midline
-midPoint.Y = min(centerLine(:,2)); % higher y-coordinate is the midline point
-midPoint.X = centerLine((centerLine(:,2) == midPoint.Y)); % get corrsponding x-coordinate
+mPoint.Y = min(cLine(:,2)); % higher y-coordinate is the midline point
+mPoint.X = cLine((cLine(:,2) == mPoint.Y)); % get corrsponding x-coordinate
 
 % Calculate initial angle of head midline
-initAngle.head = rad2deg(atan2(midPoint.X - centerPoint.X , -(midPoint.Y - centerPoint.Y) ));
+initAngle.head = rad2deg( atan2( mPoint.X - cPoint.X , -(mPoint.Y - cPoint.Y) ) );
 
 % Setup tracking
-points	= detectMinEigenFeatures(objectFrame,'ROI',objectRegion); % detect features
-points  = points.selectStrongest(nPoints); % get strongest points
+points	= detectMinEigenFeatures(trackFrame,'ROI',ROI); % detect features
+points  = points.selectStrongest(npoint); % get strongest points
 tracker = vision.PointTracker('MaxBidirectionalError',5,'NumPyramidLevels',7,...
     'BlockSize',[31 31],'MaxIterations',40); % create tracker object
 
-initialize(tracker,points.Location,objectFrame); % start tracker
+initialize(tracker,points.Location,trackFrame); % start tracker
 
 % Calculate initial angle to feature (antenna)
-[points,validity] = tracker(objectFrame);
+[points,validity] = tracker(trackFrame);
 pointFrame_disp = insertMarker(displayFrame,points(validity, :),'+');
 
 initFeat.Y = round(mean(points(:,2)));
 initFeat.X = round(mean(points(:,1)));
 
-initAngle.feature = rad2deg(atan2(initFeat.X - centerPoint.X , -(initFeat.Y - centerPoint.Y) ));
+initAngle.feature = rad2deg(atan2(initFeat.X - cPoint.X , -(initFeat.Y - cPoint.Y) ));
 
 % Calculate offset angle from feature to head midline
 offsetAngle = initAngle.feature - initAngle.head;
 
 % Show points and lines
-figure (2); clf ; imshow(pointFrame_disp); title('Detected Interest Points: Click to continue');
-line([centerPoint.X , midPoint.X ],[centerPoint.Y , midPoint.Y],'Color','r','Linewidth',2)
-line([centerPoint.X , initFeat.X ],[centerPoint.Y , initFeat.Y],'Color','cy','Linewidth',2)
-
+fig = figure; clf
+ax(1) = subplot(1,1,1) ; axis image ; hold on
+set(fig, 'Color', 'w', 'Units', 'inches')
+fig.Position(3:4) = [6 5];
+title('Detected Interest Points', 'FontWeight', 'bold', 'FontSize',12)
+xlabel('Click to continue', 'FontWeight', 'bold', 'FontSize',12)
+    imshow(pointFrame_disp)
+    line([cPoint.X ,  mPoint.X ],[cPoint.Y , mPoint.Y],   'Color', 'r', 'Linewidth', 1.5)
+    line([cPoint.X , initFeat.X],[cPoint.Y , initFeat.Y], 'Color', 'c', 'Linewidth', 1.5)
 pause % wait for click to continue
-close(2) % close figure
+close(fig) % close figure
+
+% Create display
+fig(1) = figure (101); clf
+set(fig, 'Visible', 'off')
+fColor = 'k'; % figure and main axis color
+aColor = 'w'; % axis line color
+set(fig,'Color',fColor,'Units','inches','Position',[2 2 9 7])
+fig(1).Position(3:4) = [9 7];
+% movegui(fig,'center')
+figure (101)
+    % Raw image with tracking window
+    ax(1) = subplot(3,4,[2,3,6,7]); hold on ; cla ; axis image
+
+    % Head angle window
+    ax(2) = subplot(3,4,9:12); hold on ; cla ; xlim([0 nframe])
+        xlabel('Frame')
+        ylabel('Angle (°)')
+        h.hAngle = animatedline(ax(2), 'Color', 'b', 'LineWidth', 1);
+        % ylim(5*[-1 1])
+        
+set(ax, 'Color', fColor, 'LineWidth', 1.5, 'FontSize', 12, 'FontWeight', 'bold', ...
+    'YColor', aColor, 'XColor',aColor)
+
+% Preallocate vectors to store tracked points & angles
+Pos.X    = zeros(nframe,1);
+Pos.Y    = zeros(nframe,1);
+hAngles  = zeros(nframe,1); 
+POINTS   = cell(nframe,1);
+validity = zeros(nframe,npoint);
 
 % Track features & calculate head angle for every frame
-Pos.X = zeros(nFrame,1); Pos.Y = zeros(nFrame,1); hAngles = zeros(nFrame,1); % preallocate vectors to store data
-POINTS = cell(nFrame,1);
-
 tic
-for kk = 1:nFrame
-    currentFrame = vid(:,:,kk); % get frame
-    [points,~] = tracker(currentFrame); % detect features
-%     disp(validity)
-    POINTS{kk} = points; % store points in array
+disp('Tracking...')
+for idx = 1:nframe
+	% Display frame count every every 100 frames
+    if (idx==1) || ~mod(idx,100) || (idx==nframe)
+        fprintf('%i\n',idx)
+    end
     
-	Pos.Y(kk) = mean(points(:,2)); Pos.X(kk) = mean(points(:,1)); % calculate average (x.y) position of features
+    % Get frame & track features
+    frame = vid(:,:,idx); % get frame
+    [points,validity(idx,:)] = tracker(frame); % detect features
+    POINTS{idx} = points; % store points in array
     
-	hAngles(kk) = rad2deg( atan2( Pos.X(kk) - centerPoint.X , ... % calculate head midline angle
-            -(Pos.Y(kk) - centerPoint.Y) ) ) - offsetAngle;
-end
-
-disp('Angle Calculations: Done')
-toc
-
-%% Replay Video %%
-if playBack    
-    % Setup Figures
-    h1 = figure (1); clf ; title('Tracking') ; movegui(h1,[200 -100]) % tracking figure
-    h2 = figure (2); clf ; title('Head Angle') ; ylabel('deg') ; xlabel('time') ; movegui(h2,[-100 200]) % head angle vs time figure
-    hWait = waitbar(0,'Finding Angles'); movegui(hWait,[-200 -200]) % wait bar handle
-    hAnglePlot  = animatedline('Color','b','LineWidth',2); % angles handle
-
-    % Display frames at higher rate
-    disp('Replay Video at Higher Frame Rate:')
-    for kk = 1:round(playBack):nFrame
-        currentFrame = vid(:,:,kk); % get frame
-        pointFrame = insertMarker(currentFrame,POINTS{kk},'+'); % add points to image
-           
-        figure (1)
-        if debug
-            imshow(pointFrame) ; waitbar(kk/nFrame,hWait); % show tracking
-            line([centerPoint.X , Pos.X(kk) ],[centerPoint.Y , Pos.Y(kk)],...  % update line drawn to feature
-                'Color','cy','LineWidth',2)
-        else
-            imshow(currentFrame) ; waitbar(kk/nFrame,hWait); % show tracking
+	% Calculate average (x,y) position of features
+	Pos.Y(idx) = mean(points(:,2));
+    Pos.X(idx) = mean(points(:,1));
+    
+ 	% Calculate head midline angle
+	hAngles(idx) = rad2deg( atan2( Pos.X(idx) - cPoint.X , -(Pos.Y(idx) - cPoint.Y) ) ) - offsetAngle;
+    
+    if playback || idx==1 || idx==nframe
+        set(fig, 'Visible', 'on')
+        % Display image
+        if (idx==1) || (~mod(idx,playback)) || (idx==nframe) % at playback rate
+            % Show images with tracking annotation
+            ax(1) = subplot(3,4,[2,3,6,7]); cla % frame & tracking
+            if showpoint % show all tracked points and point mean
+                pointFrame = insertMarker(frame, points, '+'); % add points to image
+                imshow(pointFrame) % frame with tracked points
+                
+            	line([cPoint.X , Pos.X(idx) ], [cPoint.Y , Pos.Y(idx)], ... % update line drawn to features
+                        'Color', 'c', 'LineWidth', 1)
+            else % just show the head midline
+                imshow(frame)
+            end
+                    
+            line([cPoint.X ,  Pos.X(idx) - (initFeat.X - mPoint.X)], ... % update line drawn to head midline
+                 [cPoint.Y ,  Pos.Y(idx) - (initFeat.Y - mPoint.Y)], ...
+                    'Color', 'b', 'LineWidth', 1.5, 'Marker', '.')
         end
-
-            line([centerPoint.X ,  Pos.X(kk) - (initFeat.X - midPoint.X)],...  % update line drawn to head mideline
-                 [centerPoint.Y ,  Pos.Y(kk) - (initFeat.Y - midPoint.Y)],...
-                 'Color','r','LineWidth',2,'Marker','.')
-             
-        figure (2)
-            addpoints(hAnglePlot,t_v(kk),hAngles(kk)) % update line
-            box on
+    
+        % Display angle
+        ax(2) = subplot(3,4,9:12); % angles
+            addpoints(h.hAngle, idx, hAngles(idx))
+            
+        if idx==1
+            initframe = getframe(fig);
+            initframe = initframe.cdata;
+        elseif idx==nframe
+            finalframe = getframe(fig);
+            finalframe = finalframe.cdata;
+        end
+        
+        pause(0.0005) % give time for images to display
     end
 end
+toc
 
-% pause
-if playBack
-    close (hWait) ; 
-%     close (h1) ; close (h2) % close waitbar & figure window
-end
 end

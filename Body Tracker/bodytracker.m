@@ -10,8 +10,8 @@ function [norm_ang,imgstats,initframe] = bodytracker(vid, playback)
 %   INPUT:
 %       vid         :   input video matrix
 %       playback   	:   playback rate (show a frame in increments of "playback").
-%                       If false, then don't show anything.
-%                           default = 1
+%                       If false, then don't show anything. (default = 1)
+%                           
 %   OUTPUT:
 %       norm_ang 	:   normalized & unwrapped body angle [°]
 %       imgstats 	:   structure containing some basic image statistics (orientation, centroid, etc.)
@@ -20,6 +20,11 @@ function [norm_ang,imgstats,initframe] = bodytracker(vid, playback)
 
 if nargin < 2
     playback = 1; % default
+end
+
+if ~rem(playback,1)==0
+    warning('Warning: "playback" roundes to nearest integer')
+    playback = round(playback);
 end
 
 vid = flipvid(vid,'lr'); % flip video to arena reference frame
@@ -47,6 +52,11 @@ toc
 pause(2)
 close all
 
+% Set some parameters
+offset  = 90;  % shift the reference frame so 0° is the top vertical axis in video [°]
+dthresh = 160; % threshold for detecting >180° flips in ellipse orientation, or angles > 360°
+shift   = 0;   % shift to keep angle wrapped [°] (dynamic)
+
 % Create display
 fig(1) = figure (100); clf
 set(fig, 'Visible', 'off')
@@ -72,12 +82,9 @@ figure (100)
 set(ax, 'Color', fColor, 'LineWidth', 1.5, 'FontSize', 12, 'FontWeight', 'bold', ...
     'YColor', aColor, 'XColor',aColor)
 
+% Preallocate vectors to store tracked angles
 raw_ang  = nan(nframe,1); % stores raw angles calulated by ellipse fit [°]
 norm_ang = nan(nframe,1); % stores normalized/unwrapped angles [°]
-
-offset = 90; % shift the reference frame so 0° is the top vertical axis in video [°]
-dthresh = 160; % threshold for detecting 180 flips in ellipse orientation, or angles > 360 [°]
-shift = 0; % shift to keep angle wrapped [°] (dynamic)
 
 tic
 disp('Tracking...')
@@ -157,12 +164,12 @@ for idx = 1:nframe
     
         % Display angle
         ax(3) = subplot(3,2,5:6);
-            % addpoints(h.raw_angle,  idx, raw_angle(idx)) % debugging
+            % addpoints(h.raw_angle, idx, raw_angle(idx)) % debugging
             addpoints(h.norm_angle, idx, norm_ang(idx))
             
         if idx==1
-           initframe = getframe(fig);
-           initframe = initframe.cdata;
+            initframe = getframe(fig);
+            initframe = initframe.cdata;
         end
         
         pause(0.0005) % give time for images to display
