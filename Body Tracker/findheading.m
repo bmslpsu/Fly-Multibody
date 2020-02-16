@@ -33,10 +33,15 @@ heading = imgstats.Orientation(1);
 
 % Extract bounding reigon and rotate to 90°
 check_frame = imrotate(imgstats(1).Image, 90 - imgstats(1).Orientation, 'loose');
+head_frame =  imrotate(frame, 90 - imgstats(1).Orientation, 'loose');
 
 % Get image reigon stats and extract bounding reigon of rotated reigon
 imgstats = regionprops(check_frame,'Centroid','Orientation','Image'); % image reigon properties
-check_frame = imgstats.Image;
+check_frame = imgstats(1).Image;
+
+imgstats = regionprops(imbinarize(head_frame),'BoundingBox','Image'); % image reigon properties
+[~,flyIdx] = max(cellfun(@(x) numel(x), {imgstats.Image}));
+head_frame = imcrop(head_frame,imgstats(flyIdx).BoundingBox);
 
 % Get size & centroid of image
 dim = size(check_frame);
@@ -68,7 +73,7 @@ if bias < 1 % head is at the top (correct guess)
     flip = false;
     top_color = 'r';
     bot_color = 'b';
-    new_frame = check_frame;
+    new_frame = head_frame;
 elseif bias > 1 % head is at the bottom (inccorrect guess)
     flip = true;
     % Compute ajusted heading
@@ -79,7 +84,7 @@ elseif bias > 1 % head is at the bottom (inccorrect guess)
     top_color = 'b';
     bot_color = 'r';
     
-    new_frame = flipud(check_frame); % flip frame so head is on top
+    new_frame = flipud(head_frame); % flip frame so head is on top
 end
 
 % Check for ambiguous estimates % bring up debug window if heading estimate
@@ -104,7 +109,7 @@ if debug
             hold off
 
         ax(2) = subplot(1,2,2); cla ; hold on; axis image ; title('Adjusted Heading')
-            imshow(new_frame) 
+            imshow(new_frame)
             hold off
         
 	set(ax,'FontSize',10)

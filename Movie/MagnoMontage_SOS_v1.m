@@ -83,7 +83,7 @@ FLY.wba     = filtfilt(b,a,FLY.wba - mean(FLY.wba));
 
 % Normalize fly kinematics for experimental window
 FLY.int_time    = 0:(1/FLY.Fs):Pat.total_time; % video time
-FLY.int_body   = interp1(FLY.time, FLY.body,  FLY.int_time, 'nearest'); % interpolate head to match fly video
+FLY.int_body    = interp1(FLY.time, FLY.body,  FLY.int_time, 'nearest'); % interpolate head to match fly video
 FLY.int_head    = interp1(FLY.time, FLY.head,  FLY.int_time, 'nearest'); % interpolate head to match fly video
 FLY.int_lwing   = interp1(FLY.time, FLY.lwing, FLY.int_time, 'nearest'); % interpolate left wing to match fly video
 FLY.int_rwing   = interp1(FLY.time, FLY.rwing, FLY.int_time, 'nearest'); % interpolate head to match fly video
@@ -95,7 +95,7 @@ Pat.int_pos_deg = 3.75*(Pat.int_pos - mean(Pat.int_pos)); % interpolate pattern 
 
 % Get video data
 FLY.vid_sync = find(FLY.time>0,1,'first');
-FLY.vid_frames = (FLY.vid_sync:(FLY.Fs*(Pat.total_time+(1./FLY.Fs)*FLY.vid_sync)))';
+FLY.vid_frames = (FLY.vid_sync:(FLY.Fs*(Pat.total_time + (1./FLY.Fs)*FLY.vid_sync)))';
 FLY.nframe = length(FLY.vid_frames);
 FLY.raw = flipvid(squeeze(raw_data.vidData),'lr'); % raw video data
 FLY.reg = squeeze(reg_data.regvid); % registered video data

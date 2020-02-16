@@ -25,7 +25,7 @@ for file = 1:nfile
 
     [bAngles,imgstats,initframe] = bodytracker(vidData, playback);
 
-    % save(fullfile(bodydir,FILES{file}),'-v7.3','bAngles','imgstats','initframe','t_v')
+    save(fullfile(bodydir,FILES{file}),'-v7.3','bAngles','imgstats','initframe','t_v')
     
     close all
 end

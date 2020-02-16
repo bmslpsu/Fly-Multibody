@@ -37,8 +37,7 @@ displayFrame = vid(:,:,1); % get 1st frame for display
 
 % Prompt user to define feature detection area & centerline
 fig = figure; clf
-set(fig, 'Color', 'w', 'Units', 'inches')
-fig.Position(3:4) = [8 7];
+set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 9 7])
 title('Pick area of interest & draw head midline', 'FontWeight', 'bold', 'FontSize',12)
 xlabel('Click to continue', 'FontWeight', 'bold', 'FontSize',12)
 ax(1) = subplot(1,1,1) ; axis image ; hold on
@@ -84,13 +83,13 @@ offsetAngle = initAngle.feature - initAngle.head;
 % Show points and lines
 fig = figure; clf
 ax(1) = subplot(1,1,1) ; axis image ; hold on
-set(fig, 'Color', 'w', 'Units', 'inches')
-fig.Position(3:4) = [6 5];
+set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 9 7])
 title('Detected Interest Points', 'FontWeight', 'bold', 'FontSize',12)
 xlabel('Click to continue', 'FontWeight', 'bold', 'FontSize',12)
     imshow(pointFrame_disp)
-    line([cPoint.X ,  mPoint.X ],[cPoint.Y , mPoint.Y],   'Color', 'r', 'Linewidth', 1.5)
-    line([cPoint.X , initFeat.X],[cPoint.Y , initFeat.Y], 'Color', 'c', 'Linewidth', 1.5)
+    line([cPoint.X ,  mPoint.X ],[cPoint.Y , mPoint.Y],   'Color', 'c', 'Linewidth', 1.5)
+    line([cPoint.X , initFeat.X],[cPoint.Y , initFeat.Y], 'Color', 'b', 'Linewidth', 1.5)
+    R = sqrt( (cPoint.X - mPoint.X)^(2) + (cPoint.Y - mPoint.Y)^(2) );
 pause % wait for click to continue
 close(fig) % close figure
 
@@ -100,17 +99,16 @@ set(fig, 'Visible', 'off')
 fColor = 'k'; % figure and main axis color
 aColor = 'w'; % axis line color
 set(fig,'Color',fColor,'Units','inches','Position',[2 2 9 7])
-fig(1).Position(3:4) = [9 7];
 % movegui(fig,'center')
 figure (101)
     % Raw image with tracking window
-    ax(1) = subplot(3,4,[2,3,6,7]); hold on ; cla ; axis image
+    ax(1) = subplot(3,4,1:8); hold on ; cla ; axis image
 
     % Head angle window
     ax(2) = subplot(3,4,9:12); hold on ; cla ; xlim([0 nframe])
         xlabel('Frame')
         ylabel('Angle (°)')
-        h.hAngle = animatedline(ax(2), 'Color', 'b', 'LineWidth', 1);
+        h.hAngle = animatedline(ax(2), 'Color', 'c', 'LineWidth', 1.5);
         % ylim(5*[-1 1])
         
 set(ax, 'Color', fColor, 'LineWidth', 1.5, 'FontSize', 12, 'FontWeight', 'bold', ...
@@ -149,20 +147,26 @@ for idx = 1:nframe
         % Display image
         if (idx==1) || (~mod(idx,playback)) || (idx==nframe) % at playback rate
             % Show images with tracking annotation
-            ax(1) = subplot(3,4,[2,3,6,7]); cla % frame & tracking
+            ax(1) = subplot(3,4,1:8); cla % frame & tracking
             if showpoint % show all tracked points and point mean
                 pointFrame = insertMarker(frame, points, '+'); % add points to image
                 imshow(pointFrame) % frame with tracked points
                 
             	line([cPoint.X , Pos.X(idx) ], [cPoint.Y , Pos.Y(idx)], ... % update line drawn to features
-                        'Color', 'c', 'LineWidth', 1)
+                        'Color', 'b', 'LineWidth', 1)
             else % just show the head midline
                 imshow(frame)
             end
-                    
-            line([cPoint.X ,  Pos.X(idx) - (initFeat.X - mPoint.X)], ... % update line drawn to head midline
-                 [cPoint.Y ,  Pos.Y(idx) - (initFeat.Y - mPoint.Y)], ...
-                    'Color', 'b', 'LineWidth', 1.5, 'Marker', '.')
+        	
+            tracked.X = cPoint.X + R*sind(hAngles(idx));
+            tracked.Y = cPoint.Y - R*cosd(hAngles(idx));
+            
+         	line([cPoint.X , tracked.X], [cPoint.Y , tracked.Y], ... % update line drawn to head midline
+                    'Color', 'c', 'LineWidth', 2.5, 'Marker', '.')
+            
+%             line([cPoint.X ,  Pos.X(idx) - (initFeat.X - mPoint.X)], ... 
+%                  [cPoint.Y ,  Pos.Y(idx) - (initFeat.Y - mPoint.Y)], ...
+%                     'Color', 'c', 'LineWidth', 2.5, 'Marker', '.')
         end
     
         % Display angle

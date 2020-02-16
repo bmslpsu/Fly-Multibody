@@ -13,7 +13,7 @@ function [] = batch_headtrack(root, npoints, playback, showpoint)
 %
 
 % showpoint = true;
-% npoints = 10;
+% npoints = 5;
 % playback = 5;
 % root = 'H:\EXPERIMENTS\MAGNO\Experiment_SOS\registered';
 
@@ -26,12 +26,11 @@ headdir = fullfile(PATH,'tracked_head');
 for file = 1:nfile
     disp(FILES(file))
     disp('---------------------------------------')
-    load(fullfile(PATH,FILES(file)),'regvid','t_v')
+    load(fullfile(PATH,FILES(file)),'vidData','t_v')
 
-    [hAngles,cPoint,validity,ROI,initframe,finalframe] = headtracker(regvid, npoints, playback, showpoint);
-    
-    close all
-    
+    [hAngles,cPoint,validity,ROI,initframe,finalframe] = headtracker(vidData, npoints, playback, showpoint);
+        
+    figure
     imagesc(validity)
     
     pause

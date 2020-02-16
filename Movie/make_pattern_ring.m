@@ -20,7 +20,7 @@ function [hpatch] = make_pattern_ring(pattern,pos,center,radius,thickness,color)
 % radius      = floor(max([FLY.yP FLY.xP])/1.7);
 % thickness   = 15;
 
-if nargin<6
+if nargin < 6
     color = 'g'; % default color
 end
 

@@ -43,7 +43,7 @@ parfor idx = 1:nframe
     % disp(idx)
     frame = vid(:,:,idx); % get raw frame
     bnframe = imbinarize(frame); % binarize
-    bnframe = imerode(bnframe,  SE_erode); % erode
+    bnframe = imerode(bnframe, SE_erode); % erode
     bnframe = imdilate(bnframe, SE_dilate); % dilate
     bnvid(:,:,idx) = logical(bnframe); % store bianary frame
 end
@@ -62,7 +62,7 @@ fig(1) = figure (100); clf
 set(fig, 'Visible', 'off')
 fColor = 'k'; % figure and main axis color
 aColor = 'w'; % axis line color
-set(fig,'Color',fColor,'Units','inches','Position',[2 2 9 7])
+set(fig, 'Color', fColor, 'Units', 'inches', 'Position', [2 2 9 7])
 fig(1).Position(3:4) = [9 7];
 % movegui(fig,'center')
 figure (100)
@@ -102,30 +102,30 @@ for idx = 1:nframe
     tempstats = regionprops(bnframe,'Centroid','Area','BoundingBox','Orientation', ...
         'MajorAxisLength','MinorAxisLength'); % image reigon properties
     
-    imgstats(idx) = tempstats(1);
+    imgstats(idx) = tempstats(1); % get stats only for largest feature
     
-    centroid = imgstats(idx).Centroid;
-    L = imgstats(idx).MajorAxisLength / 2;
+    centroid = imgstats(idx).Centroid; % centroid of image
+    L = imgstats(idx).MajorAxisLength / 2; % long axis of image
     
     raw_ang(idx)  = -(imgstats(idx).Orientation + offset); % raw angle [°]
     norm_ang(idx) = -(imgstats(idx).Orientation + offset + shift); % normalized, unwrapped angle [°]
     
+    % Flip heading by 180° if we if the heading is in the wrong direction
     if ~flip
         norm_ang(idx) = norm_ang(idx) + 180;
     end
  	
-    % Check for changes in angle > 180 degree. correct for the ellipse
-    % fit and unwrap angles
+    % Check for changes in angle > 180°. Correct for the ellipse fit and unwrap angles.
     if idx > 1
         dbody = norm_ang(idx) - norm_ang(idx-1); % change in body angle between frames [°]
         magd = abs(dbody); % magnitude of change [°]
         signd = sign(dbody); % direction of change
         if magd > dthresh % 180 or more flip
-            flipn = round(magd/180); % how many 180 shifts we need
+            flipn = round(magd/180); % how many 180° shifts we need
          	shift = -signd*flipn*180; % shift amount [°]
             norm_ang(idx) = norm_ang(idx)  + shift; % normalized, unwrapped angle [°]
         end
-    elseif idx==1 % start angle as positive
+    elseif idx==1 % make start angle positive
         if norm_ang(idx) < 0
             norm_ang(idx) = norm_ang(idx) + 360;
         end
@@ -143,7 +143,8 @@ for idx = 1:nframe
 
             % Show images with tracking annotation
             ax(1) = subplot(3,2,[1,3]); cla % raw
-                imshow(frame);
+                imshow(frame) % frame
+                
                 h.heading = semi_ellipse(centroid, -L, 0.5, 0.90, -norm_ang(idx), 'r');
                 delete([h.heading{2:4}])
                 alpha(h.heading{1},0.3)
@@ -154,7 +155,7 @@ for idx = 1:nframe
 
                 % Show bounding box
                 h.rect = rectangle('Position', imgstats(idx).BoundingBox, 'EdgeColor', 'g', ...
-                    'LineWidth', 1); % bounding box
+                    'LineWidth', 1);
 
                 % Show ellipse
                 h.ellps = ellipse(centroid, 2*L, 0.5, 0.90, -norm_ang(idx), 'r');
@@ -168,8 +169,8 @@ for idx = 1:nframe
                 h.heading{1}.LineStyle = 'none';
 
                 % Show centroid & heading
-                plot(heading(:,1), heading(:,2), '-r', 'LineWIdth', 1) % centroid
-                plot(reverse(:,1), reverse(:,2), '-b', 'LineWIdth', 1) % heading
+                plot(heading(:,1), heading(:,2), '-r', 'LineWidth', 1) % centroid
+                plot(reverse(:,1), reverse(:,2), '-b', 'LineWidth', 1) % heading
                 plot(centroid(1),  centroid(2),  '.g', 'MarkerSize', 20) % reverse heading
         end
     
@@ -178,7 +179,7 @@ for idx = 1:nframe
             % addpoints(h.raw_angle, idx, raw_angle(idx)) % debugging
             addpoints(h.norm_angle, idx, norm_ang(idx))
             
-        if idx==1
+        if idx==1 % get 1st frame
             initframe = getframe(fig);
             initframe = initframe.cdata;
         end
