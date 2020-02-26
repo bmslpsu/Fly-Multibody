@@ -1,4 +1,4 @@
-function [norm_ang,imgstats,initframe] = bodytracker(vid, playback)
+function [norm_ang,imgstats,initframe] = bodytracker(vid, playback, head_debug)
 %% bodytracker: tracks the body angle of an insect in a magnetic tether
 %
 % Fits an ellipse to the 'on' reigon in each frame (insect body). Blurs the
@@ -10,7 +10,8 @@ function [norm_ang,imgstats,initframe] = bodytracker(vid, playback)
 %   INPUT:
 %       vid         :   input video matrix
 %       playback   	:   playback rate (show a frame in increments of "playback").
-%                       If false, then don't show anything. (default = 1)
+%                       If false, then onlt show the 1st frame. (default = 1)
+%       head_debug  :   always bring up the heading angle check window if true
 %                           
 %   OUTPUT:
 %       norm_ang 	:   normalized & unwrapped body angle [°]
@@ -18,12 +19,19 @@ function [norm_ang,imgstats,initframe] = bodytracker(vid, playback)
 %       initframe   :   initial (1st) frame image
 %
 
-if nargin < 2
+if nargin < 3
+    head_debug = false; % default
+    if nargin < 2
+        playback = 1; % default
+    end
+end
+
+if isempty(playback)
     playback = 1; % default
 end
 
 if ~rem(playback,1)==0
-    warning('Warning: "playback" roundes to nearest integer')
+    warning('Warning: "playback" rounds to nearest integer')
     playback = round(playback);
 end
 
@@ -31,7 +39,8 @@ vid = flipvid(vid,'lr'); % flip video to arena reference frame
 [yp,xp,nframe] = size(vid);  % get size & # of frames of video
 
 % Use the inital frame to find the heading
-[~,flip] = findheading(vid(:,:,1), false);
+[~,flip] = findheading(vid(:,:,1), head_debug);
+disp('Heading found.')
 
 % Preprocess raw video
 disp('Video preprocessing...')
@@ -49,7 +58,7 @@ parfor idx = 1:nframe
 end
 toc
 
-pause(2)
+pause(1)
 close all
 
 % Set some parameters
@@ -110,7 +119,7 @@ for idx = 1:nframe
     raw_ang(idx)  = -(imgstats(idx).Orientation + offset); % raw angle [°]
     norm_ang(idx) = -(imgstats(idx).Orientation + offset + shift); % normalized, unwrapped angle [°]
     
-    % Flip heading by 180° if we if the heading is in the wrong direction
+    % Flip heading by 180° if the heading is in the wrong direction
     if ~flip
         norm_ang(idx) = norm_ang(idx) + 180;
     end
@@ -123,7 +132,7 @@ for idx = 1:nframe
         if magd > dthresh % 180 or more flip
             flipn = round(magd/180); % how many 180° shifts we need
          	shift = -signd*flipn*180; % shift amount [°]
-            norm_ang(idx) = norm_ang(idx)  + shift; % normalized, unwrapped angle [°]
+            norm_ang(idx) = norm_ang(idx) + shift; % normalized, unwrapped angle [°]
         end
     elseif idx==1 % make start angle positive
         if norm_ang(idx) < 0
@@ -155,7 +164,7 @@ for idx = 1:nframe
 
                 % Show bounding box
                 h.rect = rectangle('Position', imgstats(idx).BoundingBox, 'EdgeColor', 'g', ...
-                    'LineWidth', 1);
+                                                                'LineWidth', 1);
 
                 % Show ellipse
                 h.ellps = ellipse(centroid, 2*L, 0.5, 0.90, -norm_ang(idx), 'r');

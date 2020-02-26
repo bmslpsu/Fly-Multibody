@@ -8,7 +8,8 @@ function [heading,flip,bias,ax,fig] = findheading(frame, debug, ratio)
 %
 %   OUTPUT:
 %       heading  	:   heading orientation angle [°]
-%       flip      	:   should we flip the heading? (0 = no: head at top, 1 = yes: head at bottom)
+%       flip      	:   should we flip the heading? (0 = no: head at top, 
+%                       1 = yes: head at bottom)
 %       bias        :   ratio between upper and lower quadrant (values
 %                       close to 1 are more ambiguous)
 %       ax          :   axes handles
