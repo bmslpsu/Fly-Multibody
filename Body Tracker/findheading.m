@@ -30,7 +30,7 @@ bnframe = imerode(bnframe,  SE_erode); % erode
 
 % Get image reigon stats
 imgstats = regionprops(bnframe,'BoundingBox','Orientation','Image'); % image reigon properties
-heading = imgstats.Orientation(1);
+heading = imgstats(1).Orientation;
 
 % Extract bounding reigon and rotate to 90°
 check_frame = imrotate(imgstats(1).Image, 90 - imgstats(1).Orientation, 'loose');
