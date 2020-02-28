@@ -10,8 +10,8 @@ function [norm_ang,imgstats,initframe] = bodytracker(vid, playback, head_debug)
 %   INPUT:
 %       vid         :   input video matrix
 %       playback   	:   playback rate (show a frame in increments of "playback").
-%                       If false, then onlt show the 1st frame. (default = 1)
-%       head_debug  :   always bring up the heading angle check window if true
+%                       If false, then only show the 1st frame. (default = 1)
+%       head_debug  :   always bring up the heading angle check-window if true
 %                           
 %   OUTPUT:
 %       norm_ang 	:   normalized & unwrapped body angle [°]

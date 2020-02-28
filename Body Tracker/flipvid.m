@@ -1,5 +1,5 @@
 function [vid] = flipvid(vid,method)
-%% flipud_vid: switches the names of two variables in a .mat data file
+%% flipud_vid: flips all frames in a 3D video (or matrix)
 %
 %   INPUT:
 %       vidin     	:   input video data
