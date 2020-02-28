@@ -119,10 +119,6 @@ for idx = 1:nframe
     raw_ang(idx)  = -(imgstats(idx).Orientation + offset); % raw angle [°]
     norm_ang(idx) = -(imgstats(idx).Orientation + offset + shift); % normalized, unwrapped angle [°]
     
-    % Flip heading by 180° if the heading is in the wrong direction
-    if ~flip
-        norm_ang(idx) = norm_ang(idx) + 180;
-    end
  	
     % Check for changes in angle > 180°. Correct for the ellipse fit and unwrap angles.
     if idx > 1
@@ -134,7 +130,13 @@ for idx = 1:nframe
          	shift = -signd*flipn*180; % shift amount [°]
             norm_ang(idx) = norm_ang(idx) + shift; % normalized, unwrapped angle [°]
         end
-    elseif idx==1 % make start angle positive
+    elseif idx==1
+        % Flip heading by 180° if the heading is in the wrong direction
+        if flip
+            norm_ang(idx) = norm_ang(idx) + 180;
+        end
+        
+       	% Make start angle positive
         if norm_ang(idx) < 0
             norm_ang(idx) = norm_ang(idx) + 360;
         end
@@ -154,7 +156,7 @@ for idx = 1:nframe
             ax(1) = subplot(3,2,[1,3]); cla % raw
                 imshow(frame) % frame
                 
-                h.heading = semi_ellipse(centroid, -L, 0.5, 0.90, -norm_ang(idx), 'r');
+                h.heading = semi_ellipse(centroid, -L, 0.5, 0.90, 180-norm_ang(idx), 'r');
                 delete([h.heading{2:4}])
                 alpha(h.heading{1},0.3)
                 h.heading{1}.LineStyle = 'none';
@@ -167,12 +169,12 @@ for idx = 1:nframe
                                                                 'LineWidth', 1);
 
                 % Show ellipse
-                h.ellps = ellipse(centroid, 2*L, 0.5, 0.90, -norm_ang(idx), 'r');
+                h.ellps = ellipse(centroid, 2*L, 0.5, 0.90, 180-norm_ang(idx), 'r');
                 delete([h.ellps{[1,3:6]}])
                 h.ellps{2}.Color = 'r';
                 h.ellps{2}.LineWidth = 1;
                 
-                h.heading = semi_ellipse(centroid, -L, 0.5, 0.90, -norm_ang(idx), 'r');
+                h.heading = semi_ellipse(centroid, -L, 0.5, 0.90, 180-norm_ang(idx), 'r');
                 delete([h.heading{2:4}])
                 alpha(h.heading{1},0.3)
                 h.heading{1}.LineStyle = 'none';
