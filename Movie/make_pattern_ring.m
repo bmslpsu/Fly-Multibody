@@ -10,6 +10,7 @@ function [hpatch] = make_pattern_ring(pattern,pos,center,radius,thickness,color)
 %       radius    	: radius of pattern
 %       thickness 	: thickness of pattern
 %       color       : color of pattern
+%
 %   OUTPUT:
 %       -
 %
@@ -34,14 +35,14 @@ Pats        = pattern.Pats(1,:,pos(1),pos(2)); % pixel map
 hpatch = gobjects(length(theta_map),1);
 hold on
 for kk = 1:length(theta_map)
-    xin = center(1) + radius*cos(theta_map(kk));
-    xout = center(1) + rout*cos(theta_map(kk));
-    xinN = center(1) + radius*cos(theta_map(kk) + sA);
-    xoutN = center(1) + rout*cos(theta_map(kk) + sA);
-    yin = center(2) + radius*sin(theta_map(kk));
-    yout = center(2) + rout*sin(theta_map(kk));
-    yinN = center(2) + radius*sin(theta_map(kk) + sA);
-    youtN = center(2) + rout*sin(theta_map(kk) + sA);
+    xin     = center(1) + radius*cos(theta_map(kk));
+    xout    = center(1) + rout*cos(theta_map(kk));
+    xinN    = center(1) + radius*cos(theta_map(kk) + sA);
+    xoutN   = center(1) + rout*cos(theta_map(kk) + sA);
+    yin     = center(2) + radius*sin(theta_map(kk));
+    yout    = center(2) + rout*sin(theta_map(kk));
+    yinN    = center(2) + radius*sin(theta_map(kk) + sA);
+    youtN   = center(2) + rout*sin(theta_map(kk) + sA);
 
 	hpatch(kk) = patch([xout, xoutN, xinN, xin], [yout, youtN,yinN, yin], color, ...
                 'linestyle', 'none', 'FaceAlpha', Pats(kk)*(1/(2^(pattern.gs_val)-1)));
