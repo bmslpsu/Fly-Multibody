@@ -1,5 +1,6 @@
 function [pkFreq,pkMag,pkPhase,pkIdx] = getfreqpeaks(freq,mag,phase,IOFreq,fTol,debug)
 %% getfreqpeaks: get magnitude & phase values of frequency domain data at input-output (IO) freqeuncies
+%
 %   INPUT:
 %       freq        : frequency vector
 %       mag         : magnitude vector
@@ -7,11 +8,13 @@ function [pkFreq,pkMag,pkPhase,pkIdx] = getfreqpeaks(freq,mag,phase,IOFreq,fTol,
 %       IOFreq     	: unique freuncies present (if empty, find peaks automatically)
 %       fTol        : frequency search tolerance (default=2*T) >>> varargin{1}
 %       debug       : showplot (default=false) >>> varargin{2}
+%
 %   OUTPUT:
 %       pkFreq      : IO frequencies
 %       pkMag       : manitude at uFreq
 %       pkPhase 	: phase at uFreq
 %       pkIdx       : index of peaks
+%
 
 if isempty(fTol)
     fTol = 2*mean(diff(freq)); % default tolerance range

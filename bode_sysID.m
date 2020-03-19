@@ -1,4 +1,4 @@
-function [] = bode_sysID(time,ref,IOFv,varargin)
+function [SYSTEM] = bode_sysID(time,ref,IOFv,debug,varargin)
 %% bode_sysID: calculates weights of redundant actuation in frequency domain
 %
 %   INPUT:
@@ -7,7 +7,7 @@ function [] = bode_sysID(time,ref,IOFv,varargin)
 %       IOFv   	:	input-output frequncies present in data (leave empty to automatically detect)
 %
 %   OUTPUT:
-%       MOV   	:   
+%       SYSTEM 	:   structure with system ID attributes
 %
 %   Usage: bode_sysID(time,ref,IOFv,input_1,input_2,...input_n)
 %
@@ -57,136 +57,154 @@ IOmagMean = mean(IOMag,1);
 plotOrder = fliplr(plotOrder);
 
 % Convert state outputs to frequency response functions
-% Gain                = Mag ./ refMag;
-% PhaseDiff           = refPhase - Phase;
-% FRF                 = Freq ./ refFreq;
 IOGain              = IOMag ./ refIOMag;
 IOPhaseDiff         = IOPhase - refIOPhase;
 IOFRF               = IOFreq ./ refIOFreq;
 IOFRF_Gain          = abs(IOFRF);
 IOFRF_PhaseDiff     = angle(IOFRF);
 
+IOPhaseDiff(IOPhaseDiff >  pi) = IOPhaseDiff(IOPhaseDiff >  pi) - 2*pi;
+IOPhaseDiff(IOPhaseDiff < -pi) = IOPhaseDiff(IOPhaseDiff < -pi) + 2*pi;
+
+IOFRF_PhaseDiff(IOFRF_PhaseDiff >  pi) = IOFRF_PhaseDiff(IOFRF_PhaseDiff >  pi) - 2*pi;
+IOFRF_PhaseDiff(IOFRF_PhaseDiff < -pi) = IOFRF_PhaseDiff(IOFRF_PhaseDiff < -pi) + 2*pi;
+
 % Calculate weights
 IOWeight = IOGain(:,1:end-1) ./ IOGain(:,end);
 
-close all
-% Figure
-mrkSize = 10;
-fig(1) = figure; clf
-set(fig, 'Color', 'w','Units','inches','Position',[1 1 6 7])
-movegui(fig,'center')
-ax(1) = subplot(5,3,1:3); hold on
-    href = plot(time, ref, 'Color', stimColor);
-    hout = gobjects(1,nState);
-    for jj = 1:nState
-        hout(jj) = plot(time, State(:,jj), 'Color', cmap(jj,:));
-    end
-    xlabel('Time (s)')
-    ylabel('Magnitude (°)')
- 	leg = legend([href,hout],'Visual Motion','Body','Head','Gaze');
-    leg.Box = 'off';
-    set(ax(1),'XLim',[0 time(end)])
-    set([href hout],'LineWidth',1)
-    
-ax(2) = subplot(5,3,4); hold on
-    href = plot(refFv, refMag, 'Color', stimColor);
-    hrefIO = plot(IOFv, refIOMag, '.-', 'Color', stimColor, 'MarkerSize', mrkSize);
-    hout = gobjects(1,nState);
-    houtIO = gobjects(1,nState);
-    for jj = plotOrder
-        hout(jj) = plot(Fv, Mag(:,jj), 'Color', cmap(jj,:));
-        houtIO(jj) = plot(IOFv, IOMag(:,jj), '.-', 'Color', cmap(jj,:), 'MarkerSize', mrkSize);
-    end
-    ylabel('Magnitude (°)')
-    set([href hrefIO hout houtIO],'LineWidth',1)
-    delete([hrefIO houtIO])
-    
-ax(3) = subplot(5,3,7); hold on
-    hrefIO = plot(IOFv, rad2deg(refIOPhase), '.-', 'Color', stimColor, 'MarkerSize', mrkSize);
-    houtIO = gobjects(1,nState);
-    for jj = 1:nState
-        houtIO(jj) = plot(IOFv, rad2deg(IOPhase(:,jj)), '.-', 'Color', cmap(jj,:), 'MarkerSize', mrkSize);
-    end
-    set([hrefIO houtIO],'LineWidth',1)
-    ylim(180*[-1 1])
-    ylabel('Phase (°)')
-    xlabel('Frequency (Hz)')
-    
-ax(4) = subplot(5,3,5); hold on
-    houtIO = gobjects(1,nState);
-    for jj = 1:nState
-        houtIO(jj) = plot(IOFv, IOGain(:,jj), '.-', 'Color', cmap(jj,:), 'MarkerSize', mrkSize);
-    end
-    maxGain = max(max(IOGain));
-    if maxGain<1
-        ylim([0 1.0])
-    else
-        ylim([0 1.1*maxGain])
-    end
-    ylabel('Gain (°/°)')
-    set([houtIO],'LineWidth',1)
-    
-ax(5) = subplot(5,3,8); hold on
-    houtIO = gobjects(1,nState);
-    for jj = 1:nState
-        houtIO(jj) = plot(IOFv, rad2deg(IOPhaseDiff(:,jj)), '.-', 'Color', cmap(jj,:), 'MarkerSize', mrkSize);
-    end
-    % ylim(180*[-1 1])
-    ylim([-180 30])
-	ylabel('Phase Difference(°)')
-    xlabel('Frequency (Hz)')
-    set([houtIO],'LineWidth',1)
-    
-ax(6) = subplot(5,3,[6,9]); hold on
-    houtIO = gobjects(1,nState-1);
-    for jj = 1:nState-1
-        houtIO(jj) = plot(IOFv, IOWeight(:,jj), '.-', 'Color', cmap(jj,:), 'MarkerSize', mrkSize);
-    end
-    ylim([0 1])
-	ylabel('Weight (°/°)')
-    xlabel('Frequency (Hz)')
-    set([houtIO],'LineWidth',1)    
-    
-ax(7) = subplot(5,3,[10,11,13,14]);
-    houtIO = gobjects(1,nState);
-    for jj = plotOrder
-        houtIO(jj) = polarplot(IOFRF_PhaseDiff(:,jj), IOFRF_Gain(:,jj), '-', ...
-            'Color', cmap(jj,:), 'MarkerSize', 1,'MarkerFaceColor','k','MarkerEdgeColor','k');
-        hold on
-        
-        hfreq = gobjects(nFreq,1);
-        for kk = 1:nFreq
-            hfreq(kk) = polarplot(IOFRF_PhaseDiff(kk,jj), IOFRF_Gain(kk,jj), '.',...
-                'MarkerSize', 15,'MarkerFaceColor',freqCmap(kk,:),'MarkerEdgeColor',freqCmap(kk,:));
-        end
-    end
-    
-    ax(7) = gca;
-%     ax.RAxis.Label.String = 'Gain (°/°)';
-%     thetalabel('Phase Difference (°)')
-    set(ax(7),'RLim',[0 1.1*maxGain])
-    set([houtIO],'LineWidth',1)
-    
-  	leg = legend(hfreq,string(IOFv));
-    leg.Box = 'off';
-    leg.Title.String = 'Frequency (Hz)';
-    
-ax(8) = subplot(5,3,[12 15]); hold on
-    hout = gobjects(1,nState);
-    houtIO = gobjects(1,nState);
-    for jj = 1:nState
-        hout(jj) = plot(Fv, Cohr(:,jj), 'Color', cmap(jj,:));
-        houtIO(jj) = plot(IOFv, IOCohr(:,jj), '.-', 'Color', cmap(jj,:), 'MarkerSize', mrkSize);
-    end
-    ylabel('Coherence')
-    set([hout houtIO],'LineWidth',1)
-    ylim([0 1.1])
-    % set(ax(2),'XLim',[0 time(end)])
-    
-    
-set(ax([2:6,8]), 'XLim', [0 1.1*max(IOFv)])
-set(ax([3,5]), 'YTick', -360:90:360)
-linkaxes(ax([2:6,8]),'x')
+SYSTEM.Mag              = Mag;
+SYSTEM.Phase            = Phase;
+SYSTEM.Cohr             = Cohr;
+SYSTEM.IOMag            = IOMag;
+SYSTEM.IOPhase      	= IOPhase;
+SYSTEM.IOGain           = IOGain;
+SYSTEM.IOPhaseDiff      = IOPhaseDiff;
+SYSTEM.IOFRF            = IOFRF;
+SYSTEM.IOFRF_Gain       = IOPhaseDiff;
+SYSTEM.IOFRF_PhaseDiff  = IOPhaseDiff;
+SYSTEM.IOCohr           = IOCohr;
 
+if debug
+    % Figure
+    mrkSize = 10;
+    fig(1) = figure; clf
+    set(fig, 'Color', 'w','Units','inches','Position',[1 1 6 7])
+    movegui(fig,'center')
+    ax(1) = subplot(5,3,1:3); hold on
+        href = plot(time, ref, 'Color', stimColor);
+        hout = gobjects(1,nState);
+        for jj = 1:nState
+            hout(jj) = plot(time, State(:,jj), 'Color', cmap(jj,:));
+        end
+        xlabel('Time (s)')
+        ylabel('Magnitude (°)')
+        leg = legend([href,hout],'Visual Motion','Body','Head','Gaze');
+        leg.Box = 'off';
+        leg.Orientation = 'horizontal';
+        set(ax(1),'XLim',[0 time(end)])
+        set([href hout],'LineWidth',1)
+
+    ax(2) = subplot(5,3,4); hold on
+        href = plot(refFv, refMag, 'Color', stimColor);
+        hrefIO = plot(IOFv, refIOMag, '.-', 'Color', stimColor, 'MarkerSize', mrkSize);
+        hout = gobjects(1,nState);
+        houtIO = gobjects(1,nState);
+        for jj = plotOrder
+            hout(jj) = plot(Fv, Mag(:,jj), 'Color', cmap(jj,:));
+            houtIO(jj) = plot(IOFv, IOMag(:,jj), '.-', 'Color', cmap(jj,:), 'MarkerSize', mrkSize);
+        end
+        ylabel('Magnitude (°)')
+        set([href hrefIO hout houtIO],'LineWidth',1)
+        delete([hrefIO houtIO])
+
+    ax(3) = subplot(5,3,7); hold on
+        hrefIO = plot(IOFv, rad2deg(refIOPhase), '.-', 'Color', stimColor, 'MarkerSize', mrkSize);
+        houtIO = gobjects(1,nState);
+        for jj = 1:nState
+            houtIO(jj) = plot(IOFv, rad2deg(IOPhase(:,jj)), '.-', 'Color', cmap(jj,:), 'MarkerSize', mrkSize);
+        end
+        set([hrefIO houtIO],'LineWidth',1)
+        ylim(180*[-1 1])
+        ylabel('Phase (°)')
+        xlabel('Frequency (Hz)')
+
+    ax(4) = subplot(5,3,5); hold on
+        houtIO = gobjects(1,nState);
+        for jj = 1:nState
+            houtIO(jj) = plot(IOFv, IOGain(:,jj), '.-', 'Color', cmap(jj,:), 'MarkerSize', mrkSize);
+        end
+        maxGain = max(max(IOGain));
+        if maxGain<1
+            ylim([0 1.0])
+        else
+            ylim([0 1.1*maxGain])
+        end
+        ylabel('Gain (°/°)')
+        set([houtIO],'LineWidth',1)
+
+    ax(5) = subplot(5,3,8); hold on
+        houtIO = gobjects(1,nState);
+        for jj = 1:nState
+            houtIO(jj) = plot(IOFv, rad2deg(IOPhaseDiff(:,jj)), '.-', 'Color', cmap(jj,:), 'MarkerSize', mrkSize);
+        end
+        % ylim(180*[-1 1])
+        ylim([-180 180])
+        ylabel('Phase Difference(°)')
+        xlabel('Frequency (Hz)')
+        set([houtIO],'LineWidth',1)
+
+    ax(6) = subplot(5,3,[6,9]); hold on
+        houtIO = gobjects(1,nState-1);
+        for jj = 1:nState-1
+            houtIO(jj) = plot(IOFv, IOWeight(:,jj), '.-', 'Color', cmap(jj,:), 'MarkerSize', mrkSize);
+        end
+        ylim([0 1.1])
+        ylabel('Weight (°/°)')
+        % xlabel('Frequency (Hz)')
+        set([houtIO],'LineWidth',1)    
+
+    ax(7) = subplot(5,3,[10,11,13,14]);
+        houtIO = gobjects(1,nState);
+        for jj = plotOrder
+            houtIO(jj) = polarplot(IOFRF_PhaseDiff(:,jj), IOFRF_Gain(:,jj), '-', ...
+                'Color', cmap(jj,:), 'MarkerSize', 1,'MarkerFaceColor','k','MarkerEdgeColor','k');
+            hold on
+
+            hfreq = gobjects(nFreq,1);
+            for kk = 1:nFreq
+                hfreq(kk) = polarplot(IOFRF_PhaseDiff(kk,jj), IOFRF_Gain(kk,jj), '.',...
+                    'MarkerSize', 15,'MarkerFaceColor',freqCmap(kk,:),'MarkerEdgeColor',freqCmap(kk,:));
+            end
+        end
+
+        ax(7) = gca;
+    %     ax.RAxis.Label.String = 'Gain (°/°)';
+    %     thetalabel('Phase Difference (°)')
+        set(ax(7),'RLim',[0 1.1*maxGain])
+        set([houtIO],'LineWidth',1)
+
+        leg = legend(hfreq,string(IOFv));
+        leg.Box = 'off';
+        leg.Title.String = 'Frequency (Hz)';
+
+    ax(8) = subplot(5,3,[12 15]); hold on
+        hout = gobjects(1,nState);
+        houtIO = gobjects(1,nState);
+        for jj = 1:nState
+            % hout(jj) = plot(Fv, Cohr(:,jj), 'Color', cmap(jj,:));
+            houtIO(jj) = plot(IOFv, IOCohr(:,jj), '.-', 'Color', cmap(jj,:), 'MarkerSize', mrkSize);
+        end
+        ylabel('Coherence')
+        set([houtIO],'LineWidth',1)
+        ylim([0 1.1])
+        xlabel('Frequency (Hz)')
+        % set(ax(2),'XLim',[0 time(end)])
+
+    set(ax([2:6,8]), 'XLim', [0.2 1.1*max(IOFv)])
+    set(ax([3,5]), 'YTick', -360:90:360)
+    linkaxes(ax([2:6,8]),'x')
+    
+    set(ax,'LineWidth',1.5)
+end
 
 end
