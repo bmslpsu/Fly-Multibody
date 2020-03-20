@@ -63,11 +63,11 @@ IOFRF               = IOFreq ./ refIOFreq;
 IOFRF_Gain          = abs(IOFRF);
 IOFRF_PhaseDiff     = angle(IOFRF);
 
-IOPhaseDiff(IOPhaseDiff >  pi) = IOPhaseDiff(IOPhaseDiff >  pi) - 2*pi;
-IOPhaseDiff(IOPhaseDiff < -pi) = IOPhaseDiff(IOPhaseDiff < -pi) + 2*pi;
-
-IOFRF_PhaseDiff(IOFRF_PhaseDiff >  pi) = IOFRF_PhaseDiff(IOFRF_PhaseDiff >  pi) - 2*pi;
-IOFRF_PhaseDiff(IOFRF_PhaseDiff < -pi) = IOFRF_PhaseDiff(IOFRF_PhaseDiff < -pi) + 2*pi;
+% IOPhaseDiff(IOPhaseDiff >  pi) = IOPhaseDiff(IOPhaseDiff >  pi) - 2*pi;
+% IOPhaseDiff(IOPhaseDiff < -pi) = IOPhaseDiff(IOPhaseDiff < -pi) + 2*pi;
+% 
+% IOFRF_PhaseDiff(IOFRF_PhaseDiff >  pi) = IOFRF_PhaseDiff(IOFRF_PhaseDiff >  pi) - 2*pi;
+% IOFRF_PhaseDiff(IOFRF_PhaseDiff < -4.8) = IOFRF_PhaseDiff(IOFRF_PhaseDiff < -4.8) + 2*pi;
 
 % Calculate weights
 IOWeight = IOGain(:,1:end-1) ./ IOGain(:,end);
@@ -191,7 +191,7 @@ if debug
         hout = gobjects(1,nState);
         houtIO = gobjects(1,nState);
         for jj = 1:nState
-            % hout(jj) = plot(Fv, Cohr(:,jj), 'Color', cmap(jj,:));
+            hout(jj) = plot(Fv, Cohr(:,jj), 'Color', cmap(jj,:));
             houtIO(jj) = plot(IOFv, IOCohr(:,jj), '.-', 'Color', cmap(jj,:), 'MarkerSize', mrkSize);
         end
         ylabel('Coherence')

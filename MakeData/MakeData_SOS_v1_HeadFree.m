@@ -29,7 +29,7 @@ tintrp = (0:(1/Fs):20)';
 function_length = 20;
 [b,a] = butter(2, Fc/(Fs/2),'low');
 for kk = 1:N{1,end}
-    disp(kk)
+    disp(kk) 
     % Load DAQ, body, head, & wing data
 	data.daq     = load(fullfile(root.daq,  FILES{kk}),'data','t_p'); % load camera trigger & pattern x-position
     data.body    = load(fullfile(root.body, FILES{kk}),'bAngles'); % load body angles
@@ -54,7 +54,7 @@ for kk = 1:N{1,end}
     % Interpolate to so all signals have the same times
     pat = 3.75*PAT.pos;
     pat = pat - mean(pat);
-    body = -data.body.bAngles;
+    body = data.body.bAngles;
     body = body - mean(body);
 	head = -data.head.hAngles;
     head = head - mean(head);

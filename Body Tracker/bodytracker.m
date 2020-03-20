@@ -35,7 +35,7 @@ if ~rem(playback,1)==0
     playback = round(playback);
 end
 
-vid = flipvid(vid,'lr'); % flip video to arena reference frame
+% vid = flipvid(vid,'lr'); % flip video to arena reference frame
 [yp,xp,nframe] = size(vid);  % get size & # of frames of video
 
 % Use the inital frame to find the heading
