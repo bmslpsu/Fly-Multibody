@@ -15,6 +15,7 @@ FILES = string(FILES);
 nfile = length(FILES);
 
 regdir = fullfile(PATH,'registered');
+mkdir(regdir)
 
 for file = 1:nfile
     disp(FILES(file))
