@@ -14,19 +14,19 @@ function [MOV] = MagnoMontage_SOS_v1(rootdir,rootpat,vidFs,export)
 %       MOV         : structure containing movie 
 %
 
-% % Example Input %
+% Example Input %
 clear ; clc ; close all 
-export = true;
+export = false;
 vidFs = 50;
 rootdir = 'E:\Experiment_SOS_v1';
-rootpat = 'C:\Users\boc5244\Documents\GitHub\Arena\Patterns';
+rootpat = 'Q:\Box Sync\Git\Arena\Patterns';
 
 % Create data paths
 PATH.raw            = rootdir;
 PATH.reg            = fullfile(PATH.raw,'registered');
 PATH.body_track  	= fullfile(PATH.raw,'tracked_body');
 PATH.head_track     = fullfile(PATH.reg,'tracked_head');
-PATH.beninfly_track	= fullfile(PATH.reg,'tracked_headwing');
+PATH.beninfly_track	= fullfile(PATH.reg,'tracked_head_wing');
 PATH.mask           = fullfile(PATH.beninfly_track,'mask');
 
 % Create movie output directory
@@ -54,7 +54,7 @@ benifly_data    = ImportBenifly(fullfile(PATH.beninfly_track,FILE.benifly)); % l
 raw_data        = load(fullfile(PATH.raw,FILE.raw),'data','t_p','vidData','t_v'); % load raw video & DAQ pattern positions
 reg_data        = load(fullfile(PATH.reg,FILE.raw),'regvid','trf'); % load registered video
 head_data    	= load(fullfile(PATH.head_track,FILE.raw),'hAngles','cPoint'); % load head angles
-body_data    	= load(fullfile(PATH.body_track,FILE.raw),'bAngles','imgstats'); % load body angles
+body_data    	= load(fullfile(PATH.body_track,FILE.raw),'bAngles','imgstats','initframe'); % load body angles
 disp('DONE')
 
 %% Get pattern data & sync with start of visual stimulus
@@ -67,10 +67,13 @@ FLY.Fs      = round(1/mean(diff(FLY.time))); % video sampling rate
 FLY.Fc      = 15; % cut off frequency for lpf
 [b,a]       = butter(2,FLY.Fc/(FLY.Fs/2),'low'); % make lpf
 FLY.body    = body_data.bAngles; % body angles [deg]
-% FLY.head    = filtfilt(b,a,head_data.hAngles); % head angles [deg]
-FLY.head    = filtfilt(b,a,rad2deg(benifly_data.Head)); % head angles [deg]
+FLY.head    = filtfilt(b,a,head_data.hAngles); % head angles [deg]
+% FLY.head    = filtfilt(b,a,rad2deg(benifly_data.Head)); % head angles [deg]
+FLY.head    = FLY.head - mean(FLY.head); % head angles [deg]
 FLY.lwing   = rad2deg(hampel(FLY.time,benifly_data.LWing)); % left wing angles [deg]
 FLY.rwing   = rad2deg(hampel(FLY.time,benifly_data.RWing)); % right wing angles [deg]
+FLY.lwing   = filtfilt(b,a,FLY.lwing); % left wing angles [deg]
+FLY.rwing   = filtfilt(b,a,FLY.rwing); % right wing angles [deg]
 FLY.wba     = FLY.lwing - FLY.rwing; % delta wing-beat-amplitude [deg]
 [b,a]       = butter(2,20/(FLY.Fs/2),'low'); % make lpf
 FLY.wba     = filtfilt(b,a,FLY.wba); % delta wing-beat-amplitude [deg]
@@ -86,7 +89,7 @@ FLY.int_wba     = FLY.wba(TRIG.range);
 PAT.norm        = 3.75*(PAT.pos_exp - mean(PAT.pos_exp));
 
 %% Get video data
-FLY.raw = flipvid(squeeze(raw_data.vidData(:,:,TRIG.range)),'lr'); % raw video data
+FLY.raw = (flipud(squeeze(raw_data.vidData(:,:,TRIG.range)))); % raw video data
 FLY.reg = squeeze(reg_data.regvid(:,:,TRIG.range)); % registered video data
 FLY.raw_crop = FLY.raw;
 FLY.reg_crop = FLY.reg;
@@ -101,6 +104,7 @@ radius = floor(max([FLY.raw_yP FLY.raw_xP])/1.8); % radius of pattern
 thickness = 15; % radius display width
 
 %% Get benifly parameters/mask
+% Heading
 fid = fopen(fullfile(PATH.mask, FILE.mask));
 raw = fread(fid,inf); 
 str = char(raw'); 
@@ -115,16 +119,19 @@ FLY.rwing_hinge = [params.gui.right.hinge.x , params.gui.right.hinge.y];
 FLY.lwing_tip = FLY.lwing_hinge - FLY.wing_length*[cosd(FLY.int_lwing),  sind(FLY.int_lwing)];
 FLY.rwing_tip = FLY.rwing_hinge + FLY.wing_length*[cosd(FLY.int_rwing), -sind(FLY.int_rwing)];
 
-FLY.head_length = 30;
-% FLY.head_hinge = [head_data.cPoint.X  , head_data.cPoint.Y];
-FLY.head_hinge = [params.gui.head.hinge.x  , params.gui.head.hinge.y];
+FLY.head_length = 35;
+FLY.head_hinge = [head_data.cPoint.X  , head_data.cPoint.Y];
+% FLY.head_hinge = [params.gui.head.hinge.x  , params.gui.head.hinge.y];
 FLY.head_tip   = FLY.head_hinge + FLY.head_length*[sind(FLY.int_head) , -cosd(FLY.int_head)];
 
-% imshow(FLY.reg(:,:,1))
-% hold on
-% plot([FLY.head_hinge(1),FLY.head_tip(1,1)],[FLY.head_hinge(2),FLY.head_tip(1,2)],'c-')
-% plot(FLY.head_hinge(1),FLY.head_hinge(2),'r*')
-% plot(FLY.head_tip(1,1),FLY.head_tip(1,2),'g*')
+FLY.body_centroid   = cat(1,body_data.imgstats(TRIG.range).Centroid); % centroid of image
+FLY.body_length     = cat(1,body_data.imgstats(TRIG.range).MajorAxisLength); % long axis of image
+FLY.body_tip        = FLY.body_centroid + repmat((FLY.body_length/2),1,2).* ...
+                                    [sind(FLY.int_body), -cosd(FLY.int_body)];
+FLY.reverse         = FLY.body_centroid + repmat((FLY.body_length/2),1,2).* ...
+                                     -[sind(FLY.int_body), -cosd(FLY.int_body)];
+FLY.heading = [FLY.body_centroid , FLY.body_tip];
+FLY.abdomen = [FLY.body_centroid , FLY.reverse];
 
 %% Make Movie
 % Create structure to store frames
@@ -143,14 +150,14 @@ FIG = figure (1); clf % main figure window for display & export
 set(FIG, 'Color', 'k', 'Renderer', 'OpenGL','Position', 0.8*[100, 100, 1.75*16*40, 1.2*16*50]);
 % set(FIG, 'Visible','off');
 linewidth = 1.25; % displayed line width
-fontsize = 10;
+fontsize = 12;
     
 clear ax
 ax(1) = subplot(14,2,1:2:15) ; cla; hold on; axis square % for raw fly & pattern vid
-        title('Arena Frame','Color','w')
+        title('Arena Frame','Color','w','FontSize',fontsize)
 ax(2) = subplot(14,2,2:2:16) ; cla; hold on; axis square % for registered fly & pattern vid
-        title('Body Frame','Color','w')
-ax(3) = subplot(14,2,(16+1):(16+4))  ; cla; hold on
+        title('Body Frame','Color','w','FontSize',fontsize)
+ax(3) = subplot(14,2,(16+1):(16+4))  ; cla ; hold on
         ylabel('Stimulus (°)','Color','w','FontSize',fontsize)
      	h.pat = animatedline('Color','g','LineWidth',linewidth); % for pattern angle
 ax(4) = subplot(14,2,(16+4+1):(16+2*4)) ; cla; hold on;
@@ -162,10 +169,10 @@ ax(5) = subplot(14,2,(16+2*4+1):(16+3*4)) ; cla; hold on;
     	xlabel('Time (s)','Color','w','FontSize',fontsize)
         h.body = animatedline('Color','r','LineWidth',linewidth); % for body angle
 
-set(ax(3:end), 'FontSize', 10, 'Color', 'k', 'YColor', 'w', 'XColor', 'w', 'FontWeight', 'bold',...
+set(ax(3:end), 'FontSize', 12, 'Color', 'k', 'YColor', 'w', 'XColor', 'w', 'FontWeight', 'bold',...
     'LineWidth', 1.5,'XLim', [0 round(FLY.int_time(end))])
 set(ax(end),'XTick', 0:2:round(FLY.time(end)))
-set(ax(3:end-1), 'XTick', [])
+set(ax(3:end-1), 'XTickLabel', [], 'XColor', 'none')
 set(ax(3), 'YLim', 20*[-1 1], 'YTick', 15*[-1 0 1])
 set(ax(4), 'YLim', 6 *[-1 1], 'YTick', 5 *[-1 0 1])
 % set(ax(5), 'YLim', 40*[-1 1], 'YTick', 30*[-1 0 1])
@@ -174,7 +181,7 @@ align_Ylabels_ax(ax(3:end)')
 
 pp = 1;
 iter = round(FLY.Fs/vidFs); % # of frames to skip per iteration to acheive desired frame rate
-expframe = circshift(mod(1:FLY.nframe,iter)==0,1); % which frames to export
+expframe = circshift(mod(1:FLY.nframe,iter)==1,0); % which frames to export
 disp('Exporting Video...')
 tic
 for jj = 1:FLY.nframe % for each frame
@@ -187,30 +194,22 @@ for jj = 1:FLY.nframe % for each frame
         % Display raw video
         subplot(14,2,1:2:15); cla; hold on; axis square
             imshow(Frame.raw)
-            
-         	centroid = body_data.imgstats(jj).Centroid; % centroid of image
-           	L = body_data.imgstats(jj).MajorAxisLength / 2; % long axis of image
-            
-            % Heading
-          	head = centroid - L*[sind(FLY.int_body(jj)), cosd(FLY.int_body(jj))];
-            heading = [centroid ; head];
-            abdomen = centroid + L*[sind(FLY.int_body(jj)), cosd(FLY.int_body(jj))];
-            reverse = [centroid ; abdomen];
-            
+           
             % Show ellipse
-            h.ellps = ellipse(centroid, 2*L, 0.5, 0.90, FLY.int_body(jj), 'r');
-            delete([h.ellps{[1,3:6]}])
-            h.ellps{2}.Color = 'r';
-            h.ellps{2}.LineWidth = 1;
+            % h.ellps = ellipse(FLY.body_centroid(jj,:), FLY.body_length(jj), 0.5, 0.90, FLY.int_body(jj), 'r');
+            % delete([h.ellps{[1,3:6]}])
+            % h.ellps{2}.Color = 'r';
+            % h.ellps{2}.LineWidth = 1;
 
-            h.heading = semi_ellipse(centroid, -L, 0.5, 0.90, FLY.int_body(jj), 'r');
+            h.heading = semi_ellipse(FLY.body_centroid(jj,:), FLY.body_length(jj)/2, 0.5, 0.90, ...
+                                            180 - FLY.int_body(jj), 'r');
             delete([h.heading{2:4}])
             alpha(h.heading{1},0.3)
             h.heading{1}.LineStyle = 'none';
             
          	% Show centroid & heading
-            plot(heading(:,1), heading(:,2), '-r', 'LineWidth', 2) % centroid
-            plot(reverse(:,1), reverse(:,2), '-b', 'LineWidth', 2) % heading
+            % plot(FLY.heading(jj,[1,3]), FLY.heading(jj,[2,4]), '-r', 'LineWidth', 2) % centroid
+            % plot(FLY.abdomen(jj,[1,3]), FLY.abdomen(jj,[2,4]), '-b', 'LineWidth', 2) % heading
         
             % Make pattern ring
             make_pattern_ring(pattern_data.pattern,[PAT.pos_exp(jj),5],FLY.raw_center,...
@@ -247,7 +246,8 @@ for jj = 1:FLY.nframe % for each frame
    	% Body plot
     subplot(14,2,(16+2*4+1):(16+3*4)); hold on
     % addpoints(h.wba, FLY.int_time(jj), FLY.int_wba(jj))
-        addpoints(h.body, FLY.int_time(jj), FLY.int_body(jj))
+        % addpoints(h.body, FLY.int_time(jj), FLY.int_body(jj))
+        addpoints(h.body, FLY.int_time(jj), FLY.int_wba(jj))
 
     drawnow
     

@@ -16,7 +16,7 @@ optimizer.MaximumIterations = 150;
 optimizer.MaximumStepLength = 0.03;
 optimizer.MinimumStepLength = 0.0002;
 
-vid = fliplr(squeeze(vid)); % In case it's 4D
+vid = flipup(squeeze(vid)); % In case it's 4D
 dim = size(vid); % Used often
 
 % Get intial orientation

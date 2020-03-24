@@ -35,7 +35,7 @@ if ~rem(playback,1)==0
     playback = round(playback);
 end
 
-% vid = flipvid(vid,'lr'); % flip video to arena reference frame
+vid = flipud(vid); % flip video to arena reference frame
 [yp,xp,nframe] = size(vid);  % get size & # of frames of video
 
 % Use the inital frame to find the heading
@@ -117,7 +117,7 @@ for idx = 1:nframe
     L = imgstats(idx).MajorAxisLength / 2; % long axis of image
     
     raw_ang(idx)  = (imgstats(idx).Orientation - offset); % raw angle [°]
-    norm_ang(idx) = (imgstats(idx).Orientation - offset + shift); % normalized, unwrapped angle [°]
+    norm_ang(idx) = -(imgstats(idx).Orientation - offset + shift); % normalized, unwrapped angle [°]
  	
     % Check for changes in angle > 180°. Correct for the ellipse fit and unwrap angles.
     if idx > 1
@@ -146,16 +146,16 @@ for idx = 1:nframe
         % Display images
         if (idx==1) || (~mod(idx,playback)) || (idx==nframe) % display at playback rate
             % Get approximate location of head
-            head = centroid - L*[sind(norm_ang(idx)), cosd(norm_ang(idx))];
+            head = centroid + L*[sind(norm_ang(idx)), -cosd(norm_ang(idx))];
             heading = [centroid ; head];
-            abdomen = centroid + L*[sind(norm_ang(idx)), cosd(norm_ang(idx))];
+            abdomen = centroid - L*[sind(norm_ang(idx)), -cosd(norm_ang(idx))];
             reverse = [centroid ; abdomen];
 
             % Show images with tracking annotation
             ax(1) = subplot(3,2,[1,3]); cla % raw
                 imshow(frame) % frame
                 
-                h.heading = semi_ellipse(centroid, -L, 0.5, 0.90, norm_ang(idx), 'r');
+                h.heading = semi_ellipse(centroid, L, 0.5, 0.90, 180 - norm_ang(idx), 'r');
                 delete([h.heading{2:4}])
                 alpha(h.heading{1},0.3)
                 h.heading{1}.LineStyle = 'none';
@@ -168,12 +168,12 @@ for idx = 1:nframe
                                                                 'LineWidth', 1);
 
                 % Show ellipse
-                h.ellps = ellipse(centroid, 2*L, 0.5, 0.90, norm_ang(idx), 'r');
+                h.ellps = ellipse(centroid, 2*L, 0.5, 0.90, 180 - norm_ang(idx), 'r');
                 delete([h.ellps{[1,3:6]}])
                 h.ellps{2}.Color = 'r';
                 h.ellps{2}.LineWidth = 1;
                 
-                h.heading = semi_ellipse(centroid, -L, 0.5, 0.90, norm_ang(idx), 'r');
+                h.heading = semi_ellipse(centroid, L, 0.5, 0.90, 180 - norm_ang(idx), 'r');
                 delete([h.heading{2:4}])
                 alpha(h.heading{1},0.3)
                 h.heading{1}.LineStyle = 'none';

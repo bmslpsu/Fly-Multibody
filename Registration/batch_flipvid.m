@@ -33,7 +33,7 @@ files = string(files);
 isWritable = true;
 for kk = 1:length(files)
     disp(kk)
-    flipframe = false;
+    flipframe = true;
     fname = fullfile(path,files(kk));
     matObj = matfile(fname,'Writable',isWritable); % load .mat object
     if checkframe

@@ -77,15 +77,15 @@ if debug % plot magnitude & phase
 fig = figure ; clf
 fig.Color = 'w';
     subplot(2,1,1) ; hold on ; ylabel('Magnitude')
-    plot(freq,mag,'*-b')
-    if autoflag; plot(freq,magtest,'y') ; end
-    plot(Ff,pkMag,'or')
-    xlim([0 max(IOFreq+1)])
+        plot(freq,mag,'*-b')
+        if autoflag; plot(freq,magtest,'y') ; end
+        plot(Ff,pkMag,'or')
+        xlim([0 max(IOFreq+1)])
 
     subplot(2,1,2) ; hold on ; ylabel('Phase')
-    plot(freq,phase,'*-b')
-    plot(Ff,pkPhase,'or')
-    xlim([0 max(IOFreq+1)])
-    xlabel('Frequency')
+        plot(freq,rad2deg(phase),'*-b')
+        plot(Ff,rad2deg(pkPhase),'or')
+        xlim([0 max(IOFreq+1)])
+        xlabel('Frequency')
 end
 end

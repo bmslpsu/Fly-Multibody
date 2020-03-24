@@ -15,19 +15,16 @@ function [SYSTEM] = bode_sysID(time,ref,IOFv,debug,varargin)
 nState  = length(varargin) + 1; % # of output states
 nPoint  = length(time);         % # of data points in time domain
 nFpoint = ceil(nPoint/2);       % # of data points in frequency domain
+% nFpoint = 1000;       % # of data points in frequency domain
 Fs      = 1/mean(diff(time));   % sampling rate [Hz]
 
 State  = cellfun(@(x) x(:),varargin,'UniformOutput',false); % store inputs in cells as column vectors
 State  = cat(2,State{:}); % store inputs in cells as column vectors
 State(:,end+1)  = sum(State,2); % last state is the sum of all states 
 
-% cmap        = jet(nOut);              % color map
-fullColor   = [0.3 0.1 0.7];            % full state color
-cmap        = [1 0 0;0 0 1;fullColor]; 	% color map
-stimColor   = [0 1 0];                 	% stimulus color
-
 % Convert reference to frequency domain
 [refFv, refMag, refPhase, refFreq] = FFT(time,ref);
+% [refFreq, refFv, refMag, refPhase] = chirpz_transform(time,ref,0,20,nFpoint);
 [IOFv, refIOMag, refIOPhase, IOidx] = getfreqpeaks(refFv, refMag, refPhase, IOFv, [], false);
 refIOFreq = refFreq(IOidx);
 nIO = length(IOFv);
@@ -43,12 +40,16 @@ IOMag  	= nan(nIO,nState);
 IOPhase	= nan(nIO,nState);
 IOFreq 	= nan(nIO,nState);
 IOCohr 	= nan(nIO,nState);
+ftol = 0.02;
 for jj = 1:nState
     [Fv, Mag(:,jj), Phase(:,jj), Freq(:,jj)] = FFT(time,State(:,jj));
-    [~, IOMag(:,jj),IOPhase(:,jj),IOidx] = getfreqpeaks(Fv, Mag(:,jj), Phase(:,jj), IOFv, [], false);
+    
+    %[Freq(:,jj), Fv, Mag(:,jj), Phase(:,jj)] = chirpz_transform(time,State(:,jj),0,20,nFpoint);
+    
+    [~, IOMag(:,jj),IOPhase(:,jj),IOidx] = getfreqpeaks(Fv, Mag(:,jj), Phase(:,jj), IOFv, ftol, false);
     IOFreq(:,jj) = Freq(IOidx,jj);
     [Cohr(:,jj),~] = mscohere(ref,State(:,jj),[],[],Fv,Fs);
-    [~, IOCohr(:,jj),~,~] = getfreqpeaks(Fv, Cohr(:,jj), [], IOFv, [], false);
+    [~, IOCohr(:,jj),~,~] = getfreqpeaks(Fv, Cohr(:,jj), [], IOFv, ftol, false);
 end
 
 % Sort states by their overall means (to plot from largest to smallest)
@@ -63,29 +64,56 @@ IOFRF               = IOFreq ./ refIOFreq;
 IOFRF_Gain          = abs(IOFRF);
 IOFRF_PhaseDiff     = angle(IOFRF);
 
-% IOPhaseDiff(IOPhaseDiff >  pi) = IOPhaseDiff(IOPhaseDiff >  pi) - 2*pi;
-% IOPhaseDiff(IOPhaseDiff < -pi) = IOPhaseDiff(IOPhaseDiff < -pi) + 2*pi;
-% 
-% IOFRF_PhaseDiff(IOFRF_PhaseDiff >  pi) = IOFRF_PhaseDiff(IOFRF_PhaseDiff >  pi) - 2*pi;
-% IOFRF_PhaseDiff(IOFRF_PhaseDiff < -4.8) = IOFRF_PhaseDiff(IOFRF_PhaseDiff < -4.8) + 2*pi;
+lim1 = deg2rad(120);
+lim2 = deg2rad(300);
+
+IOPhaseDiff(IOPhaseDiff >  lim1) = IOPhaseDiff(IOPhaseDiff >  lim1) - 2*pi;
+IOPhaseDiff(IOPhaseDiff < -lim2) = IOPhaseDiff(IOPhaseDiff < -lim2) + 2*pi;
+
+IOFRF_PhaseDiff(IOFRF_PhaseDiff >  lim1) = IOFRF_PhaseDiff(IOFRF_PhaseDiff >  lim1) - 2*pi;
+IOFRF_PhaseDiff(IOFRF_PhaseDiff < -lim2) = IOFRF_PhaseDiff(IOFRF_PhaseDiff < -lim2) + 2*pi;
 
 % Calculate weights
 IOWeight = IOGain(:,1:end-1) ./ IOGain(:,end);
 
+% Make output structure
+SYSTEM.State            = State;
+SYSTEM.Time             = time;
+
+SYSTEM.Fv               = refFv;
+SYSTEM.IOFv             = IOFv;
+
+SYSTEM.refFreq          = refFreq;
+SYSTEM.refMag           = refMag;
+SYSTEM.refPhase     	= refPhase;
+SYSTEM.refIOFreq     	= refIOFreq;
+SYSTEM.refIOMag       	= refIOMag;
+SYSTEM.refIOPhase       = refIOPhase;
+
 SYSTEM.Mag              = Mag;
 SYSTEM.Phase            = Phase;
-SYSTEM.Cohr             = Cohr;
 SYSTEM.IOMag            = IOMag;
 SYSTEM.IOPhase      	= IOPhase;
+
 SYSTEM.IOGain           = IOGain;
 SYSTEM.IOPhaseDiff      = IOPhaseDiff;
 SYSTEM.IOFRF            = IOFRF;
 SYSTEM.IOFRF_Gain       = IOPhaseDiff;
 SYSTEM.IOFRF_PhaseDiff  = IOPhaseDiff;
+
+SYSTEM.Cohr             = Cohr;
 SYSTEM.IOCohr           = IOCohr;
 
+% Figure
 if debug
-    % Figure
+    fullColor   = [0.3 0.1 0.7];            % full state color
+    cmap        = [1 0 0;0 0 1;fullColor]; 	% color map
+    stimColor   = [0 1 0];                 	% stimulus color
+
+    if nState > 3
+        cmap = [jet(nState-1) ; fullColor]; % color map
+    end
+    
     mrkSize = 10;
     fig(1) = figure; clf
     set(fig, 'Color', 'w','Units','inches','Position',[1 1 6 7])
