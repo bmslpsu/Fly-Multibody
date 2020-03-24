@@ -24,7 +24,7 @@ v1 = vid(:,:,1); % initial frame
 v2 = medfilt2(imopen(v1,strel('disk',15)),[7 7]);
 % v3 = im2bw(v2,graythresh(v2));
 v3 = imbinarize(v2);
-L = regionprops(v3,'Orientation'); % intial angle
+L = regionprops(v3,'Orientation'); % initial angle
 
 % refangle = L.Orientation;
 [yy,~] = find(v3==1);
