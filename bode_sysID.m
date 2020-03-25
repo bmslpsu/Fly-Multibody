@@ -110,8 +110,12 @@ if debug
     cmap        = [1 0 0;0 0 1;fullColor]; 	% color map
     stimColor   = [0 1 0];                 	% stimulus color
 
-    if nState > 3
+    if nState ~=3
         cmap = [jet(nState-1) ; fullColor]; % color map
+        legLabel = "Output: " + string(1:nState-1);
+        legLabel(nState) = "ALL Output";
+    else
+        legLabel = ["Visual Motion","Body","Head","Gaze"];
     end
     
     mrkSize = 10;
@@ -126,7 +130,7 @@ if debug
         end
         xlabel('Time (s)')
         ylabel('Magnitude (°)')
-        leg = legend([href,hout],'Visual Motion','Body','Head','Gaze');
+        leg = legend([href,hout],legLabel);
         leg.Box = 'off';
         leg.Orientation = 'horizontal';
         set(ax(1),'XLim',[0 time(end)])

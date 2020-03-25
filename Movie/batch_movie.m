@@ -1,33 +1,27 @@
-function [] = batch_movie(rootdir, rootpat, head_debug)
+function [] = batch_movie(rootdir, rootpat, vidFs)
 %% batch_movie: runs a MakeMovie function for selected files
 %
 %   INPUT:
 %       rootdir   	:   root directory
 %       rootpat   	:   root pattern directory
+%       vidFs       :   output video frame rate
 %
 %   OUTPUT:
 %       -
 %
 
-% rootdir = 'E:\Experiment_SOS_v1';
-% rootpat = 'C:\Users\boc5244\Documents\GitHub\Arena\Patterns';
+export = true; % save the videos
 
-[FILES, PATH] = uigetfile({'*.mat', 'MAT-files'},'Select videos', root, 'MultiSelect','on');
-FILES = string(FILES);
+[FILES, PATH] = uigetfile({'*.*'},'Select movie file', rootdir, 'MultiSelect','on');
+[patfile, patpath] = uigetfile({'*.mat'},'Select pattern file', rootpat, 'MultiSelect','on');
+pat = fullfile(patpath,patfile);
+
 nfile = length(FILES);
-
-bodydir = fullfile(PATH,'tracked_body');
-mkdir bodydir
 for file = 1:nfile
     disp(FILES(file))
     disp('---------------------------------------')
-    load(fullfile(PATH,FILES(file)),'vidData','t_v')
-    
-   	close all
-    
-    [bAngles,imgstats,initframe] = bodytracker(vidData, playback, head_debug);
-
-    save(fullfile(bodydir,FILES{file}),'-v7.3','bAngles','imgstats','initframe','t_v')
+    main = fullfile(PATH, FILES{file});
+    MagnoMontage_SOS_v2(main, pat, vidFs, export);
 end
 disp('ALL DONE')
 end

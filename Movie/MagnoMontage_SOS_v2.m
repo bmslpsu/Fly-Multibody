@@ -1,5 +1,5 @@
-function [MOV] = MagnoMontage_SOS_v1(rootdir,rootpat,vidFs,export)
-%% MagnoMontage_SOS_v1: makes movie for fly in magnetic tether
+function [MOV] = MagnoMontage_SOS_v2(rootdir,rootpat,vidFs,export)
+%% MagnoMontage_SOS_v2: makes movie for fly in magnetic tether
 %
 % 	Includes fly video, registered video, body tracking, head tracking, 
 %   wing tracking,& pattern position
@@ -21,6 +21,22 @@ function [MOV] = MagnoMontage_SOS_v1(rootdir,rootpat,vidFs,export)
 % rootdir = 'E:\Experiment_SOS_v1';
 % rootpat = 'Q:\Box Sync\Git\Arena\Patterns';
 
+if ~isfolder(rootdir)
+    dirflag = false;
+    [rootdir,mainfile,mainext] = fileparts(rootdir);
+else
+    dirflag = true;
+end
+
+if ~isfolder(rootpat)
+	[PATH.pat,FILE.pat,patext] = fileparts(rootpat);
+    FILE.pat = [FILE.pat , patext];
+else
+	% Select pattern file
+    [FILE.pat, PATH.pat] = uigetfile({'*.mat'}, ...
+        'Select pattern file', rootpat, 'MultiSelect','off');
+end
+
 % Create data paths
 PATH.raw            = rootdir;
 PATH.reg            = fullfile(PATH.raw,'registered');
@@ -29,17 +45,17 @@ PATH.head_track     = fullfile(PATH.reg,'tracked_head');
 PATH.beninfly_track	= fullfile(PATH.reg,'tracked_head_wing');
 PATH.mask           = fullfile(PATH.beninfly_track,'mask');
 
+if dirflag
+    % Select tracked angle file (use head tracked files to select)
+    [FILE.raw, PATH.head_track] = uigetfile({'*.mat'}, ...
+        'Select fly file', PATH.head_track, 'MultiSelect','off');
+else
+    FILE.raw = [mainfile , mainext];
+end
+
 % Create movie output directory
 PATH.mov = fullfile(PATH.raw,'movie'); % movie directory
 mkdir(PATH.mov) % create directory for export images
-
-% Select tracked angle file (use head tracked files to select)
-[FILE.raw, PATH.head_track] = uigetfile({'*.mat'}, ...
-    'Select fly file', PATH.head_track, 'MultiSelect','off');
-
-% Select pattern file
-[FILE.pat, PATH.pat] = uigetfile({'*.mat'}, ...
-    'Select pattern file', rootpat, 'MultiSelect','off');
 
 % Set file names
 [~,FILE.basename,~] = fileparts(FILE.raw);
