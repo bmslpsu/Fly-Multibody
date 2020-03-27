@@ -7,7 +7,9 @@ classdef FlyModel
     properties (SetAccess = public, Hidden = false)
       	body            % body Ellipse object
         head            % head Ellipse object
-    end 
+        lwing           % left wing arc
+     	rwing           % right wing arc
+    end
     
 	properties (SetAccess = private, Hidden = false)
     end
@@ -26,49 +28,76 @@ classdef FlyModel
             body_b = 0.25*full_size;
             head_a = 0.25*full_size;
             head_b = 1.00*head_a;
+            wing_L = 0.75*body_a;
             pin_offset = 0.5 - 1/7;
             
             % Construct the fly
             obj.body = Ellipse(center, body_a, body_b, 'ellipse', 0, pin_offset, body_color, alpha);
             obj.head = Ellipse(obj.body.top, head_a, head_b, 'semi', 0, 0, head_color, alpha);
+            obj.rwing = Arc(obj.body.right, wing_L, 60, 100, [0.3 0.1 0.7], 0.5);
+            obj.lwing = Arc(obj.body.right, wing_L, 90 + 60, 100, [0.3 0.1 0.7], 0.5);
+
             % obj = draw(obj,0,0);
         end
         
-        function obj = draw(obj,body_ang,head_ang,center)
+        function obj = draw(obj,body_ang,head_ang,lwing_ang,rwing_ang,center)
             %DRAW Draw the shape
             %   Draw body & head
             %
             
-            if nargin < 4
+            if nargin < 5
                 center = obj.body.center;
+                if nargin < 4
+                    % Default constant wing angles
+                    lwing_ang = 60; 
+                    rwing_ang = 60;
+                elseif nargin == 4
+                   error('Must specify both or neither wing angles')
+                end
             end
             
             showpoints = false;
             
             obj.body.center = center;
-            obj.body = draw(obj.body, body_ang, showpoints);
+            obj.body = update(obj.body, body_ang);
             
             obj.head.center = obj.body.top;
-            obj.head = draw(obj.head, body_ang + head_ang, showpoints);
+            obj.head = update(obj.head, body_ang + head_ang);
             
-            set([obj.body.h.center,obj.head.h.bottom],'MarkerEdgeColor','k','MarkerSize',obj.head.a/2);
+            obj.rwing.center = obj.body.centroid;
+            obj.lwing.center = obj.body.centroid;
+            
+            obj.rwing = draw(obj.rwing, rwing_ang - body_ang, showpoints);
+         	obj.lwing = draw(obj.lwing, 180 + lwing_ang - body_ang, showpoints);
+            obj.body  = draw(obj.body, body_ang, showpoints);
+            obj.head  = draw(obj.head, body_ang + head_ang, showpoints);
+            
+            % set([obj.body.h.center,obj.head.h.bottom],'MarkerEdgeColor','k','MarkerSize',obj.head.a/2);
             % obj.head.h.bottom.MarkerEdgeColor = obj.head.h.patch.FaceColor;
         end
         
-        function obj = move(obj,body_ang,head_ang,center)
+        function obj = move(obj,body_ang,head_ang,rwing,lwing,center)
             %MOVE Move the fly body & head
             %   Input the head and body angles
             %
             
-            if nargin == 1
-                t = 0:0.001:1;
-                body_ang = 180*sin(2*pi*5*t);
-                head_ang = 30*sin(2*pi*20*t);
-            end
-                    
-            if nargin < 4
-               center = repmat(obj.body.center,length(t),1);
-               %center = [(1:length(t))' , (1:length(t))'];
+            if nargin < 6
+                t = (0:0.001:2)';
+                temp_body_ang = 1000*t + 50*sin(2*pi*15*t);
+                center = repmat(obj.body.center,length(t),1);
+                % center = [(1:length(t))' , (1:length(t))'];
+                if nargin < 5
+                    lwing = 60 + 15*sin(2*pi*30*t);
+                   	if nargin < 4
+                       	rwing = 60 + 15*cos(2*pi*30*t);
+                        if nargin < 3
+                            head_ang = 30*cos(2*pi*20*t);
+                            if nargin < 2
+                                body_ang = temp_body_ang;
+                            end
+                        end
+                    end  
+                end
             end
             
             assert(length(body_ang)==length(head_ang))
@@ -87,7 +116,7 @@ classdef FlyModel
             axis([ sort([move_range1(1), move_range2(1)]) , sort([move_range1(2), move_range2(2)]) ])
             % axis(max(center,[],'all')*[-1 1 -1 1])
             for n = 1:N
-                obj = draw(obj,body_ang(n),head_ang(n),center(n,:));
+                obj = draw(obj, body_ang(n), head_ang(n), rwing(n), lwing(n), center(n,:));
                 pause(0.001)
                 cla
             end

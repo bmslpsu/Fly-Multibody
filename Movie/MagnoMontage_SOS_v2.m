@@ -195,7 +195,6 @@ set(ax(4), 'YLim', 6 *[-1 1], 'YTick', 5 *[-1 0 1])
 linkaxes(ax(3:end),'x')
 align_Ylabels_ax(ax(3:end)')
 
-pp = 1;
 iter = round(FLY.Fs/vidFs); % # of frames to skip per iteration to acheive desired frame rate
 expframe = circshift(mod(1:FLY.nframe,iter)==1,0); % which frames to export
 disp('Exporting Video...')
@@ -267,21 +266,11 @@ for jj = 1:FLY.nframe % for each frame
 
     drawnow
     
-    if expframe(jj)
-        fig_frame = getframe(FIG);
-        if export
-            try
-                writeVideo(VID,fig_frame);
-            catch
-                pause(1)
-                writeVideo(VID,fig_frame);
-            end
+    if export
+        if expframe(jj)
+            fig_frame = getframe(FIG);
+         	writeVideo(VID,fig_frame);
         end
-        
-     	% Store frame
-        % MOV(pp) = fig_frame;
-        
-        pp = pp + 1;
     end
     pause(0.001)
 end

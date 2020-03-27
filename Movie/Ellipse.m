@@ -166,7 +166,7 @@ classdef Ellipse
             hold on
             %axis image
             obj.h.patch     = patch(obj.border(:,1), obj.border(:,2), obj.color, .... % patch
-                                'FaceAlpha', obj.facealpha);
+                                'FaceAlpha', obj.facealpha, 'EdgeColor', pcolor);
                             
             obj.h.border    = plot(obj.border(:,1), obj.border(:,2), '-', 'Color', pcolor, ... % border
                                                 'LineWidth', 1);
