@@ -23,6 +23,22 @@ classdef FlyModel
             %   Construct initial fly
             %
             
+            if nargin < 5
+                alpha = 1;
+                if nargin < 4
+                    body_color = 'r';
+                    if nargin < 3
+                        head_color = 'b';
+                        if nargin < 2
+                            full_size = 1;
+                            if nargin < 1
+                                center = [0 0];
+                            end
+                        end
+                    end
+                end
+            end
+            
             % Set the sizes
             body_a = 0.75*full_size;
             body_b = 0.25*full_size;
@@ -34,8 +50,12 @@ classdef FlyModel
             % Construct the fly
             obj.body = Ellipse(center, body_a, body_b, 'ellipse', 0, pin_offset, body_color, alpha);
             obj.head = Ellipse(obj.body.top, head_a, head_b, 'semi', 0, 0, head_color, alpha);
-            obj.rwing = Arc(obj.body.right, wing_L, 60, 100, [0.3 0.1 0.7], 0.5);
-            obj.lwing = Arc(obj.body.right, wing_L, 90 + 60, 100, [0.3 0.1 0.7], 0.5);
+            obj.rwing = Arc(obj.body.right, wing_L, 60, 100, false, [0.3 0.1 0.7], 0.5);
+            obj.lwing = Arc(obj.body.right, wing_L, 90 + 60, 100, true, [0.3 0.1 0.7], 0.5);
+            
+            if ~nargin
+                obj = move(obj);
+            end
 
             % obj = draw(obj,0,0);
         end
@@ -68,7 +88,7 @@ classdef FlyModel
             obj.lwing.center = obj.body.centroid;
             
             obj.rwing = draw(obj.rwing, rwing_ang - body_ang, showpoints);
-         	obj.lwing = draw(obj.lwing, 180 + lwing_ang - body_ang, showpoints);
+         	obj.lwing = draw(obj.lwing, lwing_ang + body_ang, showpoints);
             obj.body  = draw(obj.body, body_ang, showpoints);
             obj.head  = draw(obj.head, body_ang + head_ang, showpoints);
             
@@ -82,7 +102,7 @@ classdef FlyModel
             %
             
             if nargin < 6
-                t = (0:0.001:2)';
+                t = (0:0.001:10)';
                 temp_body_ang = 1000*t + 50*sin(2*pi*15*t);
                 center = repmat(obj.body.center,length(t),1);
                 % center = [(1:length(t))' , (1:length(t))'];

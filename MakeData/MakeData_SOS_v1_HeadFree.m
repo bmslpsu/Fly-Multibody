@@ -22,6 +22,9 @@ FILES = cellstr(FILES)';
 [D,I,N,U,T,~,~,basename] = GetFileData(FILES,'',false);
 
 %% Get Data %%
+close all
+clc
+
 IOFreq = [1, 3.1, 5.3, 7.4, 9.6];
 Fs = 100;
 Fc = 15;
@@ -63,23 +66,26 @@ for kk = 1:N{1,end}
     head = head - mean(head);
     
     % Interpolate so all signals have the same times
-    Pattern = interp1(PAT.time_sync, pat, tintrp, 'nearest');
+    Reference = interp1(PAT.time_sync, pat, tintrp, 'nearest');
     Body    = interp1(trig_time, body,  tintrp, 'pchip');
     Head    = interp1(trig_time, head,  tintrp, 'pchip');
+    Error   = Reference - Body - Head;
     LWing   = interp1(trig_time, lwing, tintrp, 'pchip');
     RWing   = interp1(trig_time, rwing, tintrp, 'pchip');
     dWBA    = -interp1(trig_time, lwing-rwing, tintrp, 'pchip');
+    dWBA    = dWBA - mean(dWBA);
     
-    SYS_stim2_head_body = bode_sysID(tintrp, Pattern, IOFreq, debug, Body, Head);
-    SYS_stim2_wing = bode_sysID(tintrp, Pattern, IOFreq, debug, dWBA-mean(dWBA));
+    SYS_ref2_head_body  = frf(tintrp, Reference, IOFreq, debug, Body, Head);
+    SYS_ref2_wing       = frf(tintrp, Reference, IOFreq, debug, LWing, RWing, dWBA);
+    SYS_head2_body_wing = frf(tintrp, Head, IOFreq, debug, Body, dWBA);
+    SYS_wing2_body      = frf(tintrp, dWBA, IOFreq, debug, Body);
     
-    SYS_all = CatStructFields(2, SYS_stim2_head_body);
+    SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_ref2_wing, SYS_head2_body_wing,SYS_wing2_body);
     
-    ALL{I.fly(kk)}(end+1,1) = SYS_stim2_head_body;
+    ALL{I.fly(kk)}(end+1,1) = SYS_all;
 end
 
 %% Group Data
-clc
 fields = fieldnames(ALL{1});
 nfield = length(fields);
 FLY = [];
@@ -100,45 +106,28 @@ for kk = 1:N.fly
         end
     end
 end
+GRAND.all_trial = structfun(@(x) system_stats(x,3), GRAND.all, 'UniformOutput', false);
 
-%% Coherence
 bI = 1;
 hI = 2;
-
-clear ax
-fig(1) = figure (1) ; clf
-set(fig(1),'Color','w','Units','inches','Position',[2 2 3 5])
-ax(1) = subplot(2,1,1); hold on ; ylabel('Body Coherence')
-    plot(squeeze(GRAND.all.Fv), squeeze(GRAND.all.Cohr(:,bI,:)), ...
-        'Color', [0.5 0.5 0.5 0.3])
-  	PlotPatch(GRAND.fly_stats.mean.Cohr.mean(:,bI),...
-              GRAND.fly_stats.std.Cohr.mean(:,bI), GRAND.fly_stats.mean.Fv.mean, ...
-              1, 1, 'k','b', 0.2, 2);
-    PlotPatch(GRAND.fly_stats.mean.IOCohr.mean(:,bI),...
-              GRAND.fly_stats.std.IOCohr.mean(:,bI), IOFreq, ...
-              1, 1, 'r','r', 0.2, 2);
-          
-ax(2) = subplot(2,1,2); hold on ; ylabel('Head Coherence') ; xlabel('Frequency (Hz)')
-    plot(squeeze(GRAND.all.Fv), squeeze(GRAND.all.Cohr(:,hI,:)), ...
-        'Color', [0.5 0.5 0.5 0.3])
-  	PlotPatch(GRAND.fly_stats.mean.Cohr.mean(:,hI),...
-              GRAND.fly_stats.std.Cohr.mean(:,hI), GRAND.fly_stats.mean.Fv.mean, ...
-              1, 1, 'k','b', 0.2, 2);
-    PlotPatch(GRAND.fly_stats.mean.IOCohr.mean(:,hI),...
-              GRAND.fly_stats.std.IOCohr.mean(:,hI), IOFreq, ...
-              1, 1, 'r','r', 0.2, 2);
-
-set(ax,'LineWidth',1.5,'FontWeight','Bold','FontSize',10,'XLim',[0 10],'YLim',[0 1])
-linkaxes(ax)
-% YLabelHC = get(ax, 'YLabel');
-% set([YLabelHC{:}], 'String', 'Head Position (°)')
+gI = 3;
+lwI = 4;
+rwI = 5;
+dwI = 6;
+h2b = 8;
+h2w = 9;
+w2b = 11;
+hcolor = 'b';
+bcolor = 'r';
+gcolor = [0.4 0.1 0.7];
+ccolor = 'k';
 
 %% Complex Gain
 clear ax
 cc = hsv(length(IOFreq));
 fig(2) = figure (2) ; clf
-set(fig(2),'Color','w','Units','inches','Position',[2 2 8 5])
-ax(1) = subplot(1,2,1); hold on ; title('Body Complex Gain')
+set(fig(2),'Color','w','Units','inches','Position',[2 2 10 5])
+ax(1) = subplot(1,3,1); hold on ; title('Body')
     Real = real(squeeze(GRAND.all.IOFRF(:,bI,:)))';
     Img  = imag(squeeze(GRAND.all.IOFRF(:,bI,:)))';
     [~,~] = ComplexAxes(0:0.2:1.2);
@@ -146,8 +135,8 @@ ax(1) = subplot(1,2,1); hold on ; title('Body Complex Gain')
     for c = 1:length(hh)
        hh(c).Color = cc(c,:); 
     end
-    legend(hh,string(IOFreq) + " Hz",'Box','off','Location','northoutside')
-ax(2) = subplot(1,2,2); hold on ; title('Head Complex Gain')
+    %legend(hh,string(IOFreq) + " Hz",'Box','off','Location','northoutside')
+ax(2) = subplot(1,3,2); hold on ; title('Head')
     Real = real(squeeze(GRAND.all.IOFRF(:,hI,:))');
     Img  = -imag(squeeze(GRAND.all.IOFRF(:,hI,:))');
     [~,~] = ComplexAxes(0:0.2:0.5);
@@ -155,105 +144,428 @@ ax(2) = subplot(1,2,2); hold on ; title('Head Complex Gain')
     for c = 1:length(hh)
        hh(c).Color = cc(c,:); 
     end
-    legend(hh,string(IOFreq) + " Hz",'Box','off','Location','northoutside')
-    
-set(ax,'LineWidth',1.5,'FontWeight','Bold','FontSize',10)
+    %legend(hh,string(IOFreq) + " Hz",'Box','off','Location','northoutside')
+ax(3) = subplot(1,3,3); hold on ; title('Gaze')
+    Real = real(squeeze(GRAND.all.IOFRF(:,gI,:))');
+    Img  = -imag(squeeze(GRAND.all.IOFRF(:,gI,:))');
+    [~,~] = ComplexAxes(0:0.2:1);
+    hh = plot(Real,Img,'.','MarkerSize',10);
+    for c = 1:length(hh)
+       hh(c).Color = cc(c,:); 
+    end
+    %legend(hh,string(IOFreq) + " Hz",'Box','off','Location','northoutside')
+set(ax, 'LineWidth',1.5, 'FontWeight', 'Bold', 'FontSize', 12)
 
 %% FRF
 clear ax h
 fig(3) = figure (3) ; clf
-set(fig(3),'Color','w','Units','inches','Position',[2 2 6 2.5*3])
-ax(1) = subplot(3,2,1); hold on ; ylabel('Gain (°/°)') ; title('Body')
-    plot(squeeze(GRAND.all.IOFv), squeeze(GRAND.all.IOGain(:,bI,:)), ...
+set(fig(3),'Color','w','Units','inches','Position',[4 1 3*3 3*2])
+ax(1) = subplot(3,3,1); hold on ; ylabel('Gain (°/°)') ; title('Body')
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), squeeze(GRAND.all.IOGain(:,bI,:)), ...
         'Color', [0.5 0.5 0.5 0.3])
     [h.patch(1),h.line(1)] = PlotPatch(GRAND.fly_stats.mean.IOGain.mean(:,bI),...
               GRAND.fly_stats.std.IOGain.mean(:,bI), IOFreq, ...
-              1, 1, 'k','b', 0.2, 2);
+              1, 1, bcolor, 'b', 0.2, 2);
           
-ax(2) = subplot(3,2,2); hold on ; title('Head')
-    plot(squeeze(GRAND.all.IOFv), squeeze(GRAND.all.IOGain(:,hI,:)), ...
+ax(2) = subplot(3,3,2); hold on ; title('Head')
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), squeeze(GRAND.all.IOGain(:,hI,:)), ...
         'Color', [0.5 0.5 0.5 0.3])
     [h.patch(2),h.line(2)] = PlotPatch(GRAND.fly_stats.mean.IOGain.mean(:,hI),...
               GRAND.fly_stats.std.IOGain.mean(:,hI), IOFreq, ...
-              1, 1, 'k','b', 0.2, 2);
+              1, 1, hcolor, 'b', 0.2, 2);
           
-ax(3) = subplot(3,2,3); hold on ; ylabel('Phase Difference (°)')
-    plot(squeeze(GRAND.all.IOFv), rad2deg(squeeze(GRAND.all.IOPhaseDiff(:,bI,:))), ...
+ax(3) = subplot(3,3,3); hold on ; title('Gaze: Body + Head')
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), squeeze(GRAND.all.IOGain(:,gI,:)), ...
         'Color', [0.5 0.5 0.5 0.3])
-    [h.patch(3),h.line(3)] = PlotPatch(rad2deg(GRAND.fly_stats.circ_mean.IOPhaseDiff.circ_mean(:,bI)),...
+    [h.patch(3),h.line(3)] = PlotPatch(GRAND.fly_stats.mean.IOGain.mean(:,gI),...
+              GRAND.fly_stats.std.IOGain.mean(:,gI), IOFreq, ...
+              1, 1, gcolor, 'b', 0.2, 2);       
+                 
+ax(4) = subplot(3,3,4); hold on ; ylabel('Phase Difference (°)')
+    plot([0 10], [0 0], '--k')
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), rad2deg(squeeze(GRAND.all.IOPhaseDiff(:,bI,:))), ...
+        'Color', [0.5 0.5 0.5 0.3])
+    [h.patch(4),h.line(4)] = PlotPatch(rad2deg(GRAND.fly_stats.circ_mean.IOPhaseDiff.circ_mean(:,bI)),...
               rad2deg(GRAND.fly_stats.circ_std.IOPhaseDiff.circ_mean(:,bI)), IOFreq, ...
-              1, 1, 'k','b', 0.2, 2);
+              1, 1, bcolor, 'b', 0.2, 2);
           
-ax(4) = subplot(3,2,4); hold on
-    plot(squeeze(GRAND.all.IOFv), rad2deg(squeeze(GRAND.all.IOPhaseDiff(:,hI,:))), ...
+ax(5) = subplot(3,3,5); hold on
+    plot([0 10], [0 0], '--k')
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), rad2deg(squeeze(GRAND.all.IOPhaseDiff(:,hI,:))), ...
         'Color', [0.5 0.5 0.5 0.3])
     
 	phase = rad2deg(GRAND.fly_stats.circ_mean.IOPhaseDiff.circ_mean(:,hI));
     %(phase>0) = phase(phase>0) - 360;
-    [h.patch(4),h.line(4)] = PlotPatch(phase,...
+    [h.patch(5),h.line(5)] = PlotPatch(phase,...
               rad2deg(GRAND.fly_stats.circ_std.IOPhaseDiff.circ_mean(:,hI)), IOFreq, ...
-              1, 1, 'k','b', 0.2, 2);
+              1, 1, hcolor, 'b', 0.2, 2);
           
-ax(5) = subplot(3,2,5); hold on ; ylabel('Coherence')
-    plot(squeeze(GRAND.all.Fv), squeeze(GRAND.all.Cohr(:,bI,:)), ...
+ax(6) = subplot(3,3,6); hold on
+    plot([0 10], [0 0], '--k')
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), rad2deg(squeeze(GRAND.all.IOPhaseDiff(:,gI,:))), ...
+        'Color', [0.5 0.5 0.5 0.3])
+    
+	phase = rad2deg(GRAND.fly_stats.circ_mean.IOPhaseDiff.circ_mean(:,gI));
+    %(phase>0) = phase(phase>0) - 360;
+    [h.patch(6),h.line(6)] = PlotPatch(phase,...
+              rad2deg(GRAND.fly_stats.circ_std.IOPhaseDiff.circ_mean(:,gI)), IOFreq, ...
+              1, 1, gcolor, 'b', 0.2, 2);
+               
+ax(7) = subplot(3,3,7); hold on ; ylabel('Coherence')
+    plot(squeeze(GRAND.all.Fv(:,1,:)), squeeze(GRAND.all.Cohr(:,bI,:)), ...
         'Color', [0.5 0.5 0.5 0.3])
 	PlotPatch(GRAND.fly_stats.mean.Cohr.mean(:,bI),...
-              GRAND.fly_stats.std.Cohr.mean(:,bI), GRAND.fly_stats.mean.Fv.mean, ...
-              1, 1, 'k','b', 0.2, 1);
-    [h.patch(5),h.line(5)] = PlotPatch(GRAND.fly_stats.mean.IOCohr.mean(:,bI),...
-              GRAND.fly_stats.std.IOCohr.mean(:,bI), IOFreq, ...
-              1, 1, 'r','r', 0.2, 2);
+              GRAND.fly_stats.std.Cohr.mean(:,bI), GRAND.fly_stats.mean.Fv.mean(:,1), ...
+              1, 1, bcolor,'b', 0.2, 1);
+%     [h.patch(7),h.line(7)] = PlotPatch(GRAND.fly_stats.mean.IOCohr.mean(:,bI),...
+%               GRAND.fly_stats.std.IOCohr.mean(:,bI), IOFreq, ...
+%               1, 1, ccolor, 'b', 0.2, 2);
           
-ax(6) = subplot(3,2,6); hold on
-    plot(squeeze(GRAND.all.Fv), squeeze(GRAND.all.Cohr(:,hI,:)), ...
+ax(8) = subplot(3,3,8); hold on
+    plot(squeeze(GRAND.all.Fv(:,1,:)), squeeze(GRAND.all.Cohr(:,hI,:)), ...
         'Color', [0.5 0.5 0.5 0.3])
   	PlotPatch(GRAND.fly_stats.mean.Cohr.mean(:,hI),...
-              GRAND.fly_stats.std.Cohr.mean(:,hI), GRAND.fly_stats.mean.Fv.mean, ...
-              1, 1, 'k','b', 0.2, 1);
-    [h.patch(6),h.line(6)] = PlotPatch(GRAND.fly_stats.mean.IOCohr.mean(:,hI),...
-              GRAND.fly_stats.std.IOCohr.mean(:,hI), IOFreq, ...
-              1, 1, 'r','r', 0.2, 2);    
+              GRAND.fly_stats.std.Cohr.mean(:,hI), GRAND.fly_stats.mean.Fv.mean(:,1), ...
+              1, 1, hcolor,'b', 0.2, 1);
+%     [h.patch(8),h.line(8)] = PlotPatch(GRAND.fly_stats.mean.IOCohr.mean(:,hI),...
+%               GRAND.fly_stats.std.IOCohr.mean(:,hI), IOFreq, ...
+%               1, 1, ccolor, 'b', 0.2, 2);
+
+ax(9) = subplot(3,3,9); hold on
+    plot(squeeze(GRAND.all.Fv(:,1,:)), squeeze(GRAND.all.Cohr(:,gI,:)), ...
+        'Color', [0.5 0.5 0.5 0.3])
+  	PlotPatch(GRAND.fly_stats.mean.Cohr.mean(:,gI),...
+              GRAND.fly_stats.std.Cohr.mean(:,gI), GRAND.fly_stats.mean.Fv.mean(:,1), ...
+              1, 1, gcolor, 'b', 0.2, 1);
+%     [h.patch(9),h.line(9)] = PlotPatch(GRAND.fly_stats.mean.IOCohr.mean(:,gI),...
+%               GRAND.fly_stats.std.IOCohr.mean(:,gI), IOFreq, ...
+%               1, 1, ccolor, 'b', 0.2, 2);
           
-set(h.line,'Marker','.','MarkerFaceColor','none','MarkerSize',25')
-set(ax,'LineWidth',1.5,'FontWeight','bold','FontSize',10,'XLim',[0 10],...
-    'XGrid','on','YGrid','on')
-set(ax(1:2),'YLim',[0 1.2])
-set(ax(3:4),'YLim',[-300 200])
-set(ax(5:6),'YLim',[0 1])
+set(h.line,'Marker','.','MarkerFaceColor','none','MarkerSize', 20')
+set(ax, 'LineWidth', 1.5, 'FontWeight', 'bold', 'FontSize', 12, 'XLim', [0 10],...
+    'XGrid','on','YGrid','on','box','on')
+set(ax(1:3),'YLim',[0 1.2])
+set(ax(4:6),'YLim',[-200 100])
+set(ax(7:9),'YLim',[0 1])
 linkaxes(ax,'x')
-linkaxes(ax(1:2),'y')
-linkaxes(ax(3:4),'y')
-linkaxes(ax(5:6),'y')
+linkaxes(ax(1:3),'y')
+linkaxes(ax(4:6),'y')
+linkaxes(ax(7:9),'y')
 % set(ax(1:4),'XTickLabels',[])
-YLabelHC = get(ax(5:6), 'XLabel');
+YLabelHC = get(ax(7:9), 'XLabel');
 set([YLabelHC{:}], 'String', 'Frequency (Hz)')
 % set(ax,'XScale','log')
+align_Ylabels(fig(3))
+
+%% Weights
+clear ax h
+
+fig(4) = figure (4) ; clf
+set(fig(4),'Color','w','Units','inches','Position',[4 2 4 4])
+ax(1) = subplot(1,1,1); hold on ; xlabel('Frequency (Hz)') ; ylabel('Weights')
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), squeeze(GRAND.all.IOWeight(:,bI,:)), ...
+        'Color', [1 0 0 0.3])
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), squeeze(GRAND.all.IOWeight(:,hI,:)), ...
+        'Color', [0 0 1 0.3])
+
+  	[h.patch(1), h.line(1)] = PlotPatch(GRAND.fly_stats.mean.IOWeight.mean(:,bI),...
+              GRAND.fly_stats.std.IOWeight.mean(:,bI), GRAND.fly_stats.mean.IOFv.mean(:,1), ...
+              1, 1, bcolor,'r', 0.2, 2);
+  	[h.patch(2), h.line(2)] = PlotPatch(GRAND.fly_stats.mean.IOWeight.mean(:,hI),...
+              GRAND.fly_stats.std.IOWeight.mean(:,hI), GRAND.fly_stats.mean.IOFv.mean(:,1), ...
+              1, 1, hcolor,'b', 0.2, 2);
+          
+set(h.line,'Marker','.','MarkerFaceColor','none','MarkerSize', 20')
+set(ax, 'LineWidth', 1.5, 'FontWeight', 'bold', 'FontSize', 12, 'XLim', [0 10],...
+    'XGrid','on','YGrid','on','box','on')
+set(ax, 'YLim', [0 1])
+legend(h.line, 'Body', 'Head', 'Box', 'off')
 
 %% Time
 clear ax
-fig(4) = figure (4) ; clf
-set(fig(4),'Color','w','Units','inches','Position',[2 2 10 6])
-ax(1) = subplot(2,1,1); hold on ; ylabel('Body (°)')
-    plot(squeeze(GRAND.all.Time), squeeze(GRAND.all.State(:,bI,:)), ...
+fig(5) = figure (5) ; clf
+set(fig(5),'Color','w','Units','inches','Position',[2 2 8 5])
+ax(1) = subplot(3,1,1); hold on ; ylabel('Body (°)')
+    plot(squeeze(GRAND.all.Time(:,1,:)), squeeze(GRAND.all.State(:,bI,:)), ...
         'Color', [0.5 0.5 0.5 0.3])
   	PlotPatch(GRAND.fly_stats.mean.State.mean(:,bI),...
-              GRAND.fly_stats.std.State.mean(:,bI), GRAND.fly_stats.mean.Time.mean, ...
-              1, 1, 'k','b', 0.2, 2);
+              GRAND.fly_stats.std.State.mean(:,bI), GRAND.fly_stats.mean.Time.mean(:,1), ...
+              1, 1, bcolor,'b', 0.2, 2);
           
-ax(2) = subplot(2,1,2); hold on ; ylabel('Head (°)') ; xlabel('Time (s)')
-    plot(squeeze(GRAND.all.Time), squeeze(GRAND.all.State(:,hI,:)), ...
+ax(2) = subplot(3,1,2); hold on ; ylabel('Head (°)') ; xlabel('Time (s)')
+    plot(squeeze(GRAND.all.Time(:,1,:)), squeeze(GRAND.all.State(:,hI,:)), ...
         'Color', [0.5 0.5 0.5 0.3])
   	PlotPatch(GRAND.fly_stats.mean.State.mean(:,hI),...
-              GRAND.fly_stats.std.State.mean(:,hI), GRAND.fly_stats.mean.Time.mean, ...
-              1, 1, 'k','b', 0.2, 2);
-
+              GRAND.fly_stats.std.State.mean(:,hI), GRAND.fly_stats.mean.Time.mean(:,1), ...
+              1, 1, hcolor,'b', 0.2, 2);
+          
+ax(3) = subplot(3,1,3); hold on ; ylabel('Gaze (°)') ; xlabel('Time (s)')
+    plot(squeeze(GRAND.all.Time(:,1,:)), squeeze(GRAND.all.State(:,gI,:)), ...
+        'Color', [0.5 0.5 0.5 0.3])
+  	PlotPatch(GRAND.fly_stats.mean.State.mean(:,gI),...
+              GRAND.fly_stats.std.State.mean(:,gI), GRAND.fly_stats.mean.Time.mean(:,1), ...
+              1, 1, gcolor,'b', 0.2, 2);
+          
 set(ax,'LineWidth',1.5,'FontWeight','Bold','FontSize',10,'XLim',[0 20])
 linkaxes(ax,'x')
+linkaxes(ax([1,3]),'y')
+set(ax(1), 'YLim', 100*[-1 1])
 
+%% Wing Complex Gain
+clear ax
+cc = hsv(length(IOFreq));
+fig(6) = figure (2) ; clf
+set(fig(6), 'Color', 'w', 'Units', 'inches', 'Position', [2 2 10 5])
+ax(1) = subplot(1,3,1); hold on ; title('Left Wing')
+    Real = real(squeeze(GRAND.all.IOFRF(:,lwI,:)))';
+    Img  = imag(squeeze(GRAND.all.IOFRF(:,lwI,:)))';
+    [~,~] = ComplexAxes(0:0.05:0.2);
+    hh = plot(Real,Img,'.','MarkerSize',10);
+    for c = 1:length(hh)
+       hh(c).Color = cc(c,:); 
+    end
+    %legend(hh,string(IOFreq) + " Hz",'Box','off','Location','northoutside')
+ax(2) = subplot(1,3,2); hold on ; title('Right Wing')
+    Real = real(squeeze(GRAND.all.IOFRF(:,rwI,:))');
+    Img  = -imag(squeeze(GRAND.all.IOFRF(:,rwI,:))');
+    [~,~] = ComplexAxes(0:0.05:0.2);
+    hh = plot(Real,Img,'.','MarkerSize',10);
+    for c = 1:length(hh)
+       hh(c).Color = cc(c,:); 
+    end
+    %legend(hh,string(IOFreq) + " Hz",'Box','off','Location','northoutside')
+ax(3) = subplot(1,3,3); hold on ; title(' \DeltaWBA')
+    Real = real(squeeze(GRAND.all.IOFRF(:,rwI,:))');
+    Img  = -imag(squeeze(GRAND.all.IOFRF(:,dwI,:))');
+    [~,~] = ComplexAxes(0:0.05:0.2);
+    hh = plot(Real,Img,'.','MarkerSize',10);
+    for c = 1:length(hh)
+       hh(c).Color = cc(c,:); 
+    end
+    %legend(hh,string(IOFreq) + " Hz",'Box','off','Location','northoutside')
+    
+set(ax, 'LineWidth',1.5, 'FontWeight', 'Bold', 'FontSize', 12)
+
+%% Wing FRF
+clear ax h
+fig(7) = figure (7) ; clf
+set(fig(7), 'Color', 'w', 'Units', 'inches', 'Position', [4 1 3*3 3*2])
+ax(1) = subplot(3,3,1); hold on ; ylabel('Gain (°/°)') ; title('Left Wing')
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), squeeze(GRAND.all.IOGain(:,lwI,:)), ...
+        'Color', [0.5 0.5 0.5 0.3])
+    [h.patch(1),h.line(1)] = PlotPatch(GRAND.fly_stats.mean.IOGain.mean(:,lwI),...
+              GRAND.fly_stats.std.IOGain.mean(:,lwI), IOFreq, ...
+              1, 1, bcolor, 'b', 0.2, 2);
+          
+ax(2) = subplot(3,3,2); hold on ; title('Right Wing')
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), squeeze(GRAND.all.IOGain(:,rwI,:)), ...
+        'Color', [0.5 0.5 0.5 0.3])
+    [h.patch(2),h.line(2)] = PlotPatch(GRAND.fly_stats.mean.IOGain.mean(:,rwI),...
+              GRAND.fly_stats.std.IOGain.mean(:,rwI), IOFreq, ...
+              1, 1, hcolor, 'b', 0.2, 2);
+          
+ax(3) = subplot(3,3,3); hold on ; title('\DeltaWBA')
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), squeeze(GRAND.all.IOGain(:,dwI,:)), ...
+        'Color', [0.5 0.5 0.5 0.3])
+    [h.patch(3),h.line(3)] = PlotPatch(GRAND.fly_stats.mean.IOGain.mean(:,dwI),...
+              GRAND.fly_stats.std.IOGain.mean(:,dwI), IOFreq, ...
+              1, 1, gcolor, 'b', 0.2, 2);       
+                 
+ax(4) = subplot(3,3,4); hold on ; ylabel('Phase Difference (°)')
+    plot([0 10], [0 0], '--k')
+    phase = rad2deg(GRAND.fly_stats.circ_mean.IOPhaseDiff.circ_mean(:,lwI));
+    phase(phase > 100) = phase(phase > 100) - 360;
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), rad2deg(squeeze(GRAND.all.IOPhaseDiff(:,lwI,:))), ...
+        'Color', [0.5 0.5 0.5 0.3])
+    [h.patch(4),h.line(4)] = PlotPatch(phase,...
+              rad2deg(GRAND.fly_stats.circ_std.IOPhaseDiff.circ_mean(:,lwI)), IOFreq, ...
+              1, 1, bcolor, 'b', 0.2, 2);
+          
+ax(5) = subplot(3,3,5); hold on
+    plot([0 10], [0 0], '--k')
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), rad2deg(squeeze(GRAND.all.IOPhaseDiff(:,rwI,:))), ...
+        'Color', [0.5 0.5 0.5 0.3])
+    
+	phase = rad2deg(GRAND.fly_stats.circ_mean.IOPhaseDiff.circ_mean(:,rwI));
+    %(phase>0) = phase(phase>0) - 360;
+    [h.patch(5),h.line(5)] = PlotPatch(phase,...
+              rad2deg(GRAND.fly_stats.circ_std.IOPhaseDiff.circ_mean(:,rwI)), IOFreq, ...
+              1, 1, hcolor, 'b', 0.2, 2);
+          
+ax(6) = subplot(3,3,6); hold on
+    plot([0 10], [0 0], '--k')
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), rad2deg(squeeze(GRAND.all.IOPhaseDiff(:,dwI,:))), ...
+        'Color', [0.5 0.5 0.5 0.3])
+    
+	phase = rad2deg(GRAND.fly_stats.circ_mean.IOPhaseDiff.circ_mean(:,dwI));
+    %(phase>0) = phase(phase>0) - 360;
+    [h.patch(6),h.line(6)] = PlotPatch(phase,...
+              rad2deg(GRAND.fly_stats.circ_std.IOPhaseDiff.circ_mean(:,dwI)), IOFreq, ...
+              1, 1, gcolor, 'b', 0.2, 2);
+               
+ax(7) = subplot(3,3,7); hold on ; ylabel('Coherence')
+    plot(squeeze(GRAND.all.Fv(:,1,:)), squeeze(GRAND.all.Cohr(:,lwI,:)), ...
+        'Color', [0.5 0.5 0.5 0.3])
+	PlotPatch(GRAND.fly_stats.mean.Cohr.mean(:,lwI),...
+              GRAND.fly_stats.std.Cohr.mean(:,lwI), GRAND.fly_stats.mean.Fv.mean(:,1), ...
+              1, 1, bcolor,'b', 0.2, 1);
+    [h.patch(7),h.line(7)] = PlotPatch(GRAND.fly_stats.mean.IOCohr.mean(:,lwI),...
+              GRAND.fly_stats.std.IOCohr.mean(:,lwI), IOFreq, ...
+              1, 1, ccolor, 'b', 0.2, 2);
+          
+ax(8) = subplot(3,3,8); hold on
+    plot(squeeze(GRAND.all.Fv(:,1,:)), squeeze(GRAND.all.Cohr(:,rwI,:)), ...
+        'Color', [0.5 0.5 0.5 0.3])
+  	PlotPatch(GRAND.fly_stats.mean.Cohr.mean(:,rwI),...
+              GRAND.fly_stats.std.Cohr.mean(:,rwI), GRAND.fly_stats.mean.Fv.mean(:,1), ...
+              1, 1, hcolor,'b', 0.2, 1);
+    [h.patch(8),h.line(8)] = PlotPatch(GRAND.fly_stats.mean.IOCohr.mean(:,rwI),...
+              GRAND.fly_stats.std.IOCohr.mean(:,rwI), IOFreq, ...
+              1, 1, ccolor, 'b', 0.2, 2);
+
+ax(9) = subplot(3,3,9); hold on
+    plot(squeeze(GRAND.all.Fv(:,1,:)), squeeze(GRAND.all.Cohr(:,dwI,:)), ...
+        'Color', [0.5 0.5 0.5 0.3])
+  	PlotPatch(GRAND.fly_stats.mean.Cohr.mean(:,dwI),...
+              GRAND.fly_stats.std.Cohr.mean(:,dwI), GRAND.fly_stats.mean.Fv.mean(:,1), ...
+              1, 1, gcolor, 'b', 0.2, 1);
+    [h.patch(9),h.line(9)] = PlotPatch(GRAND.fly_stats.mean.IOCohr.mean(:,dwI),...
+              GRAND.fly_stats.std.IOCohr.mean(:,dwI), IOFreq, ...
+              1, 1, ccolor, 'b', 0.2, 2);
+          
+set(h.line,'Marker','.','MarkerFaceColor','none','MarkerSize', 20')
+set(ax, 'LineWidth', 1.5, 'FontWeight', 'bold', 'FontSize', 12, 'XLim', [0 10],...
+    'XGrid','on','YGrid','on','box','on')
+set(ax(1:3),'YLim',[0 0.3])
+set(ax(4:6),'YLim',[-300 150])
+set(ax(7:9),'YLim',[0 1])
+linkaxes(ax,'x')
+linkaxes(ax(1:3),'y')
+linkaxes(ax(4:6),'y')
+linkaxes(ax(7:9),'y')
+% set(ax(1:4),'XTickLabels',[])
+YLabelHC = get(ax(7:9), 'XLabel');
+set([YLabelHC{:}], 'String', 'Frequency (Hz)')
+% set(ax,'XScale','log')
+align_Ylabels(fig(7))
+
+%% Head 2 Wing FRF
+h2w_color = 'c';
+clear ax h
+fig(8) = figure (8) ; clf
+set(fig(8), 'Color', 'w', 'Units', 'inches', 'Position', [4 1 3 3*2])
+ax(1) = subplot(3,1,1); hold on ; ylabel('Gain (°/°)') ; title('Head >>> Wing')
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), squeeze(GRAND.all.IOGain(:,h2w,:)), ...
+        'Color', [0.5 0.5 0.5 0.3])
+    [h.patch(1),h.line(1)] = PlotPatch(GRAND.fly_stats.mean.IOGain.mean(:,h2w),...
+              GRAND.fly_stats.std.IOGain.mean(:,h2w), IOFreq, ...
+              1, 1, h2w_color, 'b', 0.2, 2);
+                        
+ax(2) = subplot(3,1,2); hold on ; ylabel('Phase Difference (°)')
+    plot([0 10], [0 0], '--k')
+    phase = rad2deg(GRAND.fly_stats.circ_mean.IOPhaseDiff.circ_mean(:,h2w));
+    phase(phase > 100) = phase(phase > 100) - 360;
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), rad2deg(squeeze(GRAND.all.IOPhaseDiff(:,h2w,:))), ...
+        'Color', [0.5 0.5 0.5 0.3])
+    [h.patch(2),h.line(2)] = PlotPatch(phase,...
+              rad2deg(GRAND.fly_stats.circ_std.IOPhaseDiff.circ_mean(:,h2w)), IOFreq, ...
+              1, 1, h2w_color, 'b', 0.2, 2);
+          
+ax(3) = subplot(3,1,3); hold on ; ylabel('Coherence')
+    plot(squeeze(GRAND.all.Fv(:,1,:)), squeeze(GRAND.all.Cohr(:,h2w,:)), ...
+        'Color', [0.5 0.5 0.5 0.3])
+  	PlotPatch(GRAND.fly_stats.mean.Cohr.mean(:,h2w),...
+              GRAND.fly_stats.std.Cohr.mean(:,h2w), GRAND.fly_stats.mean.Fv.mean(:,1), ...
+              1, 1, h2w_color, 'b', 0.2, 1);
+%     [h.patch(3),h.line(3)] = PlotPatch(GRAND.fly_stats.mean.IOCohr.mean(:,h2w),...
+%               GRAND.fly_stats.std.IOCohr.mean(:,h2w), IOFreq, ...
+%               1, 1, ccolor, 'b', 0.2, 2);
+
+set(h.line,'Marker','.','MarkerFaceColor','none','MarkerSize', 20')  
+set(ax, 'LineWidth', 1.5, 'FontWeight', 'bold', 'FontSize', 12, 'XLim', [0 10],...
+    'XGrid','on','YGrid','on','box','on')
+set(ax(2),'YLim',[-200 100])
+align_Ylabels(fig(8))
+
+%% Head 2 Body FRF
+h2b_color = 'm';
+clear ax h
+fig(9) = figure (9) ; clf
+set(fig(9), 'Color', 'w', 'Units', 'inches', 'Position', [4 1 3 3*2])
+ax(1) = subplot(3,1,1); hold on ; ylabel('Gain (°/°)') ; title('Head >>> Body')
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), squeeze(GRAND.all.IOGain(:,h2b,:)), ...
+        'Color', [0.5 0.5 0.5 0.3])
+    [h.patch(1),h.line(1)] = PlotPatch(GRAND.fly_stats.mean.IOGain.mean(:,h2b),...
+              GRAND.fly_stats.std.IOGain.mean(:,h2b), IOFreq, ...
+              1, 1, h2b_color, 'b', 0.2, 2);
+                        
+ax(2) = subplot(3,1,2); hold on ; ylabel('Phase Difference (°)')
+    plot([0 10], [0 0], '--k')
+    phase = rad2deg(GRAND.fly_stats.circ_mean.IOPhaseDiff.circ_mean(:,h2b));
+    phase(phase > 100) = phase(phase > 100) - 360;
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), rad2deg(squeeze(GRAND.all.IOPhaseDiff(:,h2b,:))), ...
+        'Color', [0.5 0.5 0.5 0.3])
+    [h.patch(2),h.line(2)] = PlotPatch(phase,...
+              rad2deg(GRAND.fly_stats.circ_std.IOPhaseDiff.circ_mean(:,h2b)), IOFreq, ...
+              1, 1, h2b_color, 'b', 0.2, 2);
+          
+ax(3) = subplot(3,1,3); hold on ; ylabel('Coherence')
+    plot(squeeze(GRAND.all.Fv(:,1,:)), squeeze(GRAND.all.Cohr(:,h2b,:)), ...
+        'Color', [0.5 0.5 0.5 0.3])
+  	PlotPatch(GRAND.fly_stats.mean.Cohr.mean(:,h2b),...
+              GRAND.fly_stats.std.Cohr.mean(:,h2b), GRAND.fly_stats.mean.Fv.mean(:,1), ...
+              1, 1, h2b_color, 'b', 0.2, 1);
+%     [h.patch(3),h.line(3)] = PlotPatch(GRAND.fly_stats.mean.IOCohr.mean(:,h2w),...
+%               GRAND.fly_stats.std.IOCohr.mean(:,h2w), IOFreq, ...
+%               1, 1, ccolor, 'b', 0.2, 2);
+
+set(h.line,'Marker','.','MarkerFaceColor','none','MarkerSize', 20')
+set(ax, 'LineWidth', 1.5, 'FontWeight', 'bold', 'FontSize', 12, 'XLim', [0 10],...
+    'XGrid','on','YGrid','on','box','on')
+set(ax(2),'YLim',[-200 100])
+align_Ylabels(fig(9))
+
+%% Head 2 Body FRF
+w2b_color = [0.2 0.8 0.4];
+clear ax h
+fig(10) = figure (10) ; clf
+set(fig(10), 'Color', 'w', 'Units', 'inches', 'Position', [4 1 3 3*2])
+ax(1) = subplot(3,1,1); hold on ; ylabel('Gain (°/°)') ; title('Wing >>> Body')
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), squeeze(GRAND.all.IOGain(:,w2b,:)), ...
+        'Color', [0.5 0.5 0.5 0.3])
+    [h.patch(1),h.line(1)] = PlotPatch(GRAND.fly_stats.mean.IOGain.mean(:,w2b),...
+              GRAND.fly_stats.std.IOGain.mean(:,w2b), IOFreq, ...
+              1, 1, w2b_color, 'b', 0.2, 2);
+                        
+ax(2) = subplot(3,1,2); hold on ; ylabel('Phase Difference (°)')
+    plot([0 10], [0 0], '--k')
+    phase = rad2deg(GRAND.fly_stats.circ_mean.IOPhaseDiff.circ_mean(:,w2b));
+    phase(phase > 100) = phase(phase > 100) - 360;
+    plot(squeeze(GRAND.all.IOFv(:,1,:)), rad2deg(squeeze(GRAND.all.IOPhaseDiff(:,w2b,:))), ...
+        'Color', [0.5 0.5 0.5 0.3])
+    [h.patch(2),h.line(2)] = PlotPatch(phase,...
+              rad2deg(GRAND.fly_stats.circ_std.IOPhaseDiff.circ_mean(:,w2b)), IOFreq, ...
+              1, 1, w2b_color, 'b', 0.2, 2);
+          
+ax(3) = subplot(3,1,3); hold on ; ylabel('Coherence')
+    plot(squeeze(GRAND.all.Fv(:,1,:)), squeeze(GRAND.all.Cohr(:,w2b,:)), ...
+        'Color', [0.5 0.5 0.5 0.3])
+  	PlotPatch(GRAND.fly_stats.mean.Cohr.mean(:,w2b),...
+              GRAND.fly_stats.std.Cohr.mean(:,w2b), GRAND.fly_stats.mean.Fv.mean(:,1), ...
+              1, 1, w2b_color, 'b', 0.2, 1);
+%     [h.patch(3),h.line(3)] = PlotPatch(GRAND.fly_stats.mean.IOCohr.mean(:,h2w),...
+%               GRAND.fly_stats.std.IOCohr.mean(:,h2w), IOFreq, ...
+%               1, 1, ccolor, 'b', 0.2, 2);
+
+set(h.line,'Marker','.','MarkerFaceColor','none','MarkerSize', 20')
+set(ax, 'LineWidth', 1.5, 'FontWeight', 'bold', 'FontSize', 12, 'XLim', [0 10],...
+    'XGrid','on','YGrid','on','box','on')
+set(ax(2),'YLim',[-200 100])
+align_Ylabels(fig(10))
 
 %% SAVE %%
-disp('Saving...')
-save(['H:\DATA\Magno_Data\' filename '_' datestr(now,'mm-dd-yyyy') '.mat'], ...
-    'FLY','GRAND','D','I','U','N','T','-v7.3')
-disp('SAVING DONE')
+% disp('Saving...')
+% save(['H:\DATA\Magno_Data\' filename '_' datestr(now,'mm-dd-yyyy') '.mat'], ...
+%     'FLY','GRAND','D','I','U','N','T','-v7.3')
+% disp('SAVING DONE')
 end

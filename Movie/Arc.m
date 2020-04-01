@@ -7,9 +7,10 @@ classdef Arc
     properties (SetAccess = public, Hidden = false)
       	center          % rotation point
         L               % dimension length 1 (long axis)
-        theta           % orientation angle (°)
+        theta           % orientation angle (°) CCW+ from right horizontal
       	offset          % rotation agle from orientation angle (°)
         lower           %
+        flip            % flip the axis or not
         color           % patch face color
         facealpha       % pacth face opacity
      	h               % handles to graphics objects
@@ -20,13 +21,14 @@ classdef Arc
         axis            % long and short axes points
         border          % border points
        	span            % arc angle span
+     	theta_global    % global coordinate system angle (°)
     end
     
  	properties (SetAccess = public, Hidden = false)
     end
 
     methods
-        function obj = Arc(center,L,theta,offset,color,facealpha)
+        function obj = Arc(center,L,theta,offset,flip,color,facealpha)
             %ARC Construct an instance of this class
             %   Construct initial shape
             %
@@ -37,6 +39,7 @@ classdef Arc
             obj.offset     	= offset;      	% rotation agle from orientation angle (°)
             obj.color       = color;       	% patch color
             obj.facealpha   = facealpha;  	% patch face opacity
+            obj.flip        = flip;         % flip 0 axis by 180 & change to CW+
             
             % obj = draw(obj,theta,false);
         end
@@ -45,13 +48,21 @@ classdef Arc
             %UPDATE Calculate geometric properties
             %   Grab current properties and use them to compute the geometric properties
             %
-
+            
             obj.theta = theta;
-          	obj.lower = (-obj.offset + obj.theta); % rotation agle from orientation angle (°)
-          	obj.tip = obj.center + obj.L*[cosd(obj.theta) , sind(obj.theta)]; % tip of arc
+            
+            if ~obj.flip
+                obj.theta_global = obj.theta;
+                obj.lower = -obj.offset + obj.theta_global; % rotation angle from axis (°)
+            elseif obj.flip
+                obj.theta_global = 360-(obj.theta + 180);
+                obj.lower = obj.offset + obj.theta_global; % rotation angle from axis (°)
+            end
+            
+         	obj.tip = obj.center + obj.L*[cosd(obj.theta_global) , sind(obj.theta_global)]; % tip of arc
             obj.axis = [obj.center ; obj.tip]; % arc major axis
-            obj.span = linspace(obj.theta, obj.lower, 100)'; % wrap around from orientation angle to constant lower angle
-           	obj.border = obj.center + obj.L*[cosd(obj.span) , sind(obj.span)]; % border in center reference frame
+            obj.span = linspace(obj.theta_global,obj.lower, 100)'; % wrap around from orientation angle to constant lower angle
+            obj.border = obj.center + obj.L*[cosd(obj.span) , sind(obj.span)]; % border in center reference frame
             obj.border = [obj.border ; obj.center ; obj.tip];
         end
         

@@ -16,10 +16,10 @@ function [MOV] = MagnoMontage_Animated(rootpat,vidFs,body_ang,head_ang,rwing_ang
 
 % Example Input %
 clear ; clc ; close all 
-export = true;
+export = false;
 vidFs = 50;
 rootdir = 'E:\Experiment_SOS_v1';
-rootpat = 'Q:\Box Sync\Git\Arena\Patterns';
+rootpat = 'C:\Users\BC\Box\Git\Arena\Patterns';
 
 % Create data paths
 PATH.raw            = rootdir;
@@ -153,11 +153,12 @@ for jj = 1:FLY.nframe % for each frame
         subplot(6,8,[6:8,14:16,22:24,30:32,38:40,46:48]); cla; hold on ; axis off
             FlyAnimation = draw(FlyAnimation, FLY.int_body(jj), FLY.int_head(jj), ...
                                 FLY.int_lwing(jj), FLY.int_rwing (jj), center);
+                            
+            % draw_semi_ellipse([0 0],50,0.75,0.9,FLY.int_body(jj),'m');
         
             % Make pattern ring
             make_pattern_ring(pattern_data.pattern,[PAT.pos_exp(jj),5],FLY.raw_center,...
                                     radius,thickness,'g');
-     	
     end
     
     % Pattern plot

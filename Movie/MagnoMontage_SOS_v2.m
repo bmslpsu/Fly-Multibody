@@ -15,11 +15,11 @@ function [MOV] = MagnoMontage_SOS_v2(rootdir,rootpat,vidFs,export)
 %
 
 % Example Input %
-% clear ; clc ; close all 
-% export = false;
-% vidFs = 50;
-% rootdir = 'E:\Experiment_SOS_v1';
-% rootpat = 'Q:\Box Sync\Git\Arena\Patterns';
+clear ; clc ; close all 
+export = false;
+vidFs = 50;
+rootdir = 'E:\Experiment_SOS_v1';
+rootpat = 'C:\Users\BC\Box\Git\Arena\Patterns';
 
 if ~isfolder(rootdir)
     dirflag = false;
