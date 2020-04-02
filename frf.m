@@ -16,11 +16,11 @@ IOFv    = IOFv(:);
 nState  = length(varargin) + 1; % # of output states
 nPoint  = length(time);         % # of data points in time domain
 nFpoint = ceil(nPoint/2);       % # of data points in frequency domain
-% nFpoint = 1000;       % # of data points in frequency domain
+% nFpoint = 1000;                 % # of data points in frequency domain
 Fs      = 1/mean(diff(time));   % sampling rate [Hz]
 
-State  = cellfun(@(x) x(:),varargin,'UniformOutput',false); % store inputs in cells as column vectors
-State  = cat(2,State{:}); % store inputs in cells as column vectors
+State = cellfun(@(x) x(:),varargin,'UniformOutput',false); % store inputs in cells as column vectors
+State = cat(2,State{:}); % store inputs in cells as column vectors
 State(:,end+1)  = sum(State,2); % last state is the sum of all states
 
 % Get state names from input variables
@@ -98,6 +98,7 @@ SYSTEM.Fv               = refFv;
 SYSTEM.IOFv             = IOFv;
 
 SYSTEM.refName          = refName;
+SYSTEM.refState         = ref;
 SYSTEM.refFreq          = refFreq;
 SYSTEM.refMag           = refMag;
 SYSTEM.refPhase     	= refPhase;

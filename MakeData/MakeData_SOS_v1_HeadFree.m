@@ -58,20 +58,25 @@ for kk = 1:N{1,end}
     
     % Get pattern, head, & body anlges
     pat = 3.75*PAT.pos;
-    pat = pat - mean(pat);
     body = data.body.bAngles;
-    body = body - mean(body);
 	head = data.head.hAngles;
     % head = rad2deg(-data.benifly.Head);
-    head = head - mean(head);
     
     % Interpolate so all signals have the same times
     Reference = interp1(PAT.time_sync, pat, tintrp, 'nearest');
+    Reference = Reference - mean(Reference);
+    
     Body    = interp1(trig_time, body,  tintrp, 'pchip');
+    Body    = Body - mean(Body);
+    
     Head    = interp1(trig_time, head,  tintrp, 'pchip');
+    Head    = Head - mean(Head);
+    
     Error   = Reference - Body - Head;
+    
     LWing   = interp1(trig_time, lwing, tintrp, 'pchip');
     RWing   = interp1(trig_time, rwing, tintrp, 'pchip');
+    
     dWBA    = -interp1(trig_time, lwing-rwing, tintrp, 'pchip');
     dWBA    = dWBA - mean(dWBA);
     
@@ -117,10 +122,13 @@ dwI = 6;
 h2b = 8;
 h2w = 9;
 w2b = 11;
+
+rI = 1;
 hcolor = 'b';
 bcolor = 'r';
 gcolor = [0.4 0.1 0.7];
 ccolor = 'k';
+rcolor = 'g';
 
 %% Complex Gain
 clear ax
@@ -282,34 +290,43 @@ set(ax, 'YLim', [0 1])
 legend(h.line, 'Body', 'Head', 'Box', 'off')
 
 %% Time
-clear ax
+clear ax h
 fig(5) = figure (5) ; clf
 set(fig(5),'Color','w','Units','inches','Position',[2 2 8 5])
 ax(1) = subplot(3,1,1); hold on ; ylabel('Body (°)')
     plot(squeeze(GRAND.all.Time(:,1,:)), squeeze(GRAND.all.State(:,bI,:)), ...
         'Color', [0.5 0.5 0.5 0.3])
-  	PlotPatch(GRAND.fly_stats.mean.State.mean(:,bI),...
+ 	plot(squeeze(GRAND.all.Time(:,1,:)), squeeze(GRAND.all.refState(:,rI,:)), ...
+        'Color', rcolor, 'LineWidth', 1)
+  	[h.patch(1),h.line(1)] = PlotPatch(GRAND.fly_stats.mean.State.mean(:,bI),...
               GRAND.fly_stats.std.State.mean(:,bI), GRAND.fly_stats.mean.Time.mean(:,1), ...
               1, 1, bcolor,'b', 0.2, 2);
-          
-ax(2) = subplot(3,1,2); hold on ; ylabel('Head (°)') ; xlabel('Time (s)')
+	uistack(h.patch(1), 'bottom')
+
+ax(2) = subplot(3,1,2); hold on ; ylabel('Head (°)') ; ylim(15.5*[-1 1]) ; yticks(15*[-1 1])
     plot(squeeze(GRAND.all.Time(:,1,:)), squeeze(GRAND.all.State(:,hI,:)), ...
         'Color', [0.5 0.5 0.5 0.3])
-  	PlotPatch(GRAND.fly_stats.mean.State.mean(:,hI),...
+ 	plot(squeeze(GRAND.all.Time(:,1,:)), squeeze(GRAND.all.refState(:,rI,:)), ...
+        'Color', rcolor, 'LineWidth', 1)
+  	[h.patch(2),h.line(2)] = PlotPatch(GRAND.fly_stats.mean.State.mean(:,hI),...
               GRAND.fly_stats.std.State.mean(:,hI), GRAND.fly_stats.mean.Time.mean(:,1), ...
               1, 1, hcolor,'b', 0.2, 2);
+	uistack(h.patch(2), 'bottom')
           
 ax(3) = subplot(3,1,3); hold on ; ylabel('Gaze (°)') ; xlabel('Time (s)')
     plot(squeeze(GRAND.all.Time(:,1,:)), squeeze(GRAND.all.State(:,gI,:)), ...
         'Color', [0.5 0.5 0.5 0.3])
-  	PlotPatch(GRAND.fly_stats.mean.State.mean(:,gI),...
+ 	plot(squeeze(GRAND.all.Time(:,1,:)), squeeze(GRAND.all.refState(:,rI,:)), ...
+        'Color', rcolor, 'LineWidth', 1)
+  	[h.patch(3),h.line(3)] = PlotPatch(GRAND.fly_stats.mean.State.mean(:,gI),...
               GRAND.fly_stats.std.State.mean(:,gI), GRAND.fly_stats.mean.Time.mean(:,1), ...
               1, 1, gcolor,'b', 0.2, 2);
-          
+    uistack(h.patch(3), 'bottom')
+    
 set(ax,'LineWidth',1.5,'FontWeight','Bold','FontSize',10,'XLim',[0 20])
 linkaxes(ax,'x')
 linkaxes(ax([1,3]),'y')
-set(ax(1), 'YLim', 100*[-1 1])
+set(ax(1), 'YLim', 75*[-1 1])
 
 %% Wing Complex Gain
 clear ax
