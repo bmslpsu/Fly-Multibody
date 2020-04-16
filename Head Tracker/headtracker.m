@@ -1,4 +1,4 @@
-function [hAngles,cPoint,validity,ROI,initframe,finalframe] = headtracker(vid, npoint, playback, showpoint)
+function [hAngles,cPoint,validity,ROI,initframe,finalframe] = headtracker(vid, npoint, center, playback, showpoint)
 % HeadTracker: tracks insect head movments in a rigid terher
 %
 % Tracks feature on fly head (ususally antenna) & calculates the angle with 
@@ -50,8 +50,12 @@ ax(1) = subplot(1,1,1) ; axis image ; hold on
 close(fig) % close figure
 
 % Coordinates for head rotation point
-cPoint.Y = max(cLine(:,2)); % lower y-coordinate is the neck joint
-cPoint.X = cLine((cLine(:,2) == cPoint.Y)); % get corrsponding x-coordinate
+if isempty(center)
+    cPoint.Y = max(cLine(:,2)); % lower y-coordinate is the neck joint
+    cPoint.X = cLine((cLine(:,2) == cPoint.Y)); % get corrsponding x-coordinate
+else
+    cPoint = center;
+end
 
 % Coordinates for initial angle of head midline
 mPoint.Y = min(cLine(:,2)); % higher y-coordinate is the midline point
@@ -64,7 +68,7 @@ initAngle.head = rad2deg( atan2( mPoint.X - cPoint.X , -(mPoint.Y - cPoint.Y) ) 
 points	= detectMinEigenFeatures(trackFrame,'ROI',ROI); % detect features
 points  = points.selectStrongest(npoint); % get strongest points
 tracker = vision.PointTracker('MaxBidirectionalError',5,'NumPyramidLevels',7,...
-    'BlockSize',[31 31],'MaxIterations',40); % create tracker object
+    'BlockSize',[11 11],'MaxIterations',40); % create tracker object
 
 initialize(tracker,points.Location,trackFrame); % start tracker
 
