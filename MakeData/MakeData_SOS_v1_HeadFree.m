@@ -1,5 +1,5 @@
 function [] = MakeData_SOS_v1_HeadFree(rootdir)
-%% MakeData_SOS_HeadFree_obj: Reads in all raw trials, transforms data, and saves in organized structure for use with figure functions
+%% MakeData_SOS_v1_HeadFree: Reads in all raw trials, transforms data, and saves in organized structure for use with figure functions
 %   INPUTS:
 %       rootdir    	:   root directory
 %   OUTPUTS:
@@ -47,7 +47,7 @@ for kk = 1:N{1,end}
     daq_pattern = data.daq.data(:,2);
     trigger     = data.daq.data(:,1);
     
-    [TRIG,PAT]  = sync_pattern_trigger(daq_time, daq_pattern, function_length, trigger, tintrp, false);
+    [TRIG,PAT]  = sync_pattern_trigger(daq_time, daq_pattern, function_length, trigger, tintrp, [], false);
     trig_time   = TRIG.time_sync;
     
   	% Filter wing angles
@@ -542,7 +542,7 @@ set(ax, 'LineWidth', 1.5, 'FontWeight', 'bold', 'FontSize', 12, 'XLim', [0 10],.
 set(ax(2),'YLim',[-200 100])
 align_Ylabels(fig(9))
 
-%% Head 2 Body FRF
+%% Wing 2 Body FRF
 w2b_color = [0.2 0.8 0.4];
 clear ax h
 fig(10) = figure (10) ; clf

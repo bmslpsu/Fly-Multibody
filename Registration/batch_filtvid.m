@@ -25,9 +25,9 @@ for file = 1:nfile
     
     Fs = round( 1 /mean(diff(t_v)) );
 
-    filtvid = filtfilt_vid(vidData, n, Fc, Fs);
+    filtvid = filtfilt_vid(3*vidData, n, Fc, Fs);
 
-    save(fullfile(filtdir,FILES{file}), '-v7.3', 'filtvid', 't_v')
+    save(fullfile(filtdir,FILES{file}), '-v7.3', 'filtvid', 't_v', 'n', 'Fc')
 end
 disp('ALL DONE')
 
