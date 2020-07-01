@@ -1,4 +1,4 @@
-function [] = batch_headtrack(root, npoints, playback, showpoint)
+function [] = batch_headtrack(root, npoints, center, playback, showpoint)
 %% batch_headtrack: runs head tracker for user selected video files
 %
 %   INPUT:
@@ -12,10 +12,14 @@ function [] = batch_headtrack(root, npoints, playback, showpoint)
 %       -
 %
 
-% showpoint = true;
-% npoints = 5;
-% playback = 5;
+showpoint = true;
+npoints = 1;
+center = [];
+playback = 5;
 % root = 'H:\EXPERIMENTS\MAGNO\Experiment_SOS\registered';
+
+center = 'H:\EXPERIMENTS\RIGID\Experiment_Asymmetry_Control_Verification\HighContrast\30\Vid\tracked_head\Fly_14_Trial_1_Vel_-90_SpatFreq_30.mat';
+center = load(center);
 
 [FILES, PATH] = uigetfile({'*.mat', 'MAT-files'},'Select videos', root, 'MultiSelect','on');
 FILES = string(FILES);
@@ -26,9 +30,10 @@ headdir = fullfile(PATH,'tracked_head');
 for file = 1:nfile
     disp(FILES(file))
     disp('---------------------------------------')
-    load(fullfile(PATH,FILES(file)),'regvid','t_v')
+    load(fullfile(PATH,FILES(file)),'vidData','t_v')
 
-    [hAngles,cPoint,validity,ROI,initframe,finalframe] = headtracker(regvid, npoints, playback, showpoint);
+    [hAngles,cPoint,validity,ROI,initframe,finalframe] = headtracker(vidData, npoints, center.cPoint, ...
+                                                                            playback, showpoint);
         
     figure
     imagesc(validity)
@@ -39,6 +44,8 @@ for file = 1:nfile
     
  	save(fullfile(headdir,FILES{file}),'-v7.3','hAngles','cPoint','validity',...
                                             'ROI','initframe','finalframe','t_v')
+%  	save(fullfile(headdir,FILES{file}),'-v7.3','hAngles','cPoint','validity',...
+%                                             'ROI','initframe','finalframe')
                                                                        
 end
 disp('ALL DONE')

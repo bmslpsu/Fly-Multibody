@@ -32,6 +32,10 @@ end
 vid = squeeze(vid); % remove singleton dimensions
 [~,~,nframe] = size(vid); % get size of video
 
+% for n = 1:nframe
+%     vid(:,:,n) = 255*uint8(imbinarize(medfilt2(vid(:,:,n),[3 3])));
+% end
+
 trackFrame = vid(:,:,1); % get 1st frame to start tracker
 displayFrame = vid(:,:,1); % get 1st frame for display
 

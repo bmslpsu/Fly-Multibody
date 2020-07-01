@@ -35,6 +35,7 @@ if ~rem(playback,1)==0
     playback = round(playback);
 end
 
+vid = squeeze(vid); % get rid of singleton dimension
 vid = flipud(vid); % flip video to arena reference frame
 [yp,xp,nframe] = size(vid);  % get size & # of frames of video
 
