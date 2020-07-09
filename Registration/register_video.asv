@@ -21,12 +21,14 @@ dim = size(vid); % Used often
 
 % Get intial orientation
 v1 = vid(:,:,1); % initial frame
-% v2 = medfilt2(imopen(v1,strel('disk',15)),[7 7]);
+v2 = medfilt2(imopen(v1,strel('disk',15)),[7 7]);
 % v3 = im2bw(v2,graythresh(v2));
-% v3 = imbinarize(v2);
-% L = regionprops(v3,'Orientation'); % initial angle
+v3 = imbinarize(v2);
+L = regionprops(v3,'Orientation'); % initial angle
+
 % refangle = L.Orientation;
-[refangle,~] = findheading(v1, false, 0);
+[refangle,flip,bias,ax,fig] = findheading(frame, debug, ratio)
+
 
 trf     = cell(dim(3),1); % store 2D affine transformations here
 fixed   = double(squeeze(vid(:,:,1)));

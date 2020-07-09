@@ -75,7 +75,7 @@ PAT.time_sync 	= daq_time - PAT.sync_time; % synced pattern time so 0 is the sta
 
 if PAT.end_idx >= length(daq_time)
     PAT.end_time = PAT.time_sync(PAT.end_idx+0); % end time
-    warning('Pattern to short')
+    %warning('Pattern to short')
 else
     PAT.end_time = PAT.time_sync(PAT.end_idx+1); % end time
 end

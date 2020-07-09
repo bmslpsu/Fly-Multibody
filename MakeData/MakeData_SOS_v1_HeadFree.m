@@ -16,10 +16,11 @@ root.benifly = fullfile(root.reg ,'tracked_head_wing');
 root.head = fullfile(root.reg ,'tracked_head');
 
 % Select files
-[FILES, ~] = uigetfile({'*.csv'}, 'Select trials', root.benifly, 'MultiSelect','on');
-FILES = cellstr(FILES)';
+% [FILES, ~] = uigetfile({'*.csv'}, 'Select trials', root.benifly, 'MultiSelect','on');
+% FILES = cellstr(FILES)';
+% [D,I,N,U,T,~,~,basename] = GetFileData(FILES,'',false);
+[D,I,N,U,T,~,~,basename] = GetFileData(root.benifly,'*.csv',false);
 
-[D,I,N,U,T,~,~,basename] = GetFileData(FILES,'',false);
 
 %% Get Data %%
 close all
@@ -27,8 +28,8 @@ clc
 
 IOFreq = [1, 3.1, 5.3, 7.4, 9.6];
 Fs = 100;
-Fc = 15;
-tintrp = (0:(1/Fs):20)';  
+Fc = 49;
+tintrp = (0:(1/Fs):20)';
 function_length = 20;
 [b,a] = butter(2, Fc/(Fs/2),'low');
 ALL = cell(N.fly,1);
@@ -47,7 +48,7 @@ for kk = 1:N{1,end}
     daq_pattern = data.daq.data(:,2);
     trigger     = data.daq.data(:,1);
     
-    [TRIG,PAT]  = sync_pattern_trigger(daq_time, daq_pattern, function_length, trigger, tintrp, [], false);
+	[TRIG,PAT]  = sync_pattern_trigger(daq_time, daq_pattern, function_length, trigger, true, [], true, false);
     trig_time   = TRIG.time_sync;
     
   	% Filter wing angles

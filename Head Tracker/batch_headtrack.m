@@ -13,13 +13,14 @@ function [] = batch_headtrack(root, npoints, center, playback, showpoint)
 %
 
 showpoint = true;
-npoints = 1;
+npoints = 2;
 center = [];
 playback = 5;
 % root = 'H:\EXPERIMENTS\MAGNO\Experiment_SOS\registered';
 
-center = 'H:\EXPERIMENTS\RIGID\Experiment_Asymmetry_Control_Verification\HighContrast\30\Vid\tracked_head\Fly_14_Trial_1_Vel_-90_SpatFreq_30.mat';
+center = 'H:\EXPERIMENTS\RIGID\Experiment_Static_Wave\tracked_head\Fly_7_Trial_1_Wave_0_Vel_0.mat';
 center = load(center);
+center = center.cPoint;
 
 [FILES, PATH] = uigetfile({'*.mat', 'MAT-files'},'Select videos', root, 'MultiSelect','on');
 FILES = string(FILES);
@@ -32,7 +33,7 @@ for file = 1:nfile
     disp('---------------------------------------')
     load(fullfile(PATH,FILES(file)),'vidData','t_v')
 
-    [hAngles,cPoint,validity,ROI,initframe,finalframe] = headtracker(vidData, npoints, center.cPoint, ...
+    [hAngles,cPoint,validity,ROI,initframe,finalframe] = headtracker(vidData, npoints, center, ...
                                                                             playback, showpoint);
         
     figure

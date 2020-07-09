@@ -3,7 +3,7 @@ function [heading,flip,bias,ax,fig] = findheading(frame, debug, ratio)
 %
 %   INPUT:
 %       frame    	:   frame to extract heading
-%       debug       :   show debug figure (boolean) (default = true)
+%       debug       :   show debug figure 0=never, 1=always, 2=if close call (default = 2)
 %      	ratio       :   frame ratio to compare top & bottom (default = 1/4)
 %
 %   OUTPUT:
@@ -19,7 +19,7 @@ function [heading,flip,bias,ax,fig] = findheading(frame, debug, ratio)
 if nargin < 3
     ratio = 1/4; % default
     if nargin < 2
-        debug = true; % default
+        debug = 2; % default
     end
 end
 
@@ -90,9 +90,11 @@ end
 
 % Check for ambiguous estimates % bring up debug window if heading estimate
 % is too close to call
-if abs(1-bias) < 0.1
-    warning('Initial heading estimate may be incorect')
-    debug = true;
+if debug == 2
+    if abs(1-bias) < 0.1
+        warning('Initial heading estimate may be incorect')
+        debug = true;
+    end
 end
 
 % Show plots
