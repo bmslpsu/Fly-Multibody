@@ -38,7 +38,8 @@ head_frame =  imrotate(frame, 90 - imgstats(1).Orientation, 'loose');
 
 % Get image reigon stats and extract bounding reigon of rotated reigon
 imgstats = regionprops(check_frame,'Centroid','Orientation','Image'); % image reigon properties
-check_frame = imgstats(1).Image;
+[~,main_image_idx] = max(cellfun(@numel,{imgstats.Image}));
+check_frame = imgstats(main_image_idx).Image;
 
 imgstats = regionprops(imbinarize(head_frame),'BoundingBox','Image'); % image reigon properties
 [~,flyIdx] = max(cellfun(@(x) numel(x), {imgstats.Image}));

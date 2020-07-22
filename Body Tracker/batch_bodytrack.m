@@ -1,4 +1,4 @@
-function [] = batch_bodytrack(root, playback, head_debug)
+function [] = batch_bodytrack(root, playback, heading_debug)
 %% batch_bodytrack: runs body tracker for user selected video files
 %
 %   INPUT:
@@ -15,11 +15,11 @@ function [] = batch_bodytrack(root, playback, head_debug)
 % root = 'H:\EXPERIMENTS\MAGNO\Experiment_SOS';
 
 if nargin < 3
-    head_debug = false; % default
+    heading_debug = false; % default
     if nargin < 2
         playback = 1; % default
         if ~nargin
-            root = ''; % root is current folder 
+            root = ''; % root is current folder
         end
     end
 end
@@ -37,7 +37,7 @@ for file = 1:nfile
     
    	close all
     
-    [bAngles,imgstats,initframe] = bodytracker(vidData, playback, head_debug);
+    [bAngles,imgstats,initframe] = bodytracker(vidData, playback, heading_debug);
 
     save(fullfile(bodydir,FILES{file}),'-v7.3','bAngles','imgstats','initframe','t_v')
 end

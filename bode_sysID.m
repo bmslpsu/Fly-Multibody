@@ -20,7 +20,7 @@ Fs      = 1/mean(diff(time));   % sampling rate [Hz]
 
 State  = cellfun(@(x) x(:),varargin,'UniformOutput',false); % store inputs in cells as column vectors
 State  = cat(2,State{:}); % store inputs in cells as column vectors
-State(:,end+1)  = sum(State,2); % last state is the sum of all states 
+State(:,end+1) = sum(State,2); % last state is the sum of all states 
 
 % Convert reference to frequency domain
 [refFv, refMag, refPhase, refFreq] = FFT(time,ref);
