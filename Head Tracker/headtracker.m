@@ -1,5 +1,5 @@
 function [hAngles,cPoint,validity,ROI,initframe,finalframe] = headtracker(vid, npoint, center, playback, showpoint)
-% HeadTracker: tracks insect head movments in a rigid terher
+% headtracker: tracks insect head movments in a rigid terher
 %
 % Tracks feature on fly head (ususally antenna) & calculates the angle with 
 % respect to a specififed center point. Kanade–Lucas–Tomasi feature tracker.

@@ -15,7 +15,7 @@ function [] = batch_filtvid(root, n, Fc)
 FILES = string(FILES);
 nfile = length(FILES);
 
-filtdir = fullfile(PATH,'wing_filt');
+filtdir = fullfile(PATH,'vid_filt');
 mkdir(filtdir)
 
 for file = 1:nfile

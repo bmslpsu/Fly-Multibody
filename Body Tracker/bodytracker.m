@@ -1,4 +1,4 @@
-function [norm_ang,imgstats,initframe] = bodytracker(vid, playback, head_debug)
+function [norm_ang,imgstats,initframe] = bodytracker(vid, playback, head_debug, par)
 %% bodytracker: tracks the body angle of an insect in a magnetic tether
 %
 % Fits an ellipse to the 'on' reigon in each frame (insect body). Blurs the
@@ -11,7 +11,8 @@ function [norm_ang,imgstats,initframe] = bodytracker(vid, playback, head_debug)
 %       vid         :   input video matrix
 %       playback   	:   playback rate (show a frame in increments of "playback").
 %                       If false, then only show the 1st frame. (default = 1)
-%       head_debug  :   always bring up the heading angle check-window if true
+%       head_debug  :   show debug figure 0=never, 1=always, 2=if close call (default = 2)
+%       par         :   if true, use parallel processing
 %                           
 %   OUTPUT:
 %       norm_ang 	:   normalized & unwrapped body angle [°]
@@ -19,10 +20,13 @@ function [norm_ang,imgstats,initframe] = bodytracker(vid, playback, head_debug)
 %       initframe   :   initial (1st) frame image
 %
 
-if nargin < 3
-    head_debug = false; % default
-    if nargin < 2
-        playback = 1; % default
+if nargin < 4
+    par = false;
+    if nargin < 3
+        head_debug = false; % default
+        if nargin < 2
+            playback = 1; % default
+        end
     end
 end
 
@@ -36,7 +40,7 @@ if ~rem(playback,1)==0
 end
 
 vid = squeeze(vid); % get rid of singleton dimension
-vid = flipud(vid); % flip video to arena reference frame
+%vid = flipud(vid); % flip video to arena reference frame
 [yp,xp,nframe] = size(vid);  % get size & # of frames of video
 
 % Use the inital frame to find the heading
@@ -49,13 +53,24 @@ bnvid = false(yp,xp,nframe); % stores the processed video
 SE_erode = strel('disk',8,4); % erosion mask
 SE_dilate = strel('disk',12,4); % dilation mask
 tic
-parfor idx = 1:nframe
-    % disp(idx)
-    frame = vid(:,:,idx); % get raw frame
-    bnframe = imbinarize(frame); % binarize
-    bnframe = imerode(bnframe, SE_erode); % erode
-    bnframe = imdilate(bnframe, SE_dilate); % dilate
-    bnvid(:,:,idx) = logical(bnframe); % store bianary frame
+if par
+    parfor idx = 1:nframe
+        % disp(idx)
+        frame = vid(:,:,idx); % get raw frame
+        bnframe = imbinarize(frame); % binarize
+        bnframe = imerode(bnframe, SE_erode); % erode
+        bnframe = imdilate(bnframe, SE_dilate); % dilate
+        bnvid(:,:,idx) = logical(bnframe); % store bianary frame
+    end
+else
+    for idx = 1:nframe
+        % disp(idx)
+        frame = vid(:,:,idx); % get raw frame
+        bnframe = imbinarize(frame); % binarize
+        bnframe = imerode(bnframe, SE_erode); % erode
+        bnframe = imdilate(bnframe, SE_dilate); % dilate
+        bnvid(:,:,idx) = logical(bnframe); % store bianary frame
+    end
 end
 toc
 
