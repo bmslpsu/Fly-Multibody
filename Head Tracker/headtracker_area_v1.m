@@ -1,4 +1,4 @@
-classdef headtracker_area
+classdef headtracker_area_v1
     %% headtracker_area: track head yaw and roll
     %   
     
@@ -37,7 +37,7 @@ classdef headtracker_area
     end
     
     methods
-        function obj = headtracker_area(vid)
+        function obj = headtracker_area_v1(vid)
             % headtracker_area: Construct an instance of this class
             %   
             obj.vid = squeeze(vid); % input video
@@ -129,6 +129,7 @@ classdef headtracker_area
             obj.head_out_vid = false(size(obj.head_vid));
             se_dilate = strel('disk',8);
             se_erode = strel('disk',2);
+            %se_line = strel('line',5,90);
             for n = 1:obj.dim(3)
                 A = cell(1);
                 A{1} = 2*obj.head_vid(:,:,n);
@@ -151,8 +152,10 @@ classdef headtracker_area
                 
                 % Get outline of head/neck
                 A{end+1} = imerode(A{end}, se_erode);
-                A{end+1} = imfill(A{end}, 'holes'); 
-                A{end+1} = bwmorph(A{end}, 'bridge',3);
+                A{end+1} = imfill(A{end}, 'holes');
+                A{end+1} = bwareaopen(A{end},300);
+                %A{end+1} = bwmorph(A{end}, 'bridge',3);
+                
                 
                 obj.head_bw_vid(:,:,n) = A{end};
                 
@@ -175,9 +178,31 @@ classdef headtracker_area
                 %fprintf('%i \n', n)
                 raw = obj.head_vid(:,:,n); % raw for stabilization
                 frame = obj.head_out_vid(:,:,n); % frame for analysis
-
-                % Calculate yaw
-                [neck] = calculate_yaw(obj, frame, 0.95, true);
+                
+                % Get left and right segments of frame
+                left = frame;
+                left(:,round(obj.head_cent(1)):obj.head_dim(2)) = false;
+                right = frame;
+                right(:,1:round(obj.head_cent(1))) = false;
+                
+                % Get the farthest 'on' pixel from center line for left and right images
+                xx = zeros(obj.head_dim(1),2);
+                xR = zeros(obj.head_dim(1),1);
+                xL = zeros(obj.head_dim(1),1);
+                for r = 1:obj.head_dim(1)
+                    all_x = find(frame(r,:));
+                    if length(all_x) > 1
+                        xx(r,:) = [all_x(1) all_x(end)];
+                    end
+                    x_right = find(right(r,:), 1, 'last');
+                    x_left = find(left(r,:), 1, 'first');
+                    if ~isempty(x_right)
+                        xR(r) = find(right(r,:), 1, 'last');
+                    end
+                    if ~isempty(x_left)
+                        xL(r) = find(fliplr(left(r,:)), 1, 'last');
+                    end
+                end
                 
                 % Filter curves
                 [b, a] = butter(3, Fc_n, 'low');
@@ -187,6 +212,10 @@ classdef headtracker_area
                 % Get bottom edge of neck in left and right images
                 [nR(n)] = get_neck_edge(obj, xR_filt, right, false);
                 [nL(n)] = get_neck_edge(obj, xL_filt, left, false);
+                
+                if n == 527
+                    disp('here')
+                end
                 
                 %min_neck_point = round(1.1*min([nL(n).peak , nR(n).peak]));
                 %min_neck_image = obj.head_bw_vid(min_neck_point:obj.head_dim(1),:,n);
@@ -231,129 +260,16 @@ classdef headtracker_area
             fprintf(' Done. \n')
         end
         
-        function [neck] = calculate_yaw(obj, frame, Fc_n, debug)
-            % calculate_yaw:
+        function [neck] = get_neck_edge(obj, edge, I, debug)
+            % get_neck_edge:
             %   INPUTS:
+            %       edge    : far edge for each row
             %       I       : left or right image
-            %       Fc_n    : 
             %       debug   : show plots
             %
             %   OUTPUTS:
             %       neck    : neck structure
             %
-            
-            % Get outline of image
-            outline = bwboundaries(frame, 'noholes'); % [y,x]
-            
-            if length(outline) > 1
-                warning('Multiple outlines detected')
-            end
-            outline = outline{1};
-            
-            % Split into left and right sides
-            cent = round(obj.head_cent(1));
-            leftI = (outline(:,2) <= cent);
-            rightI = ~leftI;
-            left_outline = outline(leftI,:); %[y,x]
-            right_outline = outline(rightI,:); %[y,x]
-            left = frame(:,1:cent);
-            right = frame(:,cent+1:obj.head_dim(2));
-
-            % Get farthest points from center from left and right, and the width (right-left)
-            xR = nan(obj.head_dim(1),1);
-            xL = nan(obj.head_dim(1),1);
-            dx = zeros(obj.head_dim(1),2);
-            for r = 1:obj.head_dim(1)
-                all_x = find(frame(r,:));
-                if length(all_x) > 1
-                    dx(r,:) = [all_x(1) all_x(end)];
-                end
-                x_right = find(right(r,:), 1, 'last');
-                x_left = find(left(r,:), 1, 'first');
-                if ~isempty(x_right)
-                    xR(r) = x_right;
-                end
-                if ~isempty(x_left)
-                    xL(r) = x_left;
-                end
-            end
-            xR = fillmissing(xR,'nearest');
-            xL = fillmissing(xL,'nearest');
-            
-            % Filter curves
-          	[b, a] = butter(3, Fc_n, 'low');
-            xR_filt = filtfilt(b, a, xR);
-            xL_filt = filtfilt(b, a, xL);
-            
-            % Interpolate edges
-            idx = (1:obj.head_dim(1))';
-            new_idx = (1:0.1:obj.head_dim(1))';
-            xR_intrp = interp1(idx, xR_filt, new_idx);
-            xL_intrp = interp1(idx, xL_filt, new_idx);
-            
-            % Find peaks on left side
-            [~,all_peak,w,p] = findpeaks(xL_intrp, new_idx, 'MinPeakDistance', 30, 'MinPeakWidth', 3, ...
-                                'MinPeakProminence', 10, 'WidthReference', 'halfprom', ...
-                                'MaxPeakWidth', 40, 'SortStr', 'descend');
-                            
-            % Estimate neck joint location
-          	x_peak = all_peak(1);
-           	left_peak_I = dsearchn(new_idx, x_peak);
-        	left_neck = [new_idx(left_peak_I) xL_intrp(left_peak_I)]; % [y,x]
-            
-            % Find left edge
-            left_width = w(1);
-            left_edge_end_mag = left_neck(1) - left_width/1.6;
-            left_edge_end_I = find(new_idx(1:left_peak_I) > left_edge_end_mag, 1, 'first');
-            offset = round(0.2*left_width*10);
-            left_edge_I = (left_edge_end_I:left_peak_I - offset)';
-            left_edge_y = new_idx(left_edge_I);
-            left_edge_x = xL_intrp(left_edge_I);
-            
-            % Find peaks on right side
-            [~,all_peak,w,p] = findpeaks(200-xR_intrp, new_idx, 'MinPeakDistance', 30, 'MinPeakWidth', 3, ...
-                                'MinPeakProminence', 5, 'WidthReference', 'halfprom', ...
-                                'MaxPeakWidth', 40, 'SortStr', 'descend');
-                            
-            % Estimate neck joint location
-          	x_peak = all_peak(1);
-           	right_peak_I = dsearchn(new_idx, x_peak);
-        	right_neck = [new_idx(right_peak_I) , cent + xR_intrp(right_peak_I)]; % [y,x]
-            
-            % Find right edge
-            right_width = w(1);
-            right_edge_end_mag = right_neck(1) - right_width/1.6;
-            right_edge_end_I = find(new_idx(1:right_peak_I) > right_edge_end_mag, 1, 'first');
-            offset = round(0.2*right_width*10);
-            right_edge_I = (right_edge_end_I:right_peak_I - offset)';
-            right_edge_y = new_idx(right_edge_I);
-            right_edge_x = cent + xR_intrp(right_edge_I);
-            
-            neck_edge_x = [left_edge_x ; right_edge_x];
-            neck_edge_y = [left_edge_y ; right_edge_y];
-            neck_x_test = (1:obj.head_dim(2))';
-
-            c = polyfit(neck_edge_x, neck_edge_y, 1);
-
-            neck_y_test = polyval(c, neck_x_test);
-            yaw = rad2deg(atan(c(1)));
-            
-            if debug
-                fig = figure (109); clf
-                set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [3 3 4 4])
-                fig.Position
-                ax(1) = subplot(1,1,1); cla ; hold on; axis image
-                    imshow(frame, 'InitialMagnification', 400) ; hold on
-                    plot([round(obj.head_cent(1)) round(obj.head_cent(1))] + 0.5, [1 obj.head_dim(1)], 'w')
-                    plot(left_edge_x, left_edge_y, 'Color', 'b', 'LineWidth', 2.5)
-                    plot(left_neck(2), left_neck(1), '.b', 'MarkerSize', 20)
-                    plot(right_edge_x, right_edge_y, 'Color', 'r', 'LineWidth', 2)
-                    plot(right_neck(2), right_neck(1), '.r', 'MarkerSize', 20)
-                    plot(neck_x_test, neck_y_test, 'Color', 'm', 'LineWidth', 2.5)
-                    
-                %set(ax, 'Visible', 'on')
-            end
-            
             neck.I = I;
             neck.full_edge = edge;
             Isz = size(I);
@@ -554,7 +470,9 @@ classdef headtracker_area
             
             if nargin < 4
                 export = false;
-                tt = (1:obj.head_dim(3))';
+                if nargin < 3
+                    tt = (1:obj.head_dim(3))';
+                end
             else
                 export = true;
                 [~,outname,ext] = fileparts(fname);
@@ -582,7 +500,7 @@ classdef headtracker_area
                 ax(6) = subplot(4,3,6); cla ; hold on ; axis image
                 ax(7) = subplot(4,3,7); cla ; hold on ; axis image
                 ax(8) = subplot(4,3,8); cla ; hold on ; axis image
-                ax(9) = subplot(4,3,9); cla ; hold on ; axis tight ; ylabel('Intensity') ; ylim([150 270])
+                ax(9) = subplot(4,3,9); cla ; hold on ; axis tight ; ylabel('Intensity') ; ylim([100 270])
                 ax(10) = subplot(4,3,10:12); cla ; hold on ; ylabel('Angle (°)') ; xlabel('Frame')
                     h.yaw = animatedline(ax(10), 'Color', 'c', 'LineWidth', 1);
                     h.roll = animatedline(ax(10), 'Color', 'r', 'LineWidth', 1);

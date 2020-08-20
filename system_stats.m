@@ -25,12 +25,12 @@ classdef system_stats
                 %obj.circ_median = circ_median(A,dim);
                 obj.circ_std 	= circ_std(A,[],[],dim);
             else
-                obj.mean        = A;
-                obj.median      = A;
-                obj.std         = A;
-                obj.circ_mean 	= A;
-                %obj.circ_median = A;
-                obj.circ_std 	= A;
+                obj.mean        = nan;
+                obj.median      = nan;
+                obj.std         = nan;
+                obj.circ_mean 	= nan;
+                %obj.circ_median = nan;
+                obj.circ_std 	= nan;
             end
         end
     end
