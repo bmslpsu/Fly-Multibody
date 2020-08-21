@@ -28,6 +28,7 @@ classdef headtracker_area_v1
         neck                % neck properties
         pivot               % pivot point from yaw line intersection with midline
         yaw                 % head yaw
+        yaw_filt            % filtered yaw for head stabilization (to compute roll)
         saturation          % saturation [L, R] (boolean)
         
         eye                 % eye properties
@@ -40,13 +41,24 @@ classdef headtracker_area_v1
         function obj = headtracker_area_v1(vid)
             % headtracker_area: Construct an instance of this class
             %   
+            
             obj.vid = squeeze(vid); % input video
             obj.dim = size(obj.vid); % video size
             
+            % Get video properties
             [obj.vid_props, obj.bw_vid, obj.bound_box, obj.body_yaw] = get_vid_props(obj, vid, [], false);
+            
+            % Get head reigon
             [obj] = get_head_vid(obj, [0 0.1], 0.3);
+            
+            % Get yaw
             [~, ~, obj] = get_yaw(obj, 0.5);
-            [~, obj] = get_roll(obj, 0.35, 36.33);
+            
+            % Isolate head in each frame
+            [obj] = iso_head(obj, 2);
+            
+            % Get roll
+            %[~, obj] = get_roll(obj, 0.35, 36.33, false);
         end
         
         function [vid_props, bw_vid, bound_box, body_yaw] = get_vid_props(obj, vid, fill_ratio, debug)
@@ -176,7 +188,7 @@ classdef headtracker_area_v1
             obj.head_stable_vid = uint8(zeros(size(obj.head_vid)));
             for n = 1:obj.head_dim(3)
                 %fprintf('%i \n', n)
-                raw = obj.head_vid(:,:,n); % raw for stabilization
+                %raw = obj.head_vid(:,:,n); % raw for stabilization
                 frame = obj.head_out_vid(:,:,n); % frame for analysis
                 
                 % Get left and right segments of frame
@@ -209,13 +221,13 @@ classdef headtracker_area_v1
                 xR_filt = filtfilt(b, a, xR);
                 xL_filt = filtfilt(b, a, xL);
                 
+%                 if n == 1472
+%                     disp('here')
+%                 end
+                
                 % Get bottom edge of neck in left and right images
                 [nR(n)] = get_neck_edge(obj, xR_filt, right, false);
                 [nL(n)] = get_neck_edge(obj, xL_filt, left, false);
-                
-                if n == 527
-                    disp('here')
-                end
                 
                 %min_neck_point = round(1.1*min([nL(n).peak , nR(n).peak]));
                 %min_neck_image = obj.head_bw_vid(min_neck_point:obj.head_dim(1),:,n);
@@ -243,15 +255,15 @@ classdef headtracker_area_v1
                 
                 %[test,test1] = polyxpoly(obj.neck(n).x_test, obj.neck(n).y_test, ...
                     %[obj.pivot(n,1) obj.pivot(n,1)], [1 obj.head_dim(2)] );
-                    
-            	% Stabilize the frame in head reference frame
-                obj.head_stable_vid(:,:,n) = imrotate(raw, obj.neck(n).yaw, 'bilinear', 'crop');
             end
             obj.neck_left = nL;
             obj.neck_right = nR;
+            
             yaw = cat(1,obj.neck(:).yaw);
-            pivot = median(obj.pivot,1);
+            %yaw = hampel(1:obj.head_dim(3), yaw);
             obj.yaw = yaw;
+            
+            pivot = median(obj.pivot,1);
             obj.pivot = pivot;
             
             % Estimate when saturation occrurs
@@ -272,8 +284,11 @@ classdef headtracker_area_v1
             %
             neck.I = I;
             neck.full_edge = edge;
+            cut_edge = edge;
+            cutI = round(0.3 * obj.head_dim(1));
+            cut_edge(1:cutI) = nan;
             Isz = size(I);
-            [pks,locs,w,p] = findpeaks(-edge, 'MinPeakDistance', 10, 'MinPeakWidth', 3, ...
+            [pks,locs,w,p] = findpeaks(-cut_edge, 'MinPeakDistance', 10, 'MinPeakWidth', 3, ...
                                             'MinPeakProminence', 10, 'SortStr', 'descend');
             idx = (1:length(edge))';
             if isempty(locs)
@@ -356,17 +371,14 @@ classdef headtracker_area_v1
             [obj.saturation(:,2)] = isoutlier(right, 'quartiles', 1);
         end
         
-        function [roll, obj] = get_roll(obj, eye_ratio, roll_cal)
+        function [roll, obj] = get_roll(obj, eye_ratio, roll_cal, debug)
             % get_roll: find roll angle of head in each frame
             %  eye_ratio: amount around centroid to get eye intensity
             %  roll_cal: roll calibration factor
             %
             
             obj.roll_cal = roll_cal;
-            
-            % Isolate head in each frame
-            [obj] = iso_head(obj, 2);
-            
+                        
             % Get head radiius
            	bb = cat(1,obj.head_iso_props(:).BoundingBox);
             obj.head_radius = median(bb(:,4));
@@ -382,28 +394,96 @@ classdef headtracker_area_v1
             fprintf('Calculating roll angles ...')
             obj.eye.intensity = cell(obj.head_dim(3),1);
             obj.eye.intensity_mean = nan(obj.head_dim(3),obj.head_dim(2));
+            [b,a] = butter(3, 0.3, 'low');
             for n = 1:obj.head_dim(3)
                 %fprintf('%i \n', n)
                 frame = obj.head_iso_vid(:,:,n); % frame for roll analysis
                 
-                % Get eye intensityies in window
+                % Get eye intensities in window
              	obj.eye.intensity{n} = double(frame(obj.eye.window,:)); % intensity in eye range
-                obj.eye.intensity_mean(n,:) = mean(obj.eye.intensity{n},1); % mean intensity
+                int_mean = filtfilt(b, a, mean(obj.eye.intensity{n},1));
+                obj.eye.intensity_mean(n,:) = int_mean; % mean intensity
+                dx = diff(obj.eye.intensity_mean(n,:));
+                dx = [dx(1) , dx];
+                dx = filtfilt(b, a, dx);
+                obj.eye.intensity_mean_diff(n,:) = dx; % derivative of mean intensity
+
+                % Find outer spikes to get eye starts (outer)
+                [~,locs,w] = findpeaks(obj.eye.intensity_mean_diff(n,:), 'MinPeakHeight', 2, ...
+                                'MinPeakWidth', 2, 'MinPeakProminence', 2);
+              	left_outer = (locs(1) - 0*w(1)/1.5);
                 
-                % Find peaks
-                [pks,locs,w,p] = findpeaks(obj.eye.intensity_mean(n,:), 'MinPeakHeight', 100, 'MinPeakDistance', 5, ...
-                                'MinPeakWidth', 5, 'MinPeakProminence', 5);
-                            
+                [~,locs,w] = findpeaks(-obj.eye.intensity_mean_diff(n,:), 'MinPeakHeight', 2, ...
+                                'MinPeakWidth', 2, 'MinPeakProminence', 2);
+               	right_outer = (locs(end) + 0*w(end)/1.5);
+                
+                % Find peak intensities
+                [pks,locs,w,p] = findpeaks(obj.eye.intensity_mean(n,:), 'MinPeakHeight', 100, ...
+                                'MinPeakDistance', 5, 'MinPeakWidth', 2, 'MinPeakProminence', 5);
+
                 % Get left and right eye peaks (1st & last)
             	obj.eye.peak_loc(n,:) = locs([1,end]); % pixel in horizontal plane
                 obj.eye.peak_int(n,:) = pks([1,end]); % intensity value (close too 255)
-                obj.eye.search_int(n,1) = min(0.95*obj.eye.peak_int(n,:)); % intensity level to find eye widths
                 
-                % Find where left and right curves intersect the search level
-                [xi,~] = polyxpoly([1 obj.head_dim(2)], [obj.eye.search_int(n,1) obj.eye.search_int(n,1)], ...
-                    1:obj.head_dim(2), obj.eye.intensity_mean(n,:));
-                obj.eye.left(n,:) = [xi(1) , xi(2)];
-                obj.eye.right(n,:) = [xi(end-1) , xi(end)];
+                % Get change in intensity between peaks
+                flex = round(0.05 * obj.head_dim(2));
+                obj.eye.eye_range{n} = obj.eye.peak_loc(n,1)-flex : obj.eye.peak_loc(n,2)+flex; % between peaks
+                mid = nan(size(dx));
+                mid(obj.eye.eye_range{n}) = obj.eye.intensity_mean_diff(n,obj.eye.eye_range{n});
+                obj.eye.eye_mid{n} = mid; % intensity between peaks
+                
+                % Find inner valleys (end of eyes)
+              	[~,locs,w] = findpeaks(-obj.eye.eye_mid{n}, 'MinPeakHeight', 2, ...
+                                'MinPeakWidth', 2, 'MinPeakProminence', 2);
+              	if ~isempty(locs)
+                    left_inner = (locs(1) + 0*w(1)/1.5);
+                    obj.eye.left_inner_int(n) = obj.eye.intensity_mean(n,round(left_inner));
+                    obj.eye.left(n,:) = [left_outer, left_inner];
+                else
+                    obj.eye.left(n,:) = [0, 0];
+                end
+                
+             	[~,locs,w] = findpeaks(obj.eye.eye_mid{n},'MinPeakHeight', 2, ...
+                                'MinPeakWidth', 2, 'MinPeakProminence', 2);
+               	if ~isempty(locs)
+                    right_inner = (locs(end) - 0*w(end)/1.5);
+                    obj.eye.right_inner_int(n) = obj.eye.intensity_mean(n,round(right_inner));
+                    obj.eye.right(n,:) = [right_inner , right_outer];
+                else
+                    obj.eye.right(n,:) = [0 , 0];
+                end
+                
+                % Eye inner & outer points
+                obj.eye.left(n,:) = [left_outer, left_inner];
+                obj.eye.right(n,:) = [right_inner , right_outer];
+                
+                if n == 262
+                    disp('here')
+                end
+                
+                if debug
+                    figure (111) ; clf ; hold on ; ylim([-50 255])
+                        plot(obj.eye.intensity_mean(n,:), 'k', 'LineWidth', 1)
+                        plot([1 obj.head_dim(2)], [0 0], '--k', 'LineWidth', 0.5)
+                        plot(obj.eye.peak_loc(n,:), obj.eye.peak_int(n,:), '.r', 'MarkerSize', 15)
+                        plot(obj.eye.intensity_mean_diff(n,:), 'g', 'LineWidth', 1)
+                        plot(obj.eye.eye_mid{n}, 'r', 'LineWidth', 1.5)
+                        plot(obj.eye.left(n,:), [obj.eye.left_inner_int(n) obj.eye.left_inner_int(n)], ...
+                            '.-m', 'MarkerSize', 15)
+                        plot(obj.eye.right(n,:), [obj.eye.right_inner_int(n) obj.eye.right_inner_int(n)], ...
+                            '.-c', 'MarkerSize', 15)
+                        plot([obj.eye.left(n,1) obj.eye.left(n,1)], [0 obj.eye.left_inner_int(n)], 'm')
+                        plot([obj.eye.left(n,2) obj.eye.left(n,2)], [0 obj.eye.left_inner_int(n)], 'm')
+                        plot([obj.eye.right(n,2) obj.eye.right(n,2)], [0 obj.eye.right_inner_int(n)], 'c')
+                        plot([obj.eye.right(n,1) obj.eye.right(n,1)], [0 obj.eye.right_inner_int(n)], 'c')
+                end
+                
+                % % Find where left and right curves intersect the search level
+                %obj.eye.search_int(n,1) = min(0.95*obj.eye.peak_int(n,:)); % intensity level to find eye widths
+                %[xi,~] = polyxpoly([1 obj.head_dim(2)], [obj.eye.search_int(n,1) obj.eye.search_int(n,1)], ...
+                    %1:obj.head_dim(2), obj.eye.intensity_mean(n,:));
+                %obj.eye.left(n,:) = [xi(1) , xi(2)];
+                %obj.eye.right(n,:) = [xi(end-1) , xi(end)];
             end
             % Find eye widths and roll index
           	obj.eye.left_width  = diff(obj.eye.left, 1, 2);
@@ -421,8 +501,18 @@ classdef headtracker_area_v1
             %
             
             fprintf('Isolating head ...')
+            [b,a] = butter(3, 0.3, 'low');
+            obj.yaw_filt = obj.yaw;
+            obj.yaw_filt = hampel(1:obj.dim(3), obj.yaw_filt, 10, 3, 'Adaptive', 0.1);
+            obj.yaw_filt = filtfilt(b,a,obj.yaw_filt);
             
-            % Filter video and get find where the head starts in every frame
+           	% Stabilize the frame in head reference
+            for n = 1:obj.head_dim(3)
+                obj.head_stable_vid(:,:,n) = imrotate(obj.head_vid(:,:,n), ...
+                    obj.neck(n).yaw, 'bilinear', 'crop');
+            end
+            
+            % Filter video and find where the head starts in every frame
             vid_filt = obj.head_stable_vid;
             obj.head_start = nan(obj.head_dim(3),1);
             for n = 1:obj.head_dim(3)
@@ -437,7 +527,7 @@ classdef headtracker_area_v1
             y_range = obj.head_start_min:obj.pivot(2);
             obj.head_iso_vid = uint8( zeros( length(y_range), obj.head_dim(2)) );
           	for n = 1:obj.head_dim(3)
-                obj.head_iso_vid(:,:,n) = vid_filt(y_range,:,n);
+                obj.head_iso_vid(:,:,n) = obj.head_stable_vid(y_range,:,n);
                 
                 bw_iso = imbinarize(obj.head_iso_vid(:,:,n));
                 image_props = regionprops(bw_iso,'Centroid','BoundingBox','MajorAxisLength');
@@ -500,7 +590,7 @@ classdef headtracker_area_v1
                 ax(6) = subplot(4,3,6); cla ; hold on ; axis image
                 ax(7) = subplot(4,3,7); cla ; hold on ; axis image
                 ax(8) = subplot(4,3,8); cla ; hold on ; axis image
-                ax(9) = subplot(4,3,9); cla ; hold on ; axis tight ; ylabel('Intensity') ; ylim([100 270])
+                ax(9) = subplot(4,3,9); cla ; hold on ; axis tight ; ylabel('Intensity')
                 ax(10) = subplot(4,3,10:12); cla ; hold on ; ylabel('Angle (°)') ; xlabel('Frame')
                     h.yaw = animatedline(ax(10), 'Color', 'c', 'LineWidth', 1);
                     h.roll = animatedline(ax(10), 'Color', 'r', 'LineWidth', 1);
@@ -608,11 +698,21 @@ classdef headtracker_area_v1
                     ax(9) = subplot(4,3,9); cla ; hold on
                         plot(obj.eye.intensity{n}', 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
                         plot(obj.eye.intensity_mean(n,:), 'w', 'LineWidth', 2)
-                        plot(obj.eye.peak_loc(n,1), obj.eye.peak_int(n,1), '.g', 'MarkerSize', 20)
-                        plot(obj.eye.peak_loc(n,2), obj.eye.peak_int(n,2), '.g', 'MarkerSize', 20)
-                        plot([1 obj.head_dim(2)], [obj.eye.search_int(n) obj.eye.search_int(n)], '-b', 'LineWidth', 1)
-                        plot(obj.eye.left(n,:), [obj.eye.search_int(n) obj.eye.search_int(n)],  '-r', 'LineWidth', 3)
-                        plot(obj.eye.right(n,:), [obj.eye.search_int(n) obj.eye.search_int(n)],  '-r', 'LineWidth', 3) 
+                        plot([1 obj.head_dim(2)], [0 0], '--y', 'LineWidth', 0.5)
+                        plot(obj.eye.peak_loc(n,:), obj.eye.peak_int(n,:), '.g', 'MarkerSize', 15)
+                        plot(obj.eye.intensity_mean_diff(n,:), 'b', 'LineWidth', 1)
+                        plot(obj.eye.eye_mid{n}, 'g', 'LineWidth', 1.5)
+                        plot(obj.eye.left(n,:), [obj.eye.left_inner_int(n) obj.eye.left_inner_int(n)], ...
+                            '.-r', 'MarkerSize', 15)
+                        plot(obj.eye.right(n,:), [obj.eye.right_inner_int(n) obj.eye.right_inner_int(n)], ...
+                            '.-r', 'MarkerSize', 15)                  
+                     	 plot([obj.eye.left(n,1) obj.eye.left(n,1)], [0 obj.eye.left_inner_int(n)], 'r')
+                        plot([obj.eye.left(n,2) obj.eye.left(n,2)], [0 obj.eye.left_inner_int(n)], 'r')
+                        plot([obj.eye.right(n,2) obj.eye.right(n,2)], [0 obj.eye.right_inner_int(n)], 'r')
+                        plot([obj.eye.right(n,1) obj.eye.right(n,1)], [0 obj.eye.right_inner_int(n)], 'r')
+                        %plot([1 obj.head_dim(2)], [obj.eye.search_int(n) obj.eye.search_int(n)], '-b', 'LineWidth', 1)
+                        %plot(obj.eye.left(n,:), [obj.eye.search_int(n) obj.eye.search_int(n)],  '-r', 'LineWidth', 3)
+                        %plot(obj.eye.right(n,:), [obj.eye.search_int(n) obj.eye.search_int(n)],  '-r', 'LineWidth', 3) 
                 
                     if export
                         fig_frame = getframe(fig);

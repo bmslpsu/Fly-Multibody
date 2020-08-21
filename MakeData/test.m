@@ -8,7 +8,7 @@ function [] = MakeData_SOS_v1_HeadFree(rootdir)
 rootdir = 'H:\EXPERIMENTS\RIGID\Experiment_SOS_v2';
 % filename = 'SOS_HeadFree_DATA';
 
-%% Setup Directories %%
+% Setup Directories
 root.daq = rootdir;
 root.head = fullfile(root.daq ,'tracked_head_edge');
 
