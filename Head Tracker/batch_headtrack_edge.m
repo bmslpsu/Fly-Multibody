@@ -11,7 +11,7 @@ function [] = batch_headtrack_edge(root, playback, export)
 %       -
 %
 
-export = false;
+% export = false;
 playback = 0;
 root = 'H:\EXPERIMENTS\RIGID\Experiment_Ramp_forRoll';
 

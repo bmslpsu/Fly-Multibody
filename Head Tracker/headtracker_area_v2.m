@@ -1,4 +1,4 @@
-classdef headtracker_area_v1
+classdef headtracker_area_v2
     %% headtracker_area: track head yaw and roll
     %   
     
@@ -38,7 +38,7 @@ classdef headtracker_area_v1
     end
     
     methods
-        function obj = headtracker_area_v1(vid)
+        function obj = headtracker_area_v2(vid)
             % headtracker_area: Construct an instance of this class
             %   
             
@@ -222,10 +222,19 @@ classdef headtracker_area_v1
                 [b, a] = butter(3, Fc_n, 'low');
                 xR_filt = filtfilt(b, a, xR);
                 xL_filt = filtfilt(b, a, xL);
-
+                
+                if n == 120
+                    disp('here')
+                end
+                
                 % Get bottom edge of neck in left and right images
-                [nR(n)] = get_neck_edge(obj, xR_filt, right, false);
-                [nL(n)] = get_neck_edge(obj, xL_filt, left, false);
+                if n > 1
+                    [nR(n)] = get_neck_edge(obj, xR_filt, right, nR, false);
+                    [nL(n)] = get_neck_edge(obj, xL_filt, left, nL, false);
+                else
+                    [nR(n)] = get_neck_edge(obj, xR_filt, right, [], false);
+                    [nL(n)] = get_neck_edge(obj, xL_filt, left, [], false);
+                end
                 
                 %min_neck_point = round(1.1*min([nL(n).peak , nR(n).peak]));
                 %min_neck_image = obj.head_bw_vid(min_neck_point:obj.head_dim(1),:,n);
@@ -270,7 +279,7 @@ classdef headtracker_area_v1
             fprintf(' Done. \n')
         end
         
-        function [neck] = get_neck_edge(obj, edge, I, debug)
+        function [neck] = get_neck_edge(obj, edge, I, side, debug)
             % get_neck_edge:
             %   INPUTS:
             %       edge    : far edge for each row
@@ -290,11 +299,22 @@ classdef headtracker_area_v1
                                             'MinPeakProminence', 10, 'SortStr', 'descend');
             idx = (1:length(edge))';
             if isempty(locs)
-                warning('Small peak')
+                %warning('Small peak')
                 neck.flag = true;
-                [pks,locs,w,p] = findpeaks(-edge, 'MinPeakDistance', 10, 'MinPeakWidth', 3, ...
-                                        'MinPeakProminence', 5);
 
+                if ~isempty(side)
+                    good_peak = ~[side.flag]';
+                    pks = -[side.dx];
+                    pks = median(pks(good_peak));
+                    locs = [side.peak];
+                    locs = median(locs(good_peak));
+                    w = [side.width];
+                    w = median(w(good_peak));
+                else
+                    [pks,locs,w,p] = findpeaks(-edge, 'MinPeakDistance', 10, ...
+                            'MinPeakWidth', 3, 'MinPeakProminence', 5);
+                end
+                
                 if isempty(locs)
                     warning('Can''t find angle')
                     %pause(0.1)
@@ -320,13 +340,19 @@ classdef headtracker_area_v1
                 neck.flag = false;
             end
             
-            neck.peak = locs(1);
+            neck.peak = round(locs(1));
             neck.dx = -pks(1);
             neck.width = w(1);
+            
+            if ~neck.flag
+                offset = 0.2*neck.width;
+                Lr = 1.5;
+            else
+                offset = -0.4*neck.width;
+                Lr = 2;
+            end
 
-            offset = 0.2*neck.width;
-
-            neck.edge_range = ((neck.peak  - ceil(neck.width/1.5) ):floor(neck.peak - offset))';
+            neck.edge_range = ((neck.peak  - ceil(neck.width/Lr) ):floor(neck.peak - offset))';
             neck.edge = (edge(neck.edge_range));
             neck.image = I(neck.edge_range,:);
             neck.image_all = false(size(I));
@@ -335,18 +361,10 @@ classdef headtracker_area_v1
             [y, x] = find(neck.image_all);
             neck.x = x;
             neck.y = y;
-            neck.x_test = 1:size(I,2);
-
-            c = polyfit(x, y, 1);
-
-            neck.y_test = polyval(c, neck.x_test);
-            hangle = rad2deg(atan(c(1)));
-            neck.angle = hangle;
 
             if debug
-                fig = figure (109);
+                fig = figure (109); cla
                 set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [3 3 4 6])
-                fig.Position
                 ax(1) = subplot(1,1,1); hold on; axis image
                     imshow(255*I, 'InitialMagnification', 400) ; hold on
                     patch([1 1 Isz(2) Isz(2)], [neck.edge_range(1) neck.edge_range(end) ...
@@ -354,7 +372,6 @@ classdef headtracker_area_v1
                     plot(edge,idx,'m', 'LineWidth', 1)
                     plot(neck.dx, neck.peak, '.g', 'MarkerSize', 15)
                     plot(neck.x, neck.y, '.b', 'LineWidth', 1)
-                    plot(neck.x_test, neck.y_test, '-r', 'LineWidth', 1)
                 set(ax, 'Box', 'on')
             end
         end
@@ -439,18 +456,6 @@ classdef headtracker_area_v1
                 mid(obj.eye.eye_range{n}) = obj.eye.intensity_mean_diff(n,obj.eye.eye_range{n});
                 obj.eye.eye_mid{n} = mid; % intensity between peaks
                 
-                % Find inner valleys (end of eyes)
-%                 bound = 0.25;
-%                 left_thresh = bound * 10;
-%                 left_inner = find(obj.eye.eye_mid{n} < left_thresh, 1, 'first');
-%                 right_thresh = bound * 10;
-%                 right_inner = find(obj.eye.eye_mid{n} > right_thresh, 1, 'last');
-
-%              	obj.eye.left_inner_int(n) = obj.eye.intensity_mean(n,round(left_inner));
-%                 obj.eye.right_inner_int(n) = obj.eye.intensity_mean(n,round(right_inner));
-%                	obj.eye.left(n,:) = [left_outer_x, obj.eye.xinterp(left_inner)];
-%                 obj.eye.right(n,:) = [obj.eye.xinterp(right_inner) , right_outer_x];
-                
               	[~,locs,w] = findpeaks(-obj.eye.eye_mid{n}, 'MinPeakHeight', 1, ...
                                 'MinPeakWidth', res*2, 'MinPeakProminence', 3);
               	if ~isempty(locs)
@@ -473,10 +478,6 @@ classdef headtracker_area_v1
                     obj.eye.right(n,:) = [0 , 0];
                 end
                 
-                if n == 634
-                    disp(n)
-                end
-                
                 if debug
                     figure (111) ; clf ; hold on ; ylim([-50 255])
                         plot(obj.eye.xinterp, obj.eye.intensity_mean(n,:), 'k', 'LineWidth', 1)
@@ -493,13 +494,6 @@ classdef headtracker_area_v1
                         plot([obj.eye.right(n,2) obj.eye.right(n,2)], [0 obj.eye.right_inner_int(n)], 'c')
                         plot([obj.eye.right(n,1) obj.eye.right(n,1)], [0 obj.eye.right_inner_int(n)], 'c')
                 end
-                
-                % % Find where left and right curves intersect the search level
-                %obj.eye.search_int(n,1) = min(0.95*obj.eye.peak_int(n,:)); % intensity level to find eye widths
-                %[xi,~] = polyxpoly([1 obj.head_dim(2)], [obj.eye.search_int(n,1) obj.eye.search_int(n,1)], ...
-                    %1:obj.head_dim(2), obj.eye.intensity_mean(n,:));
-                %obj.eye.left(n,:) = [xi(1) , xi(2)];
-                %obj.eye.right(n,:) = [xi(end-1) , xi(end)];
             end
             % Find eye widths and roll index
           	obj.eye.left_width  = diff(obj.eye.left, 1, 2);
