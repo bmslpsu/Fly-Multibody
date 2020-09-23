@@ -3,12 +3,12 @@ function [] = Experiment_SOS(Fn)
 % Fn is the fly number
 daqreset
 imaqreset
-% Fn = 9;
 %% Set directories & experimental parameters
-root = 'C:\BC\Experiment_SOS';
+root = 'C:\BC\Experiment_SOS_v2';
+% Fn = 200;
 
-%% Spin Trial
-% % Pick random direction
+% Spin Trial
+% Pick random direction
 % dir = 0;
 % while dir==0
 %     dir = randi([-1,1],1);
@@ -20,9 +20,9 @@ n_tracktime = 21;           % length(func)/fps; seconds for each EXPERIMENT
 n_resttime = 1;             % seconds for each REST
 n_pause = 0.2;              % seconds for each pause between panel commands
 n_trial = 20;               % # of repetitions
-patID = 2;                  % Spatial frequency grating pattern
+patID = 1;                  % Spatial frequency grating pattern
 yPos  = 5;                  % 30 deg spatial frequency
-funcX = 1;                  % SOS replay (20s)
+funcX = 1;                  % SOS (20s)
 xUpdate = 200;              % function update rate
 FPS = 100;                  % camera frame rate
 nFrame = FPS*n_tracktime;   % # of frames to log
@@ -57,13 +57,19 @@ for ii = 1:n_trial
     pause(1) % pause between buffer & experiment
     
     % EXPERIMENT SETUP
-    disp('Play Stimulus: ')
-    Panel_com('set_pattern_id', patID); pause(n_pause)          % set pattern
-    Panel_com('set_position',   [15 , yPos]); pause(n_pause) 	% set starting position (xpos,ypos)
-    Panel_com('set_posfunc_id',[funcX, 1]); pause(n_pause)      % arg1 = channel (x=1,y=2); arg2 = funcID
-	Panel_com('set_funcX_freq', xUpdate); pause(n_pause)        % update rate for x-channel
-    Panel_com('set_funcY_freq', 50); pause(n_pause)             % update rate for y-channel
-    Panel_com('set_mode',       [4,0]); pause(n_pause)         	% 0=open,1=closed,2=fgen,3=vmode,4=pmode
+    disp('Play Stimulus:')
+    Panel_com('set_pattern_id', patID);	% set pattern
+    pause(n_pause)
+    Panel_com('set_position', [randi(96), yPos]); % set starting position (xpos,ypos)
+    pause(n_pause)
+    Panel_com('set_posfunc_id',[funcX, 1]); % arg1 = channel (x=1,y=2); arg2 = funcID
+    pause(n_pause)
+	Panel_com('set_funcX_freq', xUpdate); % update rate for x-channel
+    pause(n_pause)
+    Panel_com('set_funcY_freq', 50); % update rate for y-channel
+    pause(n_pause)
+    Panel_com('set_mode', [4,0]); % 0=open,1=closed,2=fgen,3=vmode,4=pmode
+    pause(n_pause)
 	
     % START EXPERIMENT & DATA COLLECTION
     start(vid) % start video buffer
