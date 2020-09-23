@@ -1,7 +1,7 @@
 
 clear ; close all ; clc
 
-root = 'H:\EXPERIMENTS\RIGID\Experiment_Static_forRoll';
+root = 'H:\EXPERIMENTS\RIGID\Experiment_Ramp_forRoll';
 % root = 'H:\EXPERIMENTS\RIGID\Experiment_SOS_v2';
 [files, PATH] = uigetfile({'*.mat','files'}, 'Select files', root, 'MultiSelect','on');
 
@@ -23,9 +23,9 @@ clc
 
 %% fly 10 trial 4
 close all ; clc
-[obj] = play_tracking(obj, 1, t_v);
-% targetdir = fullfile(PATH, 'movie');
-% [obj] = play_tracking(obj, 2, [], targetdir, files);
+% [obj] = play_tracking(obj, 1, t_v);
+targetdir = fullfile(PATH, 'movie');
+[obj] = play_tracking(obj, 4, [], targetdir, files);
 
 %%
 
