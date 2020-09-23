@@ -1,29 +1,21 @@
-function [] = Experiment_SOS(Fn)
+function [] = Experiment_SS_amp(Fn)
 %% Experiment_SOS: runs a experiment using the LED arena and fly panel
 % Fn is the fly number
 daqreset
 imaqreset
+% Fn = 9;
 %% Set directories & experimental parameters
-root = 'C:\BC\Experiment_SOS_v2';
-% Fn = 200;
-
-% Spin Trial
-% Pick random direction
-% dir = 0;
-% while dir==0
-%     dir = randi([-1,1],1);
-% end
-% Spin(Fn,root,dir*16);
+root = 'C:\BC\Experiment_SS_amp';
+amp = 3.75;
 
 %% EXPERIMENTAL PARAMETERS
 n_tracktime = 21;           % length(func)/fps; seconds for each EXPERIMENT
 n_resttime = 1;             % seconds for each REST
 n_pause = 0.2;              % seconds for each pause between panel commands
-n_trial = 20;               % # of repetitions
-patID = 1;                  % Spatial frequency grating pattern
+n_rep = 10;                 % # of repetitions
 yPos  = 5;                  % 30 deg spatial frequency
-funcX = 1;                  % SOS (20s)
-xUpdate = 200;              % function update rate
+funcX = 1;                  % SOS replay (20s)
+xUpdate = 500;              % function update rate
 FPS = 100;                  % camera frame rate
 nFrame = FPS*n_tracktime;   % # of frames to log
 Fs = 5000;                  % DAQ sampling rate [Hz]
@@ -42,12 +34,33 @@ TRIG(TRIG==-1) = 4;
 % Camera Setup
 [vid,src] = Basler_acA640_750um(nFrame);
 
+%% Set variable to control pattern oscillation frequency
+amp = [15 15 15 15 15];  % make sure same order as on SD card
+freq = [0.7 1.2 3.4 5.1 7.2 9.4]'; % make sure same order as on SD card
+n_freq = length(freq); % # of frequencies
+freqI = (1:n_freq)'; % oscillation frequency indicies
+
+% Create sequence of randomly shuffled frequencies
+freqI_all = nan(n_freq*n_rep,1);
+pp = 0;
+for kk = 1:n_rep
+    freq_rand = freqI(randperm(n_freq),:);    % reshuffle randomly
+    freqI_all(pp+1:pp+n_freq,1) = freq_rand;  % add rep
+    pp = kk*n_freq;
+end
+
+freq_all = freqI_all;
+for kk = 1:length(freq)
+    freq_all(freq_all==freqI(kk)) = freq(kk);
+end
+
+n_trial = n_rep * n_freq;
+
 %% EXPERIMENT LOOP
 disp('Start Experiment:')
-for ii = 1:n_trial   
-    disp('Trial')
-    disp(num2str(ii));  % print counter to command line
-    preview(vid);       % open video preview window
+for ii = 1:n_trial
+    fprintf('Trial: %i  Freq: %1.2f \n', ii, freq_all(ii))
+    preview(vid) % open video preview window
 	
     % SPIN BUFFER
     Arena_Ramp(2,16)
@@ -58,7 +71,7 @@ for ii = 1:n_trial
     
     % EXPERIMENT SETUP
     disp('Play Stimulus:')
-    Panel_com('set_pattern_id', patID);	% set pattern
+    Panel_com('set_pattern_id', freq_all(ii));	% set pattern
     pause(n_pause)
     Panel_com('set_position', [randi(96), yPos]); % set starting position (xpos,ypos)
     pause(n_pause)
@@ -92,7 +105,8 @@ for ii = 1:n_trial
     % SAVE DATA
     disp('Saving...')
     disp('-----------------------------------------------------------------')
-    fname = ['fly_' num2str(Fn) '_trial_' num2str(ii) '_SOS.mat'];
+    fname = ['fly_' num2str(Fn) '_trial_' num2str(ii) '_freq_' ...
+        num2str(freq_all(ii)) '_Amp_' num2str(amp) '.mat'];
     save(fullfile(root,fname),'-v7.3','data','t_p','vidData','t_v');
 end
 

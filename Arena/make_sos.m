@@ -18,18 +18,18 @@ function [All] = make_sos(T, Fs, res, F, A, norm_vel, cent, showplot, root)
 %
 
 % DEBUGGING 
-clear ; close all ; clc
-root        = 'C:\Users\BC\Box\Git\Fly-Multibody\Arena\functions';
-root        = [];
-% F           = [0.7 1.3 2.5 3.75 5.3 9];
-F           = 4;
-T           = 20;
-Fs          = 500;
-A           = 3.75;
-norm_vel   	= [];
-res         = 3.75;
-cent        = 45;
-showplot    = true;
+% clear ; close all ; clc
+% root        = 'C:\Users\BC\Box\Git\Fly-Multibody\Arena\functions';
+% root        = [];
+% % F           = [0.7 1.3 2.5 3.75 5.3 9];
+% F           = [];
+% T           = 20;
+% Fs          = 500;
+% A           = 3.75*16;
+% norm_vel   	= 250;
+% res         = 3.75;
+% cent        = 45;
+% showplot    = true;
 
 assert( (length(T) == 1) && (T > 0), '"T" must be a positive scalar')
 assert(all(F > 0), 'Frequencies must be positive')
@@ -38,12 +38,18 @@ assert( (cent/round(cent) == 1) && (cent >=1) && (cent <= 360/res), ...
 
 tt = (0:1/Fs:T)';  % time vector [s]
 F = F(:);
-N = length(F); % # of frequency components
+A = A(:);
+if isempty(A)
+    N = length(F); % # of frequency components
+elseif isempty(F)
+   N = length(A); % # of frequency components 
+end
+
 
 if isempty(norm_vel)
     norm_vel = false;
 else
-    assert(isempty(A), '"A" must be empty if "norm_vel" is specified')
+    assert(isempty(A) || isempty(F), '"A" or "F" must be empty if "norm_vel" is specified')
 end
 
 if ~norm_vel
@@ -59,7 +65,14 @@ if ~norm_vel
         end
     end
 else
-    A = norm_vel ./ (2*pi*F); % normalize amplitude of each frequency component for given peak speed
+    if isempty(A)
+        A = norm_vel ./ (2*pi*F); % normalize amplitude of each frequency component for given peak speed
+    elseif isempty(F)
+        F = norm_vel ./ (2*pi*A); % normalize frequency of each frequency component for given peak speed & ampltiude
+        n_dec = 1;
+        rr = 10 .^ n_dec;
+        F = round(rr*F) / rr;
+    end
 end
 
 Phase = deg2rad(randi(359,N,1)); % random initial phase of each frequency component [rad]
@@ -126,19 +139,24 @@ if showplot
     set(h_step, 'LineWidth', 0.75)
     set(ax, 'LineWidth', 1.5,  'FontSize', 10)
     set(ax(1:2), 'XLim', [-0.5 T])
-    set(ax(3:4), 'XLim', [0.9*min(F) 1.1*max(F)])
+    %set(ax(3:4), 'XLim', [0.9*min(F) 1.1*max(F)])
+    set(ax(3:4), 'XLim', [0 15])
     set(ax([1,3]), 'XTickLabels', [])
+    linkaxes(ax(1:2), 'x')
+    linkaxes(ax(3:4), 'x')
 end
 
 % Save fucntion
 if ~isempty(root)
     % Name file
     str_freq = '';
+    str_amp = '';
     for n = 1:N
+        str_freq = [str_freq  num2str(F(n)) '_'];
         if n < N
-            str_freq = [str_freq  num2str(F(n)) '_'];
+            str_amp = [str_amp  num2str(A(n)) '_'];
         else
-            str_freq = [str_freq  num2str(F(n))];
+            str_amp = [str_amp  num2str(A(n))];
         end
     end
     str_freq = strtrim(str_freq);
@@ -147,7 +165,8 @@ if ~isempty(root)
     else
         func_type = "SOS";
     end
-    fname = sprintf(['position_function_%s_Fs_%1.0f_T_%1.0f_freq_' str_freq '.mat'], func_type, Fs, T);
+    fname = sprintf(['position_function_%s_Fs_%1.0f_T_%1.0f_freq_' str_freq 'amp_' str_amp '.mat'], ...
+                     	func_type, Fs, T);
     fname_all = ['ALL_' fname];
     all_dir = fullfile(root, 'All');
     mkdir(all_dir)
