@@ -590,7 +590,7 @@ classdef headtracker_area_v2
             else
                 export = true;
                 [~,outname,ext] = fileparts(fname);
-                outpath = fullfile(targetdir, [outname '_montage_head.' ext]);
+                outpath = fullfile(targetdir, [outname '_montage_head' ext]);
                 if ~isempty(tt)
                     Fs = round( 1 / mean(diff(tt)));
                     vidFs = round( Fs / playback);
@@ -614,7 +614,7 @@ classdef headtracker_area_v2
                 ax(6) = subplot(4,3,6); cla ; hold on ; axis image
                 ax(7) = subplot(4,3,7); cla ; hold on ; axis image
                 ax(8) = subplot(4,3,8); cla ; hold on ; axis image
-                ax(9) = subplot(4,3,9); cla ; hold on ; axis tight ; ylabel('Intensity') ; xlabel('Frame Width')
+                ax(9) = subplot(4,3,9); cla ; hold on ; axis tight ; ylabel('Intensity') ; xlabel('Frame Width') ; ylim([-50 255])
                 ax(10) = subplot(4,3,10:12); cla ; hold on ; ylabel('Angle (°)') ; xlabel('Frame')
                     h.yaw = animatedline(ax(10), 'Color', 'c', 'LineWidth', 1);
                     h.roll = animatedline(ax(10), 'Color', 'r', 'LineWidth', 1);
