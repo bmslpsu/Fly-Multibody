@@ -3,18 +3,17 @@ function [] = Experiment_SS_amp(Fn)
 % Fn is the fly number
 daqreset
 imaqreset
-% Fn = 9;
+% Fn = 100;
 %% Set directories & experimental parameters
-root = 'C:\BC\Experiment_SS_amp';
-amp = 3.75;
+root = 'C:\BC\Experiment_SS_norm_250';
 
 %% EXPERIMENTAL PARAMETERS
-n_tracktime = 21;           % length(func)/fps; seconds for each EXPERIMENT
+n_tracktime = 11;           % length(func)/fps; seconds for each EXPERIMENT
 n_resttime = 1;             % seconds for each REST
 n_pause = 0.2;              % seconds for each pause between panel commands
 n_rep = 10;                 % # of repetitions
-yPos  = 5;                  % 30 deg spatial frequency
-funcX = 1;                  % SOS replay (20s)
+patID = 1;                  % pattern ID
+yPos = 5;                   % 30 deg spatial frequency
 xUpdate = 500;              % function update rate
 FPS = 100;                  % camera frame rate
 nFrame = FPS*n_tracktime;   % # of frames to log
@@ -35,8 +34,8 @@ TRIG(TRIG==-1) = 4;
 [vid,src] = Basler_acA640_750um(nFrame);
 
 %% Set variable to control pattern oscillation frequency
-amp = [15 15 15 15 15];  % make sure same order as on SD card
-freq = [0.7 1.2 3.4 5.1 7.2 9.4]'; % make sure same order as on SD card
+amp = [60 26.25 3.75 41.25 18.75 11.25 7.5];  % make sure same order as on SD card
+freq = [0.7 1.5 10.6 1 2.1 3.5 5.3]'; % make sure same order as on SD card
 n_freq = length(freq); % # of frequencies
 freqI = (1:n_freq)'; % oscillation frequency indicies
 
@@ -50,32 +49,31 @@ for kk = 1:n_rep
 end
 
 freq_all = freqI_all;
+amp_all = freqI_all;
 for kk = 1:length(freq)
-    freq_all(freq_all==freqI(kk)) = freq(kk);
+    freq_all(freqI_all==freqI(kk)) = freq(kk);
+    amp_all(freqI_all==freqI(kk)) = amp(kk);
 end
 
 n_trial = n_rep * n_freq;
 
 %% EXPERIMENT LOOP
 disp('Start Experiment:')
+
 for ii = 1:n_trial
-    fprintf('Trial: %i  Freq: %1.2f \n', ii, freq_all(ii))
+    fprintf('Trial: %i  Freq: %1.2f Amp: %1.2f \n', ii, freq_all(ii), amp_all(ii))
     preview(vid) % open video preview window
-	
-    % SPIN BUFFER
-    Arena_Ramp(2,16)
-    pause(n_resttime)
-    Panel_com('stop')
     
-    pause(1) % pause between buffer & experiment
+    Panel_com('stop')
+    pause(2) % pause between buffer & experiment
     
     % EXPERIMENT SETUP
     disp('Play Stimulus:')
-    Panel_com('set_pattern_id', freq_all(ii));	% set pattern
+    Panel_com('set_pattern_id', patID);	% set pattern
     pause(n_pause)
-    Panel_com('set_position', [randi(96), yPos]); % set starting position (xpos,ypos)
+    Panel_com('set_position', [1, yPos]); % set starting position (xpos,ypos)
     pause(n_pause)
-    Panel_com('set_posfunc_id',[funcX, 1]); % arg1 = channel (x=1,y=2); arg2 = funcID
+    Panel_com('set_posfunc_id',[1,freqI_all(ii)]); % arg1 = channel (x=1,y=2); arg2 = funcID
     pause(n_pause)
 	Panel_com('set_funcX_freq', xUpdate); % update rate for x-channel
     pause(n_pause)
@@ -100,13 +98,13 @@ for ii = 1:n_trial
   	disp(['Fs = ' num2str(Fs)])
     
     % SPIN BUFFER
-    Arena_Ramp(2,16)
+    Arena_Ramp(1,16)
     
     % SAVE DATA
     disp('Saving...')
     disp('-----------------------------------------------------------------')
     fname = ['fly_' num2str(Fn) '_trial_' num2str(ii) '_freq_' ...
-        num2str(freq_all(ii)) '_Amp_' num2str(amp) '.mat'];
+        num2str(freq_all(ii)) '_Amp_' num2str(amp_all(ii)) '.mat'];
     save(fullfile(root,fname),'-v7.3','data','t_p','vidData','t_v');
 end
 
