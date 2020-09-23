@@ -59,7 +59,6 @@ n_trial = n_rep * n_freq;
 
 %% EXPERIMENT LOOP
 disp('Start Experiment:')
-
 for ii = 1:n_trial
     fprintf('Trial: %i  Freq: %1.2f Amp: %1.2f \n', ii, freq_all(ii), amp_all(ii))
     preview(vid) % open video preview window
@@ -106,6 +105,7 @@ for ii = 1:n_trial
     fname = ['fly_' num2str(Fn) '_trial_' num2str(ii) '_freq_' ...
         num2str(freq_all(ii)) '_Amp_' num2str(amp_all(ii)) '.mat'];
     save(fullfile(root,fname),'-v7.3','data','t_p','vidData','t_v');
+    Panel_com('stop')
 end
 
 delete(vid)
