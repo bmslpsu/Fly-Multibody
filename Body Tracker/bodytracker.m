@@ -54,22 +54,22 @@ SE_erode = strel('disk',8,4); % erosion mask
 SE_dilate = strel('disk',12,4); % dilation mask
 tic
 if par
-    parfor idx = 1:nframe
+    parfor n = 1:nframe
         % disp(idx)
-        frame = vid(:,:,idx); % get raw frame
+        frame = vid(:,:,n); % get raw frame
         bnframe = imbinarize(frame); % binarize
         bnframe = imerode(bnframe, SE_erode); % erode
         bnframe = imdilate(bnframe, SE_dilate); % dilate
-        bnvid(:,:,idx) = logical(bnframe); % store bianary frame
+        bnvid(:,:,n) = logical(bnframe); % store bianary frame
     end
 else
-    for idx = 1:nframe
+    for n = 1:nframe
         % disp(idx)
-        frame = vid(:,:,idx); % get raw frame
+        frame = vid(:,:,n); % get raw frame
         bnframe = imbinarize(frame); % binarize
         bnframe = imerode(bnframe, SE_erode); % erode
         bnframe = imdilate(bnframe, SE_dilate); % dilate
-        bnvid(:,:,idx) = logical(bnframe); % store bianary frame
+        bnvid(:,:,n) = logical(bnframe); % store bianary frame
     end
 end
 toc
@@ -113,65 +113,69 @@ norm_ang = nan(nframe,1); % stores normalized/unwrapped angles [°]
 
 tic
 disp('Tracking...')
-for idx = 1:nframe
+for n = 1:nframe
     % Display frame count every every 100 frames
-    if (idx==1) || ~mod(idx,100) || (idx==nframe)
-        fprintf('%i\n',idx)
+    if (n==1) || ~mod(n,100) || (n==nframe)
+        fprintf('%i\n',n)
     end
     
     % Get images
-    frame = vid(:,:,idx); % raw frame
-    bnframe = bnvid(:,:,idx); % processed frame
+    frame = vid(:,:,n); % raw frame
+    bnframe = bnvid(:,:,n); % processed frame
     
   	% Calculate angle
     tempstats = regionprops(bnframe,'Centroid','Area','BoundingBox','Orientation', ...
         'MajorAxisLength','MinorAxisLength'); % image reigon properties
     
-    imgstats(idx) = tempstats(1); % get stats only for largest feature
+    % Make sure we only the largest object (body)
+    [~,sort_area] = sort([tempstats.Area],'descend');
+    bodyI = sort_area(1);
     
-    centroid = imgstats(idx).Centroid; % centroid of image
-    L = imgstats(idx).MajorAxisLength / 2; % long axis of image
+    imgstats(n) = tempstats(bodyI); % get stats
     
-    raw_ang(idx)  = (imgstats(idx).Orientation - offset); % raw angle [°]
-    norm_ang(idx) = -(imgstats(idx).Orientation - offset + shift); % normalized, unwrapped angle [°]
+    centroid = imgstats(n).Centroid; % centroid of image
+    L = imgstats(n).MajorAxisLength / 2; % long axis of image
+    
+    raw_ang(n)  = (imgstats(n).Orientation - offset); % raw angle [°]
+    norm_ang(n) = -(imgstats(n).Orientation - offset + shift); % normalized, unwrapped angle [°]
  	
     % Check for changes in angle > 180°. Correct for the ellipse fit and unwrap angles.
-    if idx > 1
-        dbody = norm_ang(idx) - norm_ang(idx-1); % change in body angle between frames [°]
+    if n > 1
+        dbody = norm_ang(n) - norm_ang(n-1); % change in body angle between frames [°]
         magd = abs(dbody); % magnitude of change [°]
         signd = sign(dbody); % direction of change
         if magd > dthresh % 180 or more flip
             flipn = round(magd/180); % how many 180° shifts we need
          	shift = -signd*flipn*180; % shift amount [°]
-            norm_ang(idx) = norm_ang(idx) + shift; % normalized, unwrapped angle [°]
+            norm_ang(n) = norm_ang(n) + shift; % normalized, unwrapped angle [°]
         end
-    elseif idx==1
+    elseif n==1
         % Flip heading by 180° if the heading is in the wrong direction
         if flip
-            norm_ang(idx) = norm_ang(idx) + 180;
+            norm_ang(n) = norm_ang(n) + 180;
         end
         
        	% Make start angle positive
-        if norm_ang(idx) < 0
-            norm_ang(idx) = norm_ang(idx) + 360;
+        if norm_ang(n) < 0
+            norm_ang(n) = norm_ang(n) + 360;
         end
     end
 
-    if playback || idx==1
+    if playback || n==1
         set(fig, 'Visible', 'on')
         % Display images
-        if (idx==1) || (~mod(idx,playback)) || (idx==nframe) % display at playback rate
+        if (n==1) || (~mod(n,playback)) || (n==nframe) % display at playback rate
             % Get approximate location of head
-            head = centroid + L*[sind(norm_ang(idx)), -cosd(norm_ang(idx))];
+            head = centroid + L*[sind(norm_ang(n)), -cosd(norm_ang(n))];
             heading = [centroid ; head];
-            abdomen = centroid - L*[sind(norm_ang(idx)), -cosd(norm_ang(idx))];
+            abdomen = centroid - L*[sind(norm_ang(n)), -cosd(norm_ang(n))];
             reverse = [centroid ; abdomen];
 
             % Show images with tracking annotation
             ax(1) = subplot(3,2,[1,3]); cla % raw
                 imshow(frame) % frame
                 
-                h.heading = semi_ellipse(centroid, L, 0.5, 0.90, 180 - norm_ang(idx), 'r');
+                h.heading = semi_ellipse(centroid, L, 0.5, 0.90, 180 - norm_ang(n), 'r');
                 delete([h.heading{2:4}])
                 alpha(h.heading{1},0.3)
                 h.heading{1}.LineStyle = 'none';
@@ -180,16 +184,16 @@ for idx = 1:nframe
                 imshow(bnframe) % frame
 
                 % Show bounding box
-                h.rect = rectangle('Position', imgstats(idx).BoundingBox, 'EdgeColor', 'g', ...
+                h.rect = rectangle('Position', imgstats(n).BoundingBox, 'EdgeColor', 'g', ...
                                                                 'LineWidth', 1);
 
                 % Show ellipse
-                h.ellps = ellipse(centroid, 2*L, 0.5, 0.90, 180 - norm_ang(idx), 'r');
+                h.ellps = ellipse(centroid, 2*L, 0.5, 0.90, 180 - norm_ang(n), 'r');
                 delete([h.ellps{[1,3:6]}])
                 h.ellps{2}.Color = 'r';
                 h.ellps{2}.LineWidth = 1;
                 
-                h.heading = semi_ellipse(centroid, L, 0.5, 0.90, 180 - norm_ang(idx), 'r');
+                h.heading = semi_ellipse(centroid, L, 0.5, 0.90, 180 - norm_ang(n), 'r');
                 delete([h.heading{2:4}])
                 alpha(h.heading{1},0.3)
                 h.heading{1}.LineStyle = 'none';
@@ -203,9 +207,9 @@ for idx = 1:nframe
         % Display angle
         ax(3) = subplot(3,2,5:6);
             % addpoints(h.raw_angle, idx, raw_angle(idx)) % debugging
-            addpoints(h.norm_angle, idx, norm_ang(idx))
+            addpoints(h.norm_angle, n, norm_ang(n))
             
-        if idx==1 % get 1st frame
+        if n==1 % get 1st frame
             initframe = getframe(fig);
             initframe = initframe.cdata;
         end

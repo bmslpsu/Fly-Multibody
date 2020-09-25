@@ -1,4 +1,4 @@
-function [] = batch_bodytrack(root, playback, heading_debug)
+function [] = batch_bodytrack(root, playback, heading_debug, par)
 %% batch_bodytrack: runs body tracker for user selected video files
 %
 %   INPUT:
@@ -6,6 +6,7 @@ function [] = batch_bodytrack(root, playback, heading_debug)
 %       playback    :   playback rate (show a frame in increments of "playback").
 %                       If false, then onlt show the 1st frame. (default = 1)
 %       head_debug  :   always bring up the heading angle check window if true
+%       par         :   use parallel processing 
 %
 %   OUTPUT:
 %       -
@@ -14,12 +15,15 @@ function [] = batch_bodytrack(root, playback, heading_debug)
 % playback = 10;
 % root = 'H:\EXPERIMENTS\MAGNO\Experiment_SOS';
 
-if nargin < 3
-    heading_debug = false; % default
-    if nargin < 2
-        playback = 1; % default
-        if ~nargin
-            root = ''; % root is current folder
+if nargin < 4
+    par = false;
+    if nargin < 3
+        heading_debug = false; % default
+        if nargin < 2
+            playback = 1; % default
+            if ~nargin
+                root = ''; % root is current folder
+            end
         end
     end
 end
@@ -29,7 +33,7 @@ FILES = string(FILES);
 nfile = length(FILES);
 
 bodydir = fullfile(PATH,'tracked_body');
-mkdir bodydir
+mkdir(bodydir)
 for file = 1:nfile
     disp(FILES(file))
     disp('---------------------------------------')
@@ -37,7 +41,7 @@ for file = 1:nfile
     
    	close all
     
-    [bAngles,imgstats,initframe] = bodytracker(vidData, playback, heading_debug);
+    [bAngles,imgstats,initframe] = bodytracker(vidData, playback, heading_debug, par);
 
     save(fullfile(bodydir,FILES{file}),'-v7.3','bAngles','imgstats','initframe','t_v')
 end

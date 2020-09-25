@@ -1,4 +1,4 @@
-function [heading,flip,bias,ax,fig] = findheading(frame, debug, ratio)
+function [heading,flip,out_frame,bias,ax,fig] = findheading(frame, debug, ratio)
 %% findheading: find heading of fly in grey-scale image
 %
 %   INPUT:
@@ -34,7 +34,8 @@ heading = imgstats(1).Orientation;
 
 % Extract bounding reigon and rotate to 90°
 check_frame = imrotate(imgstats(1).Image, 90 - imgstats(1).Orientation, 'loose');
-head_frame =  imrotate(frame, 90 - imgstats(1).Orientation, 'loose');
+head_frame = imrotate(frame, 90 - imgstats(1).Orientation, 'crop');
+out_frame = head_frame;
 
 % Get image reigon stats and extract bounding reigon of rotated reigon
 imgstats = regionprops(check_frame,'Centroid','Orientation','Image'); % image reigon properties
@@ -87,6 +88,7 @@ elseif bias > 1 % head is at the bottom (inccorrect guess)
     bot_color = 'r';
     
     new_frame = flipud(head_frame); % flip frame so head is on top
+    out_frame = flipud(out_frame); % flip frame so head is on top
 end
 
 % Check for ambiguous estimates % bring up debug window if heading estimate
@@ -95,6 +97,8 @@ if debug == 2
     if abs(1-bias) < 0.1
         warning('Initial heading estimate may be incorect')
         debug = true;
+    else
+        debug = false;
     end
 end
 
