@@ -27,14 +27,13 @@ for file = 1:nfile
 
     if file == 1
         if length(crop_xy) == 1
-            [crop_frame, crop_xy] = imcrop(vidData(:,:,:,1));
+            [~, crop_xy] = imcrop(vidData(:,:,:,1));
         end
     end
 
     [regvid,trf] = register_video(vidData, crop_xy);
 
-    %save(fullfile(regdir,FILES{file}),'-v7.3','regvid','trf','t_v')
-    save(fullfile(regdir,FILES{file}),'-v7.3','regvid','trf')
+    save(fullfile(regdir,FILES{file}),'-v7.3','regvid','trf','t_v')
 end
 disp('ALL DONE')
 end
