@@ -33,7 +33,7 @@ for file = 1:nfile
 
     [regvid,trf] = register_video(vidData, crop_xy);
 
-    save(fullfile(regdir,FILES{file}),'-v7.3','regvid','trf','t_v')
+    save(fullfile(regdir,FILES{file}),'-v7.3','regvid','trf','t_v','crop_xy')
 end
 disp('ALL DONE')
 end
