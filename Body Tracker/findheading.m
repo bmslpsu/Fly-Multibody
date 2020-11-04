@@ -27,20 +27,22 @@ SE_erode = strel('disk',8,8); % erosion mask
 
 bnframe = imbinarize(frame); % binarize
 bnframe = imerode(bnframe,  SE_erode); % erode
+bnframe = bwareaopen(bnframe,30);
 
 % Get image reigon stats
 imgstats = regionprops(bnframe,'BoundingBox','Orientation','Image'); % image reigon properties
-heading = imgstats(1).Orientation;
+[~,mI] = max(cellfun(@numel,{imgstats.Image}));
+heading = imgstats(mI).Orientation;
 
 % Extract bounding reigon and rotate to 90°
-check_frame = imrotate(imgstats(1).Image, 90 - imgstats(1).Orientation, 'loose');
-head_frame = imrotate(frame, 90 - imgstats(1).Orientation, 'crop');
+check_frame = imrotate(imgstats(mI).Image, 90 - imgstats(mI).Orientation, 'loose');
+head_frame = imrotate(frame, 90 - imgstats(mI).Orientation, 'crop');
 out_frame = head_frame;
 
 % Get image reigon stats and extract bounding reigon of rotated reigon
 imgstats = regionprops(check_frame,'Centroid','Orientation','Image'); % image reigon properties
-[~,main_image_idx] = max(cellfun(@numel,{imgstats.Image}));
-check_frame = imgstats(main_image_idx).Image;
+[~,mI] = max(cellfun(@numel,{imgstats.Image}));
+check_frame = imgstats(mI).Image;
 
 imgstats = regionprops(imbinarize(head_frame),'BoundingBox','Image'); % image reigon properties
 [~,flyIdx] = max(cellfun(@(x) numel(x), {imgstats.Image}));

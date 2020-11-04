@@ -5,25 +5,22 @@ function [] = batch_flipvid(root,varname,method,checkframe)
 %       root     	:   root directory
 %       varname     :   video variable name
 %       method      :   direction to flip
-%                           'ud'    - flip vertically
-%                           'lr'    - flip horizontally
-%                           'udlr'	- flip vertically & horizontally
+%                           'ud'        - flip vertically
+%                           'lr'        - flip horizontally
+%                           'rot180'	- flip vertically & horizontally
 %       checkframe	:   visualize frame to determine if we flip the video (boolean)
 %
 %   OUTPUT:
 %       -
 %
 
-if nargin<4
+if nargin < 4
     checkframe = true; % default
 end
 
-allmeth = ["ud","lr","udlr"];
-whichmethod = isempty(find(strcmp(method,allmeth),1));
-
-if whichmethod
-    error('"%s" is not a valid method',method)
-end
+allmeth = ["ud","lr","rot90","rot180"];
+methodI = find(strcmp(method, allmeth),1);
+assert(~isempty(methodI), '"%s" is not a valid method', method)
 
 % Select files
 [files, path] = uigetfile('*.mat','Select file to switch', root, 'MultiSelect','on');
@@ -35,7 +32,7 @@ for kk = 1:length(files)
     disp(kk)
     flipframe = true;
     fname = fullfile(path,files(kk));
-    matObj = matfile(fname,'Writable',isWritable); % load .mat object
+    matObj = matfile(fname, 'Writable', isWritable); % load .mat object
     if checkframe
         fig = figure ; clf ; cla
         vid = matObj.(varname);
@@ -49,7 +46,19 @@ for kk = 1:length(files)
     
     if flipframe
         disp('Flipping video...')
-        matObj.(varname) = flipvid(matObj.(varname),method); % flip video
+        matObj.flipped = method;
+        switch methodI
+            case 1  % flip video up/down
+                matObj.(varname) = flipud(matObj.(varname));
+          	case 2  % flip video left/right
+                matObj.(varname) = fliplr(matObj.(varname));
+          	case 3  % rotate video 90°
+                matObj.(varname) = rot90(matObj.(varname), 1);
+          	case 4  % rotate video 180°
+                matObj.(varname) = rot90(matObj.(varname), 2);
+            otherwise
+                error('Not possible')
+        end
     end
 end
 disp('Done')

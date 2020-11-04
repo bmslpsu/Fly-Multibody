@@ -59,19 +59,19 @@ sz      = imref2d(size(fixed));
 tic
 for n = 1:dim(3)
     fprintf([int2str(n) '\n'])
-    z = double(regvid(:,:,n));
+    frame = double(regvid(:,:,n));
     if n == 1
-        trf{n} = imregtform(z, fixed, 'rigid', optimizer, metric);
+        trf{n} = imregtform(frame, fixed, 'rigid', optimizer, metric);
     else
         for jj = n-1:-1:1
             if(isRigid(trf{jj}))
-                break;
+                break
             end
         end
-        trf{n} = imregtform(z, fixed, 'rigid', optimizer, metric,...
+        trf{n} = imregtform(frame, fixed, 'rigid', optimizer, metric,...
                             'InitialTransformation', trf{jj});
     end
-    reg = imwarp(z, trf{n}, 'OutputView', sz);
+    reg = imwarp(frame, trf{n}, 'OutputView', sz);
     regvid(:,:,n) = imrotate(reg, 90-refangle, 'crop');
     fixed = (fixed*n + reg)/(n+1);
 end

@@ -35,9 +35,10 @@ vid = squeeze(vid); % remove singleton dimensions
 % for n = 1:nframe
 %     vid(:,:,n) = 255*uint8(imbinarize(medfilt2(vid(:,:,n),[3 3])));
 % end
-
-trackFrame = vid(:,:,1); % get 1st frame to start tracker
-displayFrame = vid(:,:,1); % get 1st frame for display
+% start = round(nframe/2);
+start = 1;
+trackFrame = vid(:,:,start); % get 1st frame to start tracker
+displayFrame = vid(:,:,start); % get 1st frame for display
 
 % Prompt user to define feature detection area & centerline
 fig = figure; clf
@@ -71,8 +72,8 @@ initAngle.head = rad2deg( atan2( mPoint.X - cPoint.X , -(mPoint.Y - cPoint.Y) ) 
 % Setup tracking
 points	= detectMinEigenFeatures(trackFrame,'ROI',ROI); % detect features
 points  = points.selectStrongest(npoint); % get strongest points
-tracker = vision.PointTracker('MaxBidirectionalError',5,'NumPyramidLevels',7,...
-    'BlockSize',[11 11],'MaxIterations',40); % create tracker object
+tracker = vision.PointTracker('MaxBidirectionalError',5,'NumPyramidLevels',9,...
+    'BlockSize',[15 15],'MaxIterations',100); % create tracker object
 
 initialize(tracker,points.Location,trackFrame); % start tracker
 
@@ -132,7 +133,8 @@ validity = zeros(nframe,npoint);
 % Track features & calculate head angle for every frame
 tic
 disp('Tracking...')
-for idx = 1:nframe
+frame_path = [start:-1:1 , start:nframe];
+for idx = frame_path
 	% Display frame count every every 100 frames
     if (idx==1) || ~mod(idx,100) || (idx==nframe)
         fprintf('%i\n',idx)

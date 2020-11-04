@@ -25,12 +25,13 @@ for f = 1:numel(F) % each field
     if isnumeric(S.(F{f}))
         if isreal(S.(F{f}))
             dS = diff(S.(F{f}),1,dim);
+            dS(isnan(dS)) = 0;
             if all(~dS)
                 S.(F{f}) = T.(F{f});
             end
         end
     elseif isstring(S.(F{f}))
-        % S.(F{f}) = cat(dim, T.(F{f}));
+        %S.(F{f}) = cat(dim, T.(F{f}));
     end
 end
 

@@ -31,7 +31,7 @@ end
 Names(nState) = "All";
 
 % Convert reference to frequency domain
-refName = inputname(2);
+refName = string(inputname(2));
 [refFv, refMag, refPhase, refFreq] = FFT(time,ref);
 % [refFreq, refFv, refMag, refPhase] = chirpz_transform(time,ref,0,20,nFpoint);
 [~, refIOMag, refIOPhase, IOidx] = getfreqpeaks(refFv, refMag, refPhase, IOFv, [], false);
@@ -271,7 +271,7 @@ if debug
         xlabel('Frequency (Hz)')
         % set(ax(2),'XLim',[0 time(end)])
 
-    set(ax([2:6,8]), 'XLim', [0.2 1.1*max(IOFv)])
+    set(ax([2:6,8]), 'XLim', [0.2 5 + max(IOFv)])
     set(ax([3,5]), 'YTick', -360:90:360)
     linkaxes(ax([2:6,8]),'x')
     

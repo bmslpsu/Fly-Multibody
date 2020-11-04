@@ -69,13 +69,32 @@ else
         A = norm_vel ./ (2*pi*F); % normalize amplitude of each frequency component for given peak speed
     elseif isempty(F)
         F = norm_vel ./ (2*pi*A); % normalize frequency of each frequency component for given peak speed & ampltiude
-        n_dec = 1;
-        rr = 10 .^ n_dec;
-        F = round(rr*F) / rr;
+        %n_dec = 1;
+        %rr = 10 .^ n_dec;
+        %F = round(rr*F) / rr;
+        freq_res = 1 / T;
+        F = freq_res * round(F / freq_res);
     end
 end
 
 Phase = deg2rad(randi(359,N,1)); % random initial phase of each frequency component [rad]
+
+% Check for prime multiples
+Prime = nan(N);
+for n = 1:N
+    for f = 1:N
+        if (n ~= f) && (F(n) > F(f))
+            %P(n,f) = mod(F(n), F(f));
+            Prime(n,f) = F(n) / F(f);
+            check = rem(Prime(n,f),1);
+            if check < freq_res
+               disp(['Warning: ' num2str(F(n)) ...
+                   ' is a prime multiple of ' num2str(F(f)), ...
+                   '   change A = ' num2str(A(n)/3.75)]) 
+            end
+        end
+    end
+end
 
 % Generate SOS signal
 X = zeros(length(tt),1);
@@ -105,13 +124,14 @@ All.time = tt;
 All.res = res;
 All.Freq = F;
 All.Amp = A;
-All.Amp = Phase;
+All.Phase = Phase;
 All.X = X;
 All.dX = dX;
 All.X_step = X_step;
 All.dX_step = dX_step;
 All.mag = mag;
 All.phase = mag;
+All.freq_res = freq_res;
 
 if showplot
     fig = figure (313);

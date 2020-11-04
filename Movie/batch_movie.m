@@ -11,17 +11,22 @@ function [] = batch_movie(rootdir, rootpat, vidFs)
 %
 
 export = true; % save the videos
+vidFs = 50;
+% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250';
+% rootpat = 'C:\Users\BC\Box\Git\Arena\Patterns';
 
 [FILES, PATH] = uigetfile({'*.*'},'Select movie file', rootdir, 'MultiSelect','on');
-[patfile, patpath] = uigetfile({'*.mat'},'Select pattern file', rootpat, 'MultiSelect','on');
-pat = fullfile(patpath,patfile);
+FILES = cellstr(FILES);
+% [patfile, patpath] = uigetfile({'*.mat'},'Select pattern file', rootpat, 'MultiSelect','on');
+% pat = fullfile(patpath,patfile);
 
 nfile = length(FILES);
 for file = 1:nfile
     disp(FILES(file))
     disp('---------------------------------------')
     main = fullfile(PATH, FILES{file});
-    MagnoMontage_SOS_v2(main, pat, vidFs, export);
+    %montage_SOS(main, pat, vidFs, export);
+    make_montage_passive_head(main, vidFs, export)
 end
 disp('ALL DONE')
 end

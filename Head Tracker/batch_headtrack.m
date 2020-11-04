@@ -13,9 +13,9 @@ function [] = batch_headtrack(root, npoints, center, playback, showpoint)
 %
 
 showpoint = true;
-npoints = 2;
+npoints = 1;
 center = [];
-playback = 10;
+playback = 25;
 % root = 'H:\EXPERIMENTS\MAGNO\Experiment_Ramp\registered';
 % root = 'H:\EXPERIMENTS\MAGNO\Experiment_SOS\registered';
 % root = 'H:\EXPERIMENTS\RIGID\Experiment_Static_Wave';

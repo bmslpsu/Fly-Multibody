@@ -40,7 +40,7 @@ if ~rem(playback,1)==0
 end
 
 vid = squeeze(vid); % get rid of singleton dimension
-vid = flipud(vid); % flip video to arena reference frame
+vid = fliplr(vid); % flip video to arena reference frame
 [yp,xp,nframe] = size(vid);  % get size & # of frames of video
 
 % Use the inital frame to find the heading

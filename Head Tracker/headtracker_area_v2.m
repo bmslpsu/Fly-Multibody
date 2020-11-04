@@ -55,10 +55,10 @@ classdef headtracker_area_v2
             [~, ~, obj] = get_yaw(obj, 0.5);
             
             % Isolate head in each frame
-            [obj] = iso_head(obj, 2);
+            %[obj] = iso_head(obj, 2);
             
             % Get roll
-            [~, obj] = get_roll(obj, 0.35, 36.33, false);
+            %[~, obj] = get_roll(obj, 0.35, 36.33, false);
         end
         
         function [vid_props, bw_vid, bound_box, body_yaw] = get_vid_props(obj, vid, fill_ratio, debug)
@@ -224,7 +224,7 @@ classdef headtracker_area_v2
                 xL_filt = filtfilt(b, a, xL);
                 
                 if n == 120
-                    disp('here')
+                    %disp('here')
                 end
                 
                 % Get bottom edge of neck in left and right images

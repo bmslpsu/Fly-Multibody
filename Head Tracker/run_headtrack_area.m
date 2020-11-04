@@ -1,14 +1,15 @@
 
 clear ; close all ; clc
 
-root = 'H:\EXPERIMENTS\RIGID\Experiment_Ramp_forRoll';
+% root = 'H:\EXPERIMENTS\RIGID\Experiment_Ramp_forRoll';
 % root = 'H:\EXPERIMENTS\RIGID\Experiment_SOS_v2';
+root = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250\registered';
 [files, PATH] = uigetfile({'*.mat','files'}, 'Select files', root, 'MultiSelect','on');
 
-load(fullfile(PATH, files),'vidData','t_v')
+load(fullfile(PATH, files),'regvid','t_v')
 
 %%
-obj = headtracker_area_v2(vidData);
+obj = headtracker_area_v2(regvid);
 
 %%
 clc
@@ -23,9 +24,9 @@ clc
 
 %% fly 10 trial 4
 close all ; clc
-% [obj] = play_tracking(obj, 1, t_v);
-targetdir = fullfile(PATH, 'movie');
-[obj] = play_tracking(obj, 4, [], targetdir, files);
+[obj] = play_tracking(obj, 1, t_v);
+% targetdir = fullfile(PATH, 'movie');
+% [obj] = play_tracking(obj, 4, [], targetdir, files);
 
 %%
 
