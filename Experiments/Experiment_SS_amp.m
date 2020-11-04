@@ -3,13 +3,13 @@ function [] = Experiment_SS_amp(Fn)
 % Fn is the fly number
 daqreset
 imaqreset
-% Fn = 100;
+% Fn = 0;
 %% Set directories & experimental parameters
 root = 'C:\BC\Experiment_SS_norm_250';
 
 %% EXPERIMENTAL PARAMETERS
 n_tracktime = 11;           % length(func)/fps; seconds for each EXPERIMENT
-n_resttime = 1;             % seconds for each REST
+% n_resttime = 1;             % seconds for each REST
 n_pause = 0.2;              % seconds for each pause between panel commands
 n_rep = 10;                 % # of repetitions
 patID = 1;                  % pattern ID
@@ -21,6 +21,9 @@ Fs = 5000;                  % DAQ sampling rate [Hz]
 AI = 0:2;                	% Analog input channels
 AO = 1;                     % Analog output channels
 
+amp = [60 26.25 3.75 41.25 18.75 11.25 7.5];  % make sure same order as on SD card
+freq = [0.7 1.5 10.6 1 2.1 3.5 5.3]'; % make sure same order as on SD card
+
 %% Set up data acquisition on NiDAQ (session mode)
 % DAQ Setup
 [s,~] = MC_USB_1208FS_PLUS(Fs,AI,AO);
@@ -29,13 +32,13 @@ AO = 1;                     % Analog output channels
 t = 0:1/s.Rate:n_tracktime;
 TRIG = ((1/2)*(square(2*pi*FPS*t,5) - 1)');
 TRIG(TRIG==-1) = 4;
+TRIG(1:20) = 0;
+TRIG(end-20:end) = 0;
 
 % Camera Setup
 [vid,src] = Basler_acA640_750um(nFrame);
 
 %% Set variable to control pattern oscillation frequency
-amp = [60 26.25 3.75 41.25 18.75 11.25 7.5];  % make sure same order as on SD card
-freq = [0.7 1.5 10.6 1 2.1 3.5 5.3]'; % make sure same order as on SD card
 n_freq = length(freq); % # of frequencies
 freqI = (1:n_freq)'; % oscillation frequency indicies
 
@@ -97,7 +100,7 @@ for ii = 1:n_trial
   	disp(['Fs = ' num2str(Fs)])
     
     % SPIN BUFFER
-    Arena_Ramp(1,16)
+    Arena_Ramp(1,10)
     
     % SAVE DATA
     disp('Saving...')
