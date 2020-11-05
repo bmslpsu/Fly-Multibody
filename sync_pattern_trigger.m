@@ -17,8 +17,8 @@ function [TRIG,PAT] = sync_pattern_trigger(daq_time, daq_pattern, function_lengt
 %       debug         	:   BOOLEAN show debug plot (optional)
 %
 %   OUTPUT:
-%       TRIG          	: structure containing movie 
-%       PAT             : structure containing movie 
+%       TRIG          	: structure containing
+%       PAT             : structure containing
 %
 
 if nargin < 8
