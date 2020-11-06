@@ -122,6 +122,7 @@ All.func = func;
 All.Fs = Fs;
 All.time = tt;
 All.res = res;
+All.norm_vel = norm_vel;
 All.Freq = F;
 All.Amp = A;
 All.Phase = Phase;

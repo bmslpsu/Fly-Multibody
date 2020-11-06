@@ -28,11 +28,11 @@ Fs          = 50;
 % A        	= logspace((log(1.8)/log(10)),(log(45)/log(10)), 9)';
 % norm_vel 	= 103;
 
-% A           = logspace((log(2.5)/log(10)),(log(61)/log(10)), 9)';
-% norm_vel   	= 148;
+A           = logspace((log(2.5)/log(10)),(log(61)/log(10)), 9)';
+norm_vel   	= 148;
 
-A           = logspace((log(1.2)/log(10)),(log(61)/log(10)), 9)';
-norm_vel   	= 62;
+% A           = logspace((log(1.2)/log(10)),(log(61)/log(10)), 9)';
+% norm_vel   	= 62;
 
 res         = 3.75;
 cent        = 45;
