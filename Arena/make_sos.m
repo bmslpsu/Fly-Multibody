@@ -129,6 +129,7 @@ All.X = X;
 All.dX = dX;
 All.X_step = X_step;
 All.dX_step = dX_step;
+All.Fv = Fv;
 All.mag = mag;
 All.phase = mag;
 All.freq_res = freq_res;
