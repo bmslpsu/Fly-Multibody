@@ -54,9 +54,10 @@ pkIdx     	= nan(nn,nFreq);    % indicies at frequencies
 
 for kk = 1:nFreq
     fRange = [IOFreq(kk)-fTol , IOFreq(kk)+fTol]; % frequency search range
-    idxRange = freq>=fRange(1) & freq<=fRange(2); % index search range
+    idxRange = freq >= fRange(1) & freq <= fRange(2); % index search range
     magRange = mag(idxRange); % magnitude search range
     fIdx = mag==max(magRange); % index of max magnitude
+    
     Ff(kk) = freq(fIdx);
     
     pkMag(kk) = max(magRange); % store magnitude at uFreq
@@ -67,7 +68,7 @@ end
 
 pkIdx = logical(sum(pkIdx,2));
 if sum(pkIdx,1)<nFreq
-    error('Error: conflicting frequencies')
+    warning('Error: conflicting frequencies')
 end
 [pkIdx,~] = find(pkIdx==true);
 pkFreq = freq(pkIdx);

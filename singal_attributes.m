@@ -2,7 +2,7 @@ classdef singal_attributes
     % singal_attributes: calculates signal attributes
     %   
     
-    properties (SetAccess = private, Hidden = false)
+    properties (SetAccess = public, Hidden = false)
         Fs
         Ts
         time

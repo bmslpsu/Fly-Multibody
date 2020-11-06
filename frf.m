@@ -12,6 +12,8 @@ function [SYSTEM] = frf(time,ref,IOFv,debug,varargin)
 %   Usage: frf(time ,ref, IOFv, input_1, input_2, ... , input_n)
 %
 
+ftol = 0.1;
+
 IOFv    = IOFv(:);
 nState  = length(varargin) + 1; % # of output states
 nPoint  = length(time);         % # of data points in time domain
@@ -34,7 +36,7 @@ Names(nState) = "All";
 refName = string(inputname(2));
 [refFv, refMag, refPhase, refFreq] = FFT(time,ref);
 % [refFreq, refFv, refMag, refPhase] = chirpz_transform(time,ref,0,20,nFpoint);
-[~, refIOMag, refIOPhase, IOidx] = getfreqpeaks(refFv, refMag, refPhase, IOFv, [], false);
+[~, refIOMag, refIOPhase, IOidx] = getfreqpeaks(refFv, refMag, refPhase, IOFv, ftol, false);
 refIOFreq = refFreq(IOidx);
 nIO = length(IOFv);  % # of frequencies present
 freqCmap = hsv(nIO); % colormap across frequenncies
@@ -48,12 +50,11 @@ IOMag  	= nan(nIO,nState);
 IOPhase	= nan(nIO,nState);
 IOFreq 	= nan(nIO,nState);
 IOCohr 	= nan(nIO,nState);
-ftol = 0.02;
 for jj = 1:nState
     [Fv, Mag(:,jj), Phase(:,jj), Freq(:,jj)] = FFT(time,State(:,jj));
     %[Freq(:,jj), Fv, Mag(:,jj), Phase(:,jj)] = chirpz_transform(time,State(:,jj),0,20,nFpoint);
     
-    [~, IOMag(:,jj),IOPhase(:,jj),IOidx] = getfreqpeaks(Fv, Mag(:,jj), Phase(:,jj), IOFv, ftol, false);
+    [~, IOMag(:,jj),IOPhase(:,jj),IOidx] = getfreqpeaks(Fv, Mag(:,jj), Phase(:,jj), IOFv, ftol, true);
     IOFreq(:,jj) = Freq(IOidx,jj);
     [Cohr(:,jj),~] = mscohere(ref,State(:,jj),[],[],Fv,Fs);
     [~, IOCohr(:,jj),~,~] = getfreqpeaks(Fv, Cohr(:,jj), [], IOFv, ftol, false);

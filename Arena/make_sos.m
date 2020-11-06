@@ -171,12 +171,13 @@ if ~isempty(root)
     % Name file
     str_freq = '';
     str_amp = '';
+	A_round = 0.05*round(A/0.05);
     for n = 1:N
         str_freq = [str_freq  num2str(F(n)) '_'];
         if n < N
-            str_amp = [str_amp  num2str(A(n)) '_'];
+            str_amp = [str_amp  num2str(A_round(n)) '_'];
         else
-            str_amp = [str_amp  num2str(A(n))];
+            str_amp = [str_amp  num2str(A_round(n))];
         end
     end
     str_freq = strtrim(str_freq);

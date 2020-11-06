@@ -18,7 +18,7 @@ if nargin < 4
     checkframe = true; % default
 end
 
-allmeth = ["ud","lr","rot90","rot180"];
+allmeth = ["ud","lr","rot90","rot180"]; % rot180 for reg
 methodI = find(strcmp(method, allmeth),1);
 assert(~isempty(methodI), '"%s" is not a valid method', method)
 
