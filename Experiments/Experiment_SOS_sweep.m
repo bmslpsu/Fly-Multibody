@@ -1,13 +1,11 @@
-function [] = Experiment_SOS_norm(Fn)
+function [] = Experiment_SOS_sweep(Fn)
 %% Experiment_SOS_norm: runs a experiment using the LED arena and fly panel
 % Fn is the fly number
 daqreset
 imaqreset
 % Fn = 0;
 %% Set directories & experimental parameters
-% vel = 81;
-vel = 103;
-root = ['C:\BC\Experiment_SOS_vel_' num2str(vel)];
+root = 'C:\BC\Experiment_SOS_vel_v1';
 
 %% EXPERIMENTAL PARAMETERS
 n_tracktime = 21;           % length(func)/fps; seconds for each EXPERIMENT
@@ -16,8 +14,8 @@ n_pause = 0.2;              % seconds for each pause between panel commands
 n_rep = 20;                 % # of repetitions
 patID = 1;                  % pattern ID
 yPos = 5;                   % 30 deg spatial frequency
-funcID = 1;                 % position function ID
-xUpdate = 496.5;              % function update rate
+% funcID = 1;             	% position function ID
+xUpdate = 50;               % function update rate
 FPS = 100;                  % camera frame rate
 nFrame = FPS*n_tracktime;   % # of frames to log
 Fs = 5000;                  % DAQ sampling rate [Hz]
@@ -51,10 +49,26 @@ TRIG(end-end_off:end) = 0;
 %% Camera Setup
 [vid,src] = Basler_acA640_750um(nFrame);
 
+%% Set variable to control positionn function
+func = [1 2 3]';  % position function indicies
+vel = [62 103 148]'; % normalizee veloctiy of each SOS function
+n_func = length(func);	% # of functions
+
+% Create sequence of randomly shuffled frequencies
+func_all = nan(n_func*n_rep,1);
+pp = 0;
+for kk = 1:n_rep
+    func_rand = func(randperm(n_func),:);    % reshuffle randomly
+    func_all(pp+1:pp+n_func,1) = func_rand;  % add rep
+    pp = kk*n_func;
+end
+
+n_trial = n_rep * n_func;
+
 %% EXPERIMENT LOOP
 disp('Start Experiment:')
-for ii = 1:1
-    fprintf('Trial: %i \n', ii)
+for ii = 1:n_trial
+    fprintf('Trial: %i   Vel = %i \n', ii, vel(func_all(ii)))
     preview(vid) % open video preview window
     
     Panel_com('stop')
@@ -71,7 +85,7 @@ for ii = 1:1
     pause(n_pause)
     Panel_com('set_position', [1, yPos]); % set starting position (xpos,ypos)
     pause(n_pause)
-    Panel_com('set_posfunc_id',[1,funcID]); % arg1 = channel (x=1,y=2); arg2 = funcID
+    Panel_com('set_posfunc_id',[1,func_all(ii)]); % arg1 = channel (x=1,y=2); arg2 = funcID
     pause(n_pause)
 	Panel_com('set_funcX_freq', xUpdate); % update rate for x-channel
     pause(n_pause)
@@ -102,7 +116,7 @@ for ii = 1:1
     disp('Saving...')
     disp('-----------------------------------------------------------------')
     fname = ['fly_' num2str(Fn) '_trial_' num2str(ii) '_vel_' ...
-        num2str(vel) '.mat'];
+        num2str(vel(func_all(ii))) '.mat'];
     save(fullfile(root,fname),'-v7.3','data','t_p','vidData','t_v');
     Panel_com('stop')
 end

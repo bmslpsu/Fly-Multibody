@@ -142,7 +142,7 @@ axis tight
 xlabel('Time (s)')
 ylabel('Pattern position (°)')
 x_start = All.X_step(1);
-sync = DATA.reference{n}.position(1);
+sync = DATA.reference{1}.position(1);
 plot(All.time, All.X_step, 'k', 'LineWidth', 1)
 test = [];
 for n = 1:1
