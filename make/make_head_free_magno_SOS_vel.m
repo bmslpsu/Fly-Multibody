@@ -1,4 +1,4 @@
-function [] = make_head_free_magno_SOS(rootdir)
+function [] = make_head_free_magno_SOS_vel(rootdir)
 %% MakeData_SOS_v1_HeadFree: Reads in all raw trials, transforms data, and saves in organized structure for use with figure functions
 %   INPUTS:
 %       rootdir    	:   root directory
@@ -20,22 +20,22 @@ root.head = fullfile(root.reg ,'tracked_head_tip');
 % [D,I,N,U,T,~,~,basename] = GetFileData(root.benifly,'*.csv',false);
 
 % Load function files
-func = cell(N.vel, 1);
-func{1} = load('E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v1\function\ALL_position_function_SOS_Fs_50_T_20_vel_62_freq_8.2_5.05_3.1_1.9_1.15_0.7_0.45_0.25_0.15_amp_1.2_1.95_3.2_5.25_8.55_14_22.85_37.35_61.mat');
-func{2} = load('E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v1\function\ALL_position_function_SOS_Fs_50_T_20_vel_62_freq_8.2_5.05_3.1_1.9_1.15_0.7_0.45_0.25_0.15_amp_1.2_1.95_3.2_5.25_8.55_14_22.85_37.35_61.mat');
-func{3} = load('E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v1\function\ALL_position_function_SOS_Fs_50_T_20_vel_62_freq_8.2_5.05_3.1_1.9_1.15_0.7_0.45_0.25_0.15_amp_1.2_1.95_3.2_5.25_8.55_14_22.85_37.35_61.mat');
+FUNC = cell(N.vel, 1);
+FUNC{1} = load('E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v1\function\ALL_position_function_SOS_Fs_50_T_20_vel_62_freq_8.2_5.05_3.1_1.9_1.15_0.7_0.45_0.25_0.15_amp_1.2_1.95_3.2_5.25_8.55_14_22.85_37.35_61.mat');
+FUNC{2} = load('E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v1\function\ALL_position_function_SOS_Fs_50_T_20_vel_103_freq_9.1_6.1_4.05_2.7_1.8_1.2_0.8_0.55_0.35_amp_1.8_2.7_4_6_9_13.45_20.1_30.1_45.mat');
+FUNC{3} = load('E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v1\function\ALL_position_function_SOS_Fs_50_T_20_vel_148_freq_9.4_6.3_4.25_2.85_1.9_1.3_0.85_0.6_0.4_amp_2.5_3.75_5.55_8.3_12.35_18.4_27.45_40.9_61.mat');
 
 %% Get Data %%
-% close all
+close all
 clc
 
 Fs = 100;
 Fc = 20;
 func_length = 20;
 tintrp = (0:(1/Fs):func_length)';
+debug = false;
 [b,a] = butter(3, Fc/(Fs/2),'low');
 ALL = cell(N.fly,N.vel);
-debug = false;
 DATA = [I , splitvars(table(num2cell(zeros(N.file,5))))]; % store saccade objects
 DATA.Properties.VariableNames(4:end) = {'reference','body','head','error','dwba',};
 for n = 1:N.file
@@ -70,23 +70,16 @@ for n = 1:N.file
     [b_pat, a_pat] = butter(3, 12 / (Fs/2), 'low');
     Reference = interp1(PAT.time_sync, pat, tintrp, 'nearest');
     Reference = filtfilt(b_pat, a_pat, Reference);
-    %Reference = Reference * (2*D.Amp(n) / range(Reference));
     Reference = Reference - mean(Reference);
-  	%pat_time = PAT.time_sync(PAT.sync:PAT.end_idx);
-    %pat_pos = 3.75*PAT.pos(PAT.sync:PAT.end_idx);
-    %pat_pos = interp1(pat_time, pat_pos, (0:(1/500):20)', 'linear');
-    %pat_time = (0:(1/500):20)';
     
     Body    = interp1(trig_time, body,  tintrp, 'pchip');
-    %Body    = Body - mean(Body);
+    Body    = Body - mean(Body);
     Head    = interp1(trig_time, head,  tintrp, 'pchip');
     Head    = filtfilt(b, a, Head);
-    %Head    = Head - mean(Head);
     Error   = Reference - Body - Head;
     LWing   = interp1(trig_time, lwing, tintrp, 'pchip');
     RWing   = interp1(trig_time, rwing, tintrp, 'pchip');
-    dWBA    = -interp1(trig_time, lwing-rwing, tintrp, 'pchip');
-    %dWBA    = dWBA - mean(dWBA);
+    dWBA    = interp1(trig_time, lwing-rwing, tintrp, 'pchip');
     
     % Store signals
     n_detrend = 1;
@@ -95,27 +88,20 @@ for n = 1:N.file
     DATA.head{n}       = singal_attributes(Head, tintrp, 20);
     DATA.error{n}      = singal_attributes(Error, tintrp, 20, n_detrend);
     DATA.dwba{n}       = singal_attributes(dWBA, tintrp, 20);
-    
-    
-	%Head = range( DATA.body{kk}.detrend) * Head ./ range(Head);
-    %DATA.head{n} = singal_attributes(Head, tintrp, 20);
 
     % Debug plot.
     if debug
         figure (100)
         clear ax
         ax(1) = subplot(1,1,1) ; cla ; hold on
-            %title([num2str(freq)])
             plot(tintrp, DATA.reference{n}.position, 'k', 'LineWidth', 1)
             %plot(tintrp, DATA.error{kk}.detrend, 'g', 'LineWidth', 1)
-            plot(tintrp, DATA.body{n}.detrend, 'r', 'LineWidth', 1)
+            plot(tintrp, DATA.body{n}.position, 'r', 'LineWidth', 1)
             plot(tintrp, DATA.head{n}.position, 'b', 'LineWidth', 1)
             plot(tintrp, 5*DATA.dwba{n}.position_lpf, 'm', 'LineWidth', 1)
             leg = legend('Reference','Body','Head','\DeltaWBA', 'Orientation', 'horizontal');
             xlabel('Time (s)')
             ylabel('(°)')
-%         ax(2) = subplot(2,1,2) ; cla ; hold on
-%             plot(tintrp, DATA.dwba{kk}.position_lpf, 'm', 'LineWidth', 1)
                    
        	set(gcf, 'Color', 'w')
        	set(ax, 'Linewidth', 2)
@@ -123,16 +109,58 @@ for n = 1:N.file
         pause
     end
     
-    %SYS_ref2_head_body  = frf(tintrp, Reference, IOFreq, false, Body, Head);
+    IOFreq = flipud(FUNC{I.vel(n)}.All.Freq);
+    SYS_ref2_head_body  = frf(tintrp, Reference, IOFreq, false, Body, Head);
     %pause
-    %SYS_ref2_wing       = frf(tintrp, Reference, IOFreq, false, LWing, RWing, dWBA);
-    %SYS_head2_body_wing = frf(tintrp, Head, IOFreq, false, Body, dWBA);
-    %SYS_wing2_body      = frf(tintrp, dWBA, IOFreq, false, Body);
+    %close all
+    SYS_ref2_wing       = frf(tintrp, Reference, IOFreq, false, LWing, RWing, dWBA);
+    SYS_head2_body_wing = frf(tintrp, Head, IOFreq, false, Body, dWBA);
+    SYS_wing2_body      = frf(tintrp, dWBA, IOFreq, false, Body);
     
-    %SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_ref2_wing, SYS_head2_body_wing);
+    SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_ref2_wing, ...
+                                    SYS_head2_body_wing, SYS_wing2_body);
     
-    %ALL{I.fly(n),I.vel(n)}(end+1,1) = SYS_ref2_head_body;
+    ALL{I.fly(n),I.vel(n)}(end+1,1) = SYS_all;
 end
+
+%% Group Data
+clc
+fields = fieldnames(ALL{1});
+nfield = length(fields);
+FLY = [];
+GRAND = [];
+for v = 1:N.vel
+    GRAND.all(v) = cell2struct(cell(nfield,1),fields);
+    GRAND.all_trial(v) = cell2struct(cell(nfield,1),fields);
+    %GRAND.fly_all(fr) = cell2struct(cell(n_stat_fields,1),stat_fields);
+    %GRAND.fly_all(fr) = [];
+    for n = 1:N.fly
+        for f = 1:nfield
+            FLY.all(n,v).(fields{f})   = cat(3,ALL{n,v}.(fields{f}));
+            FLY.stats(n,v).(fields{f}) = system_stats(FLY.all(n,v).(fields{f}),3);
+            GRAND.all(v).(fields{f}) 	= cat(3,GRAND.all(v).(fields{f}), ...
+                                                        FLY.all(n,v).(fields{f}));
+
+            stat_fields = fieldnames(FLY.stats(n,v).(fields{f}));
+            n_stat_fields = length(stat_fields);
+            for s = 1:n_stat_fields
+                GRAND.fly_all(v).(stat_fields{s}).(fields{f})(:,:,n) = ...
+                    FLY.stats(n,v).(fields{f}).(stat_fields{s});
+                
+                GRAND.fly_stats(v).(stat_fields{s}).(fields{f}) = ...
+                    system_stats(GRAND.fly_all(v).(stat_fields{s}).(fields{f}),3);
+            end
+        end
+    end
+    GRAND.all_trial(v) = structfun(@(x) system_stats(x,3), GRAND.all(v), 'UniformOutput', false);
+end
+
+%% SAVE
+disp('Saving...')
+savedir = 'E:\DATA\Magno_Data\Multibody';
+save(fullfile(savedir, [filename '_' datestr(now,'mm-dd-yyyy') '.mat']), ...
+    'FUNC', 'DATA', 'ALL', 'GRAND', 'FLY', 'D', 'I', 'U', 'N', 'T', '-v7.3')
+disp('SAVING DONE')
 
 %%
 clc
@@ -143,106 +171,35 @@ clear ax h
 axis tight
 xlabel('Time (s)')
 ylabel('Pattern position (°)')
-<<<<<<< Updated upstream
-x_start = All.X_step(1);
-sync = DATA.reference{1}.position(1);
-plot(All.time, All.X_step, 'k', 'LineWidth', 1)
-test = [];
-for n = 1:1
-=======
 % x_start = All.X_step(1);
-sync = DATA.reference{n}.position(1);
+%sync = DATA.reference{n}.position(1);
 % plot(All.time, All.X_step, 'k', 'LineWidth', 1)
 
 ax = gobjects(N.vel,1);
-test =cell(N.vel,1);
+for v = 1:N.vel
+    ax(v) = subplot(N.vel,1,v) ; hold on
+    tt = FUNC{v}.All.time;
+    pos = FUNC{v}.All.X;
+    plot(tt, pos, 'k', 'LineWidth', 1)
+end
+
+test = cell(N.vel,1);
 for n = 1:N.file
     vel = DATA.vel(n);
->>>>>>> Stashed changes
     DATA.reference{n}.position(1) = DATA.reference{n}.position(2);
     
     ax(vel) = subplot(N.vel,1,vel) ; hold on
-    plot(DATA.reference{n}.time, DATA.reference{n}.position - 0*sync, 'LineWidth', 1);
+    plot(DATA.reference{n}.time, DATA.reference{n}.position, 'LineWidth', 1);
     %test{vel}(:,end+1) = DATA.reference{n}.position;
-    test{vel}(:,end+1) = DATA.body{n}.mag.velocity;
+    test{vel}(:,end+1) = DATA.body{n}.mag.position;
+    %test{vel}(:,end+1) = DATA.dwba{n}.mag.velocity;
 end
+
+
 % legend('Computer generated', 'Experimental (from panel controller)', 'Box', 'off')
 Fv = DATA.reference{1}.Fv;
 % plot(Fv, test)
 set(ax, 'LineWidth', 1.5, 'XLim', [-0.2 20.2])
-
-
-%%
-clc
-keepI = cellfun(@(x) isstruct(x) || isobject(x), DATA.reference);
-Data = DATA(keepI,:);
-n_cond = N.vel;
-condI = Data.vel;
-[cond_fly_group, vel_group, fly_group] = findgroups(condI, Data.fly);
-
-Head.time = splitapply(@(x) {x}, Data.reference, cond_fly_group);
-
-
-
-%%
-Head.pos    = splitapply(@(x) {cat(2,x{:})}, Data.head_scd_pos, cond_fly_group);
-Head.vel    = splitapply(@(x) {cat(2,x{:})}, Data.head_scd_vel, cond_fly_group);
-Head.accel  = splitapply(@(x) {cat(2,x{:})}, Data.head_scd_accel, cond_fly_group);
-
-Head = structfun(@(x) splitapply(@(y) {y}, x, vel_group), Head, 'UniformOutput', false);
-Head = structfun(@(x) cat(2,x{:}), Head, 'UniformOutput', false);
-% Head.pos = cellfun(@(x) x - mean(x), Head.pos, 'UniformOutput', false);
-
-Head.fly_stats = structfun(@(x) cellfun(@(y) basic_stats(y,2), x, 'UniformOutput', true), ...
-    Head, 'UniformOutput', false);
-
-fnames = string(fieldnames(Head.fly_stats));
-n_field = length(fnames);
-for f = 1:n_field
-    for v = 1:n_cond
-        Head.fly_mean.(fnames(f)){v} = cat(2, Head.fly_stats.(fnames(f))(:,v).mean);
-    end
-end
-
-Head.vel_stats = structfun(@(x) cellfun(@(y) basic_stats(y,2), x, 'UniformOutput', true), ...
-    Head.fly_mean, 'UniformOutput', false);
-
-
-
-
-
-
-
-%% Group Data
-clc
-fields = fieldnames(ALL{1});
-nfield = length(fields);
-FLY = [];
-GRAND = [];
-for fr = 1:N.vel
-    GRAND.all(fr) = cell2struct(cell(nfield,1),fields);
-    GRAND.all_trial(fr) = cell2struct(cell(nfield,1),fields);
-    %GRAND.fly_all(fr) = cell2struct(cell(n_stat_fields,1),stat_fields);
-    %GRAND.fly_all(fr) = [];
-    for n = 1:N.fly
-        for f = 1:nfield
-            FLY.all(n,fr).(fields{f})   = cat(3,ALL{n,fr}.(fields{f}));
-            FLY.stats(n,fr).(fields{f}) = system_stats(FLY.all(n).(fields{f}),3);
-            GRAND.all(fr).(fields{f})    = cat(3,GRAND.all(fr).(fields{f}), ...
-                                                        FLY.all(n,fr).(fields{f}));
-
-            stat_fields = fieldnames(FLY.stats(n,fr).(fields{f}));
-            n_stat_fields = length(stat_fields);
-            for s = 1:n_stat_fields
-                GRAND.fly_all(fr).(stat_fields{s}).(fields{f})(:,:,n) = ...
-                    FLY.stats(n,fr).(fields{f}).(stat_fields{s});
-                GRAND.fly_stats(fr).(stat_fields{s}).(fields{f}) = ...
-                    system_stats(GRAND.fly_all(fr).(stat_fields{s}).(fields{f}),3);
-            end
-        end
-    end
-    GRAND.all_trial(fr) = structfun(@(x) system_stats(x,3), GRAND.all(fr), 'UniformOutput', false);
-end
 
 %%
 bI = 1;
@@ -263,19 +220,6 @@ ccolor = 'k';
 rcolor = 'g';
 
 %% FRF
-grand_stats_fv = cat(1, GRAND.all_trial.IOFv);
-Fv = cat(1, grand_stats_fv.mean);
-grand_stats_gain = cat(1, GRAND.all_trial.IOGain);
-grand_stats_phase = cat(1, GRAND.all_trial.IOPhaseDiff);
-grand_stats_cohr = cat(1, GRAND.all_trial.IOCohr);
-
-grand_mean_gain = cat(1, grand_stats_gain.mean);
-grand_mean_phase = rad2deg(cat(1, grand_stats_phase.circ_mean));
-grand_mean_cohr = cat(1, grand_stats_cohr.mean);
-grand_std_gain = cat(1, grand_stats_gain.std);
-grand_std_phase = rad2deg(cat(1, grand_stats_phase.circ_std));
-grand_std_cohr = cat(1, grand_stats_cohr.std);
-
 pI = [bI hI gI dwI h2b h2w w2b];
 T = ["ref2body", "ref2head", "ref2gaze", "ref2wing", "head2body", "head2wing", "wing2body"];
 n_plot = length(pI);
@@ -350,18 +294,18 @@ ax = gobjects(1,n_plot);
 h = gobjects(N.freq,n_plot);
 cc = hsv(N.freq);
 for n = 1:n_plot
-    for fr = 1:N.freq
-        all_comp = cat(3, GRAND.all(fr).IOFRF);
+    for v = 1:N.freq
+        all_comp = cat(3, GRAND.all(v).IOFRF);
         ax(1,n) = subplot(2,ceil(n_plot/2),n);
             all = squeeze(all_comp(:,pI(n),:));
             %[~,~] = ComplexAxes(0:0.2:1.2);
 %             h(fr,n) = plot(real(all), imag(all), '.', 'MarkerSize', 10, ...
 %                 'MarkerFaceColor', 'none', 'MarkerEdgeColor', cc(fr,:));
-           h(fr,n) = polarplot(angle(all), abs(all), '.', 'MarkerSize', 10, ...
-                'MarkerFaceColor', 'none', 'MarkerEdgeColor', 0.3*cc(fr,:));
+           h(v,n) = polarplot(angle(all), abs(all), '.', 'MarkerSize', 10, ...
+                'MarkerFaceColor', 'none', 'MarkerEdgeColor', 0.3*cc(v,:));
             hold on ; title(T(n))
-            polarplot(angle(grand_stats_all(fr,pI(n))), abs(grand_stats_all(fr,pI(n))), ...
-                '.', 'MarkerSize', 25, 'MarkerFaceColor', 'none', 'MarkerEdgeColor', cc(fr,:));
+            polarplot(angle(grand_stats_all(v,pI(n))), abs(grand_stats_all(v,pI(n))), ...
+                '.', 'MarkerSize', 25, 'MarkerFaceColor', 'none', 'MarkerEdgeColor', cc(v,:));
             hold on ; title(T(n))
             
 %         h.mean(1) = plot(real(grand_stats_all(:,bI)), imag(grand_stats_all(:,bI)), ...
@@ -394,12 +338,12 @@ fig = figure (1) ; clf
 set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 10 9])
 movegui(fig, 'center')
 ax = gobjects(N.freq,1);
-for fr = 1:N.freq
-    T = ['Freq = ' num2str(U.freq{1}(fr)) 'Hz   Amp = ' num2str(Amp(fr)) '°'];
-    ax(fr) = subplot(N.freq,1,fr); hold on ; title(T)
-        plot(time, ref(:,fr), 'k', 'LineWidth', 1)
-        [h.patch(fr),h.line(fr)] = PlotPatch(body(:,fr),...
-          body_std(:,fr), time, 1, 1, bcolor, bcolor, 0.2, 1);
+for v = 1:N.freq
+    T = ['Freq = ' num2str(U.freq{1}(v)) 'Hz   Amp = ' num2str(Amp(v)) '°'];
+    ax(v) = subplot(N.freq,1,v); hold on ; title(T)
+        plot(time, ref(:,v), 'k', 'LineWidth', 1)
+        [h.patch(v),h.line(v)] = PlotPatch(body(:,v),...
+          body_std(:,v), time, 1, 1, bcolor, bcolor, 0.2, 1);
 end
 set(ax, 'LineWidth', 1.5)
 linkaxes(ax, 'x')

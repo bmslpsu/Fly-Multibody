@@ -13,9 +13,9 @@ function [] = batch_headtrack(root, npoints, center, playback, showpoint)
 %
 
 showpoint = true;
-npoints = 1;
+npoints = 2;
 center = [];
-playback = 25;
+playback = 20;
 % root = 'H:\EXPERIMENTS\MAGNO\Experiment_Ramp\registered';
 % root = 'H:\EXPERIMENTS\MAGNO\Experiment_SOS\registered';
 % root = 'H:\EXPERIMENTS\RIGID\Experiment_Static_Wave';
@@ -33,9 +33,9 @@ mkdir(headdir)
 for file = 1:nfile
     disp(FILES(file))
     disp('---------------------------------------')
-    load(fullfile(PATH,FILES(file)),'vidData','t_v')
+    load(fullfile(PATH,FILES(file)),'regvid','t_v')
 
-    [hAngles,cPoint,validity,ROI,initframe,finalframe] = headtracker(vidData, npoints, center, ...
+    [hAngles,cPoint,validity,ROI,initframe,finalframe] = headtracker(regvid, npoints, center, ...
                                                                             playback, showpoint);
         
     figure

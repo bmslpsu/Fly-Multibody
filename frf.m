@@ -12,7 +12,7 @@ function [SYSTEM] = frf(time,ref,IOFv,debug,varargin)
 %   Usage: frf(time ,ref, IOFv, input_1, input_2, ... , input_n)
 %
 
-ftol = 0.1;
+ftol = 0.01;
 
 IOFv    = IOFv(:);
 nState  = length(varargin) + 1; % # of output states
@@ -54,7 +54,7 @@ for jj = 1:nState
     [Fv, Mag(:,jj), Phase(:,jj), Freq(:,jj)] = FFT(time,State(:,jj));
     %[Freq(:,jj), Fv, Mag(:,jj), Phase(:,jj)] = chirpz_transform(time,State(:,jj),0,20,nFpoint);
     
-    [~, IOMag(:,jj),IOPhase(:,jj),IOidx] = getfreqpeaks(Fv, Mag(:,jj), Phase(:,jj), IOFv, ftol, true);
+    [~, IOMag(:,jj),IOPhase(:,jj),IOidx] = getfreqpeaks(Fv, Mag(:,jj), Phase(:,jj), IOFv, ftol, false);
     IOFreq(:,jj) = Freq(IOidx,jj);
     [Cohr(:,jj),~] = mscohere(ref,State(:,jj),[],[],Fv,Fs);
     [~, IOCohr(:,jj),~,~] = getfreqpeaks(Fv, Cohr(:,jj), [], IOFv, ftol, false);

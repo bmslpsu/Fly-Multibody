@@ -19,7 +19,7 @@ function [MOV] = montage_SOS(rootdir,rootpat,vidFs,export)
 % export = false;
 % vidFs = 50;
 pat_ypos = 5;
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250';
+% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v1';
 % rootpat = 'C:\Users\BC\Box\Git\Arena\Patterns';
 
 if ~isfolder(rootdir)
@@ -42,7 +42,7 @@ end
 PATH.raw            = rootdir;
 PATH.reg            = fullfile(PATH.raw,'registered');
 PATH.body_track  	= fullfile(PATH.raw,'tracked_body');
-PATH.head_track     = fullfile(PATH.reg,'tracked_head');
+PATH.head_track     = fullfile(PATH.reg,'tracked_head_tip');
 PATH.beninfly_track	= fullfile(PATH.reg,'tracked_head_wing');
 PATH.mask           = fullfile(PATH.beninfly_track,'');
 
@@ -75,7 +75,7 @@ pattern_data    = load(fullfile(PATH.pat,FILE.pat),'pattern'); % load pattern
 benifly_data    = ImportBenifly(fullfile(PATH.beninfly_track,FILE.benifly)); % load Benifly tracked kinematics
 raw_data        = load(fullfile(PATH.raw,FILE.raw),'data','t_p','vidData','t_v'); % load raw video & DAQ pattern positions
 reg_data        = load(fullfile(PATH.reg,FILE.raw),'regvid','trf'); % load registered video
-head_data    	= load(fullfile(PATH.head_track,FILE.raw),'hAngles','cPoint'); % load head angles
+head_data    	= load(fullfile(PATH.head_track,FILE.raw),'head_data','head_mask'); % load head angles
 body_data    	= load(fullfile(PATH.body_track,FILE.raw),'bAngles','imgstats','initframe'); % load body angles
 disp('DONE')
 
@@ -83,23 +83,6 @@ disp('DONE')
 func_time = 20;
 [TRIG,PAT] = sync_pattern_trigger(raw_data.t_p, raw_data.data(:,2), func_time, ...
                         raw_data.data(:,1), true, [], false, false);
-if length(TRIG.time_sync) ~= length(body_data.bAngles)
-    [TRIG,PAT] = sync_pattern_trigger(raw_data.t_p, raw_data.data(:,2), func_time, ...
-                            raw_data.data(:,1), true, [], true, false);
-end
-
-% [TRIG,PAT]  = sync_pattern_trigger(raw_data.t_p, raw_data.data(:,2), ...
-%     func_time, raw_data.data(:,1), true, [], false, false);
-% if length(TRIG.time_sync) ~= length(body_data.bAngles)
-%     trig_time = TRIG.time_sync(1:end-1);
-% else
-%     trig_time = TRIG.time_sync;
-% end
-% if length(trig_time) ~= length(body_data.bAngles)
-%     [TRIG,PAT]  = sync_pattern_trigger(raw_data.t_p, raw_data.data(:,2), ...
-%         func_time, raw_data.data(:,1), true, [], false, false);
-%     trig_time = TRIG.time_sync;
-% end
 trig_time = TRIG.time_sync;
 
 % Get kinematics data
@@ -108,15 +91,13 @@ FLY.Fs      = round(1/mean(diff(FLY.time))); % video sampling rate
 FLY.Fc      = 40; % cut off frequency for lpf
 [b,a]       = butter(3, FLY.Fc/(FLY.Fs/2),'low'); % make lpf
 FLY.body    = body_data.bAngles; % body angles [°]
-FLY.head    = head_data.hAngles; % head angles [°]
-% FLY.head    = rad2deg(benifly_data.Head); % head angles [°]
+FLY.head    = head_data.head_data.angle; % head angles [°]
 FLY.head    = filtfilt(b,a,FLY.head); % head angles [°]
 FLY.lwing   = rad2deg(hampel(FLY.time,benifly_data.LWing)); % left wing angles [°]
 FLY.rwing   = rad2deg(hampel(FLY.time,benifly_data.RWing)); % right wing angles [°]
 FLY.lwing   = filtfilt(b,a,FLY.lwing); % left wing angles [°]
 FLY.rwing   = filtfilt(b,a,FLY.rwing); % right wing angles [°]
 FLY.wba     = FLY.lwing - FLY.rwing; % delta wing-beat-amplitude [°]
-
 [b,a]       = butter(3, 20/(FLY.Fs/2), 'low'); % make lpf
 FLY.wba     = filtfilt(b,a,FLY.wba); % delta wing-beat-amplitude [°]
 FLY.wba     = FLY.wba - mean(FLY.wba); % delta wing-beat-amplitude [°]
@@ -125,7 +106,6 @@ FLY.wba     = FLY.wba - mean(FLY.wba); % delta wing-beat-amplitude [°]
 FLY.int_time    = TRIG.time_intrp_exp; % video time
 FLY.int_body    = FLY.body(TRIG.range);
 FLY.int_head    = FLY.head(TRIG.range);
-% FLY.int_head    = FLY.int_head - mean(FLY.int_head);
 FLY.int_lwing 	= FLY.lwing(TRIG.range);
 FLY.int_rwing  	= FLY.rwing(TRIG.range);
 FLY.int_wba     = FLY.wba(TRIG.range);
@@ -133,9 +113,10 @@ FLY.int_wba     = FLY.wba(TRIG.range);
 Fc_pat = 15;
 [b,a] = butter(3, Fc_pat/(FLY.Fs/2), 'low'); % make lpf
 pat_filt = filtfilt(b, a, 3.75*PAT.pos_intrp_exp);
-scale_up = 2*15 / range(pat_filt);
-PAT.norm = scale_up * (pat_filt - mean(pat_filt));
-PAT.norm_error = PAT.norm - FLY.int_body;
+PAT.norm = pat_filt - mean(pat_filt);
+% scale_up = 2*15 / range(pat_filt);
+% PAT.norm = scale_up * (pat_filt - mean(pat_filt));
+% PAT.norm_error = PAT.norm - FLY.int_body;
 
 %% Get video data
 FLY.raw = fliplr(squeeze(raw_data.vidData(:,:,TRIG.range))); % raw video data
@@ -173,10 +154,11 @@ FLY.lwing_tip = FLY.lwing_hinge - FLY.wing_length*[cosd(FLY.int_lwing - FLY.body
 FLY.rwing_tip = FLY.rwing_hinge + FLY.wing_length*[cosd(FLY.int_rwing + FLY.body_reg), ...
                                                     -sind(FLY.int_rwing + FLY.body_reg)];
 
+FLY.body_glob = head_data.head_mask.global;
 FLY.head_length = 38;
-FLY.head_hinge = fliplr(fix(padsize)) + [head_data.cPoint.X  , head_data.cPoint.Y];
-% FLY.head_hinge = [params.gui.head.hinge.x  , params.gui.head.hinge.y];
-FLY.head_tip   = FLY.head_hinge + FLY.head_length*[sind(FLY.int_head) , -cosd(FLY.int_head)];
+FLY.head_hinge = fliplr(fix(padsize)) + head_data.head_mask.move_points.rot;
+FLY.head_tip   = FLY.head_hinge + FLY.head_length*[sind(FLY.int_head - FLY.body_glob) , ...
+                    -cosd(FLY.int_head - FLY.body_glob)];
 
 FLY.body_centroid   = cat(1,body_data.imgstats(TRIG.range).Centroid); % centroid of image
 FLY.body_length     = cat(1,body_data.imgstats(TRIG.range).MajorAxisLength); % long axis of image
@@ -230,9 +212,9 @@ set(ax(3:end), 'FontSize', 12, 'Color', 'k', 'YColor', 'w', 'XColor', 'w', 'Font
     'LineWidth', 1.5, 'XLim', [-0.2 round(FLY.int_time(end))])
 set(ax(end),'XTick', 0:2:round(FLY.int_time(end)))
 set(ax(3:end-1), 'XTickLabel', [], 'XColor', 'none')
-set(ax(3), 'YLim', 16*[-1 1], 'YTick', 15*[-1 0 1])
-set(ax(4), 'YLim', 15*[-1 1], 'YTick', 10 *[-1 0 1])
-set(ax(6), 'YLim', 15*[-1 1], 'YTick', 10 *[-1 0 1])
+set(ax(3), 'YLim', 109*[-1 1])
+set(ax(4), 'YLim', 10*[-1 1], 'YTick', 5 *[-1 0 1])
+set(ax(6), 'YLim', 10*[-1 1], 'YTick', 5 *[-1 0 1])
 linkaxes(ax(1:2), 'xy')
 linkaxes(ax(3:end),'x')
 align_Ylabels_ax(ax(3:end)')
@@ -312,7 +294,7 @@ for jj = 1:FLY.nframe % for each frame
             set(ax_pat, 'Color', 'none', 'XColor', 'none', 'YColor', 'none', ...
                             'Position', ax(2).Position)
            	cla
-            pat_pos = (mean(PAT.norm_error(win)));
+            %pat_pos = (mean(PAT.norm_error(win)));
             theta = -deg2rad(pat_pos) + -(pi/2 + linspace(0, 2*pi, size(pat_image,2)));
             x = radius * cos(theta) + FLY.raw_center(1);
             y = radius * sin(theta) + FLY.raw_center(2);
