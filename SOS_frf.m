@@ -17,8 +17,9 @@ clc
 % h2w = 9;
 % w2b = 11;
 
-pI = [1 2 3 6 8 11];
-T = ["ref2body", "ref2head", "ref2gaze", "ref2wing", "head2body", "wing2body"];
+pI = [1 2 3 6 8 9 11 13];
+T = ["ref2body", "ref2head", "ref2gaze", "ref2wing", ...
+    "head2body", "wing2head", "wing2body","left2right"];
 n_plot = length(pI);
 cc = hsv(n_plot);
 Fv = DATA.reference{1}.Fv;
@@ -34,7 +35,7 @@ for n = 1:n_plot
     subI = n + (0:2)*n_plot;
     ax(1,n) = subplot(3,n_plot,subI(1)); hold on ; title(T(n))
         grand_med = GRAND.fly_stats(v).mean.IOGain.mean(:,pI(n));
-        grand_std = GRAND.fly_stats(v).std.IOGain.mean(:,pI(n));
+        grand_std = GRAND.fly_stats(v).std.IOGain.std(:,pI(n));
         [h.patch(1,n),h.line(1,n)] = PlotPatch(grand_med,...
                   grand_std, IOFv, 1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
 
@@ -80,7 +81,7 @@ set([YLabelHC], 'String', 'Coherence')
 % set(ax(7:9),'YLim',[0 1.05])
 % set(ax(1:4),'XTickLabels',[])
 
-% set(ax,'XScale','log')
+set(ax,'XScale','log')
 
 %% Save FRF data
 % fname = 'Static_freq_mag';

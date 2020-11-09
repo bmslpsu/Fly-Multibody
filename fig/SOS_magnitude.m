@@ -4,7 +4,7 @@ root = 'E:\DATA\Magno_Data\Multibody';
 [FILE,PATH] = uigetfile({'*.mat', 'DAQ-files'}, ...
     'Select head angle trials', root, 'MultiSelect','off');
 
-load(fullfile(PATH,FILE),'DATA','ALL','D','I','U','N')
+load(fullfile(PATH,FILE),'DATA','ALL','GRAND','FLY','D','I','U','N')
 
 %% FFT of all wavelengths by fly
 clearvars -except DATA ALL GRAND FLY D I U N root
@@ -12,8 +12,8 @@ clc
 
 Fv = DATA.reference{1}.Fv;
 
-% fname = 'position';
-fname = 'velocity';
+fname = 'position';
+% fname = 'velocity';
 
 MAG.ref = cell(N.fly, N.vel);
 MAG.body = cell(N.fly, N.vel);

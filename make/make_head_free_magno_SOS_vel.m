@@ -56,10 +56,12 @@ for n = 1:N.file
     trig_time   = TRIG.time_sync;
     
   	% Filter wing angles
-    lwing = hampel(data.benifly.Time, data.benifly.LWing);
-    rwing = hampel(data.benifly.Time, data.benifly.RWing);
-	lwing = rad2deg(filtfilt(b,a,lwing));
-    rwing = rad2deg(filtfilt(b,a,rwing));
+    lwing = rad2deg(data.benifly.LWing);
+    rwing = rad2deg(data.benifly.RWing);
+    lwing = hampel(data.benifly.Time, lwing);
+    rwing = hampel(data.benifly.Time, rwing);
+	lwing = filtfilt(b,a,lwing);
+    rwing = filtfilt(b,a,rwing);
     
     % Get pattern, head, & body anlges
     pat = 3.75*PAT.pos;
@@ -83,11 +85,14 @@ for n = 1:N.file
     
     % Store signals
     n_detrend = 1;
-    DATA.reference{n}  = singal_attributes(Reference, tintrp);
-    DATA.body{n}       = singal_attributes(Body, tintrp, 20, n_detrend);
-    DATA.head{n}       = singal_attributes(Head, tintrp, 20);
-    DATA.error{n}      = singal_attributes(Error, tintrp, 20, n_detrend);
-    DATA.dwba{n}       = singal_attributes(dWBA, tintrp, 20);
+    DATA.reference{n}   = singal_attributes(Reference, tintrp);
+    DATA.body{n}        = singal_attributes(Body, tintrp, [], n_detrend);
+    DATA.head{n}        = singal_attributes(Head, tintrp, []);
+    DATA.error{n}       = singal_attributes(Error, tintrp, [], n_detrend);
+    DATA.dwba{n}    	= singal_attributes(dWBA, tintrp, []);
+    DATA.lwing{n}    	= singal_attributes(LWing, tintrp, []);
+    DATA.rwing{n}       = singal_attributes(RWing, tintrp, []);
+
 
     % Debug plot.
     if debug
@@ -109,6 +114,20 @@ for n = 1:N.file
         pause
     end
     
+    if 0
+        figure (200)
+        clear ax
+        ax(1) = subplot(1,1,1) ; cla ; hold on
+            plot(tintrp, LWing, 'r', 'LineWidth', 1)
+            plot(tintrp, RWing, 'b', 'LineWidth', 1)
+            plot(tintrp, dWBA, 'k', 'LineWidth', 1)
+                   
+       	set(gcf, 'Color', 'w')
+       	set(ax, 'Linewidth', 2)
+        linkaxes(ax,'x')
+        pause
+    end
+     
     IOFreq = flipud(FUNC{I.vel(n)}.All.Freq);
     SYS_ref2_head_body  = frf(tintrp, Reference, IOFreq, false, Body, Head);
     %pause
@@ -116,9 +135,10 @@ for n = 1:N.file
     SYS_ref2_wing       = frf(tintrp, Reference, IOFreq, false, LWing, RWing, dWBA);
     SYS_head2_body_wing = frf(tintrp, Head, IOFreq, false, Body, dWBA);
     SYS_wing2_body      = frf(tintrp, dWBA, IOFreq, false, Body);
+    SYS_left2_right  	= frf(tintrp, LWing, IOFreq, false, -RWing);
     
     SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_ref2_wing, ...
-                                    SYS_head2_body_wing, SYS_wing2_body);
+                                    SYS_head2_body_wing, SYS_wing2_body, SYS_left2_right);
     
     ALL{I.fly(n),I.vel(n)}(end+1,1) = SYS_all;
 end

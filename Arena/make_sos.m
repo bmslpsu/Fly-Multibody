@@ -36,13 +36,17 @@ assert(all(F > 0), 'Frequencies must be positive')
 assert( (cent/round(cent) == 1) && (cent >=1) && (cent <= 360/res), ...
     '"cent" must be a positive integer between 0 & 360/res')
 
+freq_res = 1 / T; % frequency resolution
 tt = (0:1/Fs:T)';  % time vector [s]
 F = F(:);
 A = A(:);
 if isempty(A)
     N = length(F); % # of frequency components
 elseif isempty(F)
-   N = length(A); % # of frequency components 
+   N = length(A); % # of frequency components
+else
+    assert(length(A)==length(F), 'ampltidue and frequency vectors must be equal length if ''norm_vel'' is not specified')
+    N = length(F);
 end
 
 
@@ -69,15 +73,9 @@ else
         A = norm_vel ./ (2*pi*F); % normalize amplitude of each frequency component for given peak speed
     elseif isempty(F)
         F = norm_vel ./ (2*pi*A); % normalize frequency of each frequency component for given peak speed & ampltiude
-        %n_dec = 1;
-        %rr = 10 .^ n_dec;
-        %F = round(rr*F) / rr;
-        freq_res = 1 / T;
-        F = freq_res * round(F / freq_res);
     end
 end
-
-Phase = deg2rad(randi(359,N,1)); % random initial phase of each frequency component [rad]
+F = freq_res * round(F / freq_res); % round frequencies to nearest resolution point
 
 % Check for prime multiples
 Prime = nan(N);
@@ -97,6 +95,7 @@ for n = 1:N
 end
 
 % Generate SOS signal
+Phase = deg2rad(randi(359,N,1)); % random initial phase of each frequency component [rad]
 X = zeros(length(tt),1);
 Y = zeros(length(tt),N);
 for n = 1:N % each frequency component
@@ -188,7 +187,7 @@ if ~isempty(root)
     else
         func_type = "SOS";
     end
-    if ~isempty(norm_vel)
+    if norm_vel
         fname = sprintf(['position_function_%s_Fs_%1.0f_T_%1.0f_vel_%1.0f_freq_' ...
                             str_freq 'amp_' str_amp '.mat'], func_type, Fs, T, norm_vel);
     else
