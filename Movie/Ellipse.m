@@ -86,7 +86,7 @@ classdef Ellipse
             obj.center   	= center;    	% center rotation point
             obj.a           = a;         	% long axis length
             obj.b           = b;           	% short axis length
-            obj.theta.a     = theta;      	% long  axis direction
+            obj.theta.a     = theta;      	% long axis direction
             obj.offset      = offset;     	% rotation point offset from centroid (ratio)
             obj.color       = color;       	% patch color
             obj.facealpha   = facealpha;  	% patch face opacity
@@ -150,6 +150,9 @@ classdef Ellipse
             %
             if nargin < 3
                 showpoints = false;
+                if nargin < 2
+                   theta = obj.theta; % use current theta 
+                end
             end
             
          	if nargin >= 2

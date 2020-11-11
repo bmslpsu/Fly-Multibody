@@ -23,7 +23,7 @@ classdef system_stats
                 obj.std         = nanstd(A,[],dim);
                 obj.circ_mean 	= circ_mean(A,[],dim);
                 %obj.circ_median = circ_median(A,dim);
-                obj.circ_std 	= circ_std(A,[],[],dim);
+                [~,obj.circ_std] = circ_std(A,[],[],dim);
             else
                 obj.mean        = nan;
                 obj.median      = nan;

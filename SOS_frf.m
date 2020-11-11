@@ -4,10 +4,10 @@ root = 'E:\DATA\Magno_Data\Multibody';
 [FILE,PATH] = uigetfile({'*.mat', 'DAQ-files'}, ...
     'Select head angle trials', root, 'MultiSelect','off');
 
-load(fullfile(PATH,FILE),'DATA','ALL','GRAND','FLY','D','I','U','N')
+load(fullfile(PATH,FILE),'DATA','ALL','GRAND','FLY','FUNC','D','I','U','N')
 
 %% FRF
-clearvars -except DATA ALL GRAND FLY D I U N root
+clearvars -except DATA ALL GRAND FLY FUNC D I U N root
 clc
 
 % lwI = 4;
@@ -46,6 +46,7 @@ for n = 1:n_plot
         %phase(any((1:N.freq)'==shift_I{n},2)) = phase(any((1:N.freq)'==shift_I{n},2)) - 360;       
         grand_med = rad2deg(GRAND.fly_stats(v).circ_mean.IOPhaseDiff.circ_mean(:,pI(n)));
         grand_std = rad2deg(GRAND.fly_stats(v).circ_std.IOPhaseDiff.circ_mean(:,pI(n)));
+        grand_med(grand_med > 20) = grand_med(grand_med > 20) - 360;
         [h.patch(2,n),h.line(2,n)] = PlotPatch(grand_med,...
                   grand_std, IOFv, 1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
 
@@ -57,7 +58,7 @@ for n = 1:n_plot
 
 end
 set(h.line(1:2,:),'Marker','.','MarkerFaceColor','none','MarkerSize', 20')
-set(ax, 'LineWidth', 1.5, 'FontSize', 12, 'XLim', [0 10],...
+set(ax, 'LineWidth', 1.5, 'FontSize', 12, 'XLim', [1 16],...
     'XGrid', 'on', 'YGrid', 'on', 'Box', 'on')
 
 linkaxes(ax,'x')
@@ -81,7 +82,7 @@ set([YLabelHC], 'String', 'Coherence')
 % set(ax(7:9),'YLim',[0 1.05])
 % set(ax(1:4),'XTickLabels',[])
 
-set(ax,'XScale','log')
+% set(ax,'XScale','log')
 
 %% Save FRF data
 % fname = 'Static_freq_mag';
