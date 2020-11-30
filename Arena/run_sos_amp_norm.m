@@ -22,27 +22,27 @@ clear ; close all ; clc
 root        = 'C:\Users\BC\Box\Git\Fly-Multibody\Arena\functions';
 F           = [];
 T           = 20;
-Fs          = 50;
+Fs          = 150;
 res         = 3.75;
 cent        = 45;
 showplot    = true;
 
 %A        	= 3.75*[0.49 0.65 0.77 1.01 1.44 2 3 5 7 13];
 
-% A        	= logspace((log(1.8)/log(10)),(log(45)/log(10)), 9)';
-% norm_vel 	= 103;
+A        	= logspace((log(1.8)/log(10)),(log(45)/log(10)), 9)';
+norm_vel 	= 103;
 
-% A           = logspace((log(2.5)/log(10)),(log(61)/log(10)), 9)';
-% norm_vel   	= 148;
+A           = logspace((log(2.5)/log(10)),(log(61)/log(10)), 9)';
+norm_vel   	= 148;
 
-% A           = logspace((log(1.2)/log(10)),(log(61)/log(10)), 9)';
-% norm_vel   	= 62;
+A           = logspace((log(1.2)/log(10)),(log(61)/log(10)), 9)';
+norm_vel   	= 62;
 
-A           = logspace((log(1.35)/log(10)),(log(61)/log(10)), 12)';
-norm_vel   	= 100;
+% A           = logspace((log(1.35)/log(10)),(log(61)/log(10)), 12)';
+% norm_vel   	= 100;
 
 n_amp = length(A);
-All = make_sos(T, Fs, res, F, A, norm_vel, cent, showplot, []);
+All = make_sos(T, Fs, res, F, A, norm_vel, cent, showplot, root);
 
 disp('Freq')
 disp(All.Freq)

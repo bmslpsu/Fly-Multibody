@@ -22,7 +22,7 @@ clear ; close all ; clc
 root        = 'C:\Users\BC\Box\Git\Fly-Multibody\Arena\functions';
 F           = [];
 T           = 20;
-Fs          = 500;
+Fs          = 150;
 res         = 3.75;
 cent        = 45;
 showplot    = true;
