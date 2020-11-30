@@ -92,8 +92,8 @@ end
 
 % Make output structure
 SYSTEM.Names            = Names;
-SYSTEM.State            = State;
 SYSTEM.Time             = time;
+SYSTEM.State            = State;
 
 SYSTEM.Fv               = refFv;
 SYSTEM.IOFv             = IOFv;
@@ -114,16 +114,16 @@ SYSTEM.IOFreq         	= IOFreq;
 SYSTEM.IOMag            = IOMag;
 SYSTEM.IOPhase      	= IOPhase;
 
-SYSTEM.Gain             = Gain;
-SYSTEM.PhaseDiff       	= PhaseDiff;
-SYSTEM.FRF              = FRF;
-SYSTEM.FRF_Gain         = FRF_Gain;
-SYSTEM.FRF_PhaseDiff    = FRF_PhaseDiff;
+% SYSTEM.Gain             = Gain;
+% SYSTEM.PhaseDiff       	= PhaseDiff;
+% SYSTEM.FRF              = FRF;
+% SYSTEM.FRF_Gain         = FRF_Gain;
+% SYSTEM.FRF_PhaseDiff    = FRF_PhaseDiff;
 SYSTEM.IOGain           = IOGain;
 SYSTEM.IOPhaseDiff      = IOPhaseDiff;
 SYSTEM.IOFRF            = IOFRF;
-SYSTEM.IOFRF_Gain       = IOFRF_Gain;
-SYSTEM.IOFRF_PhaseDiff  = IOFRF_PhaseDiff;
+% SYSTEM.IOFRF_Gain       = IOFRF_Gain;
+% SYSTEM.IOFRF_PhaseDiff  = IOFRF_PhaseDiff;
 
 SYSTEM.Cohr             = Cohr;
 SYSTEM.IOCohr           = IOCohr;

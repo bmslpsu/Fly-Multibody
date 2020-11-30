@@ -1,16 +1,20 @@
-function [] = batch_register(root, crop_xy)
+function [] = batch_register(root, crop_xy, trf_set)
 %% batch_register: register selected videos
 %
 %   INPUT:
-%       root   	:   root directory
-%       crop    : 
+%       root        :   root directory
+%       crop_xy  	:   crop rectangle or boolean to manually crop
+%       trf_set     :   prior affine2D cell array for eaach frame
 %
 %   OUTPUT:
 %       -
 %
 
-if nargin < 2
-   crop_xy = []; 
+if nargin < 3
+    trf_set = [];
+    if nargin < 2
+       crop_xy = []; 
+    end
 end
 
 [FILES, PATH] = uigetfile({'*.mat', 'MAT-files'},'Select videos', root, 'MultiSelect','on');
@@ -31,7 +35,7 @@ for file = 1:nfile
         end
     end
 
-    [regvid,trf] = register_video(vidData, crop_xy);
+    [regvid,trf] = register_video_translation(vidData, crop_xy, trf_set);
 
     save(fullfile(regdir,FILES{file}),'-v7.3','regvid','trf','t_v','crop_xy')
 end

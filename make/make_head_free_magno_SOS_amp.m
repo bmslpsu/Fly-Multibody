@@ -1,5 +1,5 @@
 function [] = make_head_free_magno_SOS_amp(rootdir)
-%% MakeData_SOS_v1_HeadFree: Reads in all raw trials, transforms data, and saves in organized structure for use with figure functions
+%% make_head_free_magno_SOS_amp:
 %   INPUTS:
 %       rootdir    	:   root directory
 %   OUTPUTS:
@@ -145,14 +145,17 @@ for n = 1:N.file
     end
      
     IOFreq = FUNC{I.amp(n)}.All.Freq;
-    %IOFreq = flipud(FUNC{I.amp(n)}.All.Freq);
-    SYS_ref2_head_body  = frf(tintrp, Reference, IOFreq, false, Body, Head);
+    clss = 'velocity';
+    SYS_ref2_head_body = frf(tintrp, DATA.reference{n}.(clss), IOFreq, false, ...
+                DATA.body{n}.(clss), DATA.head{n}.(clss));
     %pause
     %close all
-    SYS_ref2_wing       = frf(tintrp, Reference, IOFreq, false, LWing, RWing, dWBA);
-    SYS_head2_body_wing = frf(tintrp, Head, IOFreq, false, Body, dWBA);
-    SYS_wing2_body      = frf(tintrp, dWBA, IOFreq, false, Body);
-    SYS_left2_right  	= frf(tintrp, LWing, IOFreq, false, -RWing);
+    SYS_ref2_wing = frf(tintrp, DATA.reference{n}.(clss), IOFreq, false, ...
+                        DATA.lwing{n}.(clss), DATA.rwing{n}.(clss), DATA.dwba{n}.(clss));
+    SYS_head2_body_wing = frf(tintrp, DATA.head{n}.(clss), IOFreq, false, ...
+                        DATA.body{n}.(clss), DATA.dwba{n}.(clss));
+    SYS_wing2_body = frf(tintrp, DATA.dwba{n}.(clss), IOFreq, false, DATA.body{n}.(clss));
+    SYS_left2_right = frf(tintrp, DATA.lwing{n}.(clss), IOFreq, false, DATA.rwing{n}.(clss));
     
     SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_ref2_wing, ...
                                     SYS_head2_body_wing, SYS_wing2_body, SYS_left2_right);

@@ -12,8 +12,8 @@ clc
 
 Fv = DATA.reference{1}.Fv;
 
-fname = 'position';
-% fname = 'velocity';
+% fname = 'position';
+fname = 'velocity';
 
 MAG.ref = cell(N.fly, N{1,3});
 MAG.body = cell(N.fly, N{1,3});
@@ -56,7 +56,7 @@ MAG.vel_stats = structfun(@(x) cellfun(@(y) basic_stats(y,2), x, 'UniformOutput'
 
 %%
 fig = figure (1) ; clf
-set(fig, 'Color', 'w','Units', 'inches', 'Position', [2 2 10 8])
+set(fig, 'Color', 'w','Units', 'inches', 'Position', [2 2 6 4])
 ax = gobjects(n_field, N{1,3});
 pp = 1;
 cc = hsv(n_field);
@@ -74,10 +74,11 @@ for f = 1:n_field
     end
 end
 
-set(ax , 'LineWidth', 1.5, 'FontSize', 11, 'Box', 'off', 'XLim', [0.5 16])
-% set(ax(1,:), 'YLim', [-1 160])
-set(ax(2,:), 'YLim', [-0.1 2])
+set(ax , 'Color', 'none', 'LineWidth', 1.5, 'FontSize', 11, 'Box', 'off', 'XLim', [0.5 16])
+set(ax(1,:), 'YLim', [-1 160])
+% set(ax(2,:), 'YLim', [-0.1 2])
 % set(ax(3,:), 'YLim', [-1 30])
+suptitle(fname)
 
 linkaxes(ax, 'x')
 linkaxes(ax(1,:), 'y')

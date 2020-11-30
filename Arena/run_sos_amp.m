@@ -33,8 +33,18 @@ showplot    = true;
 % A = 2*[1 1 1 1 1 1 1 1];
 % F = linspace(0.35,13.05, length(A))';
 
-A = 3*[1 1 1 1 1 1 1 1];
-F = linspace(0.25, 11.85, length(A))';
+% A = 3*[1 1 1 1 1 1 1 1];
+% F = linspace(0.25, 11.85, length(A))';
+
+
+A = 1*[1 1 1 1 1 1 1 1];
+F = linspace(2.55, 19, length(A))';
+
+% A = 2*[1 1 1 1 1 1 1 1];
+% F = linspace(2.45, 18, length(A))';
+
+% A = 3*[1 1 1 1 1 1 1 1];
+% F = linspace(2.3, 16.8, length(A))';
 
 All = make_sos(T, Fs, res, F, A, [], cent, showplot, root);
 

@@ -17,7 +17,8 @@ clc
 % h2w = 9;
 % w2b = 11;
 
-pI = [1 2 3 6 8 9 11 13];
+% pI = [1 2 3 6 8 9 11 13];
+pI = [1 5];
 T = ["ref2body", "ref2head", "ref2gaze", "ref2wing", ...
     "head2body", "wing2head", "wing2body","left2right"];
 n_plot = length(pI);
@@ -58,7 +59,7 @@ for n = 1:n_plot
 
 end
 set(h.line(1:2,:),'Marker','.','MarkerFaceColor','none','MarkerSize', 20')
-set(ax, 'LineWidth', 1.5, 'FontSize', 12, 'XLim', [1 16],...
+set(ax, 'LineWidth', 1.5, 'FontSize', 12, 'XLim', [0.2 16],...
     'XGrid', 'on', 'YGrid', 'on', 'Box', 'on')
 
 linkaxes(ax,'x')

@@ -161,7 +161,7 @@ if showplot
     set(ax, 'LineWidth', 1.5,  'FontSize', 10)
     set(ax(1:2), 'XLim', [-0.5 T])
     %set(ax(3:4), 'XLim', [0.9*min(F) 1.1*max(F)])
-    set(ax(3:4), 'XLim', [0 15])
+    set(ax(3:4), 'XLim', [0 21])
     set(ax([1,3]), 'XTickLabels', [])
     linkaxes(ax(1:2), 'x')
     linkaxes(ax(3:4), 'x')

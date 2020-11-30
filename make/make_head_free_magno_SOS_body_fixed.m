@@ -1,29 +1,25 @@
-function [] = make_head_free_magno_SOS_vel(rootdir)
-%% MakeData_SOS_v1_HeadFree: Reads in all raw trials, transforms data, and saves in organized structure for use with figure functions
+function [] = make_head_free_magno_SOS_body_fixed(rootdir)
+%% make_head_free_magno_SOS_body_fixed: Reads in all raw trials, transforms data, and saves in organized structure for use with figure functions
 %   INPUTS:
 %       rootdir    	:   root directory
 %   OUTPUTS:
 %       -
 %
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v1';
-filename = 'SOS_HeadFree_vel';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_body_fixed';
+filename = 'SOS_HeadFree_body_fixed';
 
 %% Setup Directories %%
 root.daq = rootdir; clear rootdir
-root.body = fullfile(root.daq,'tracked_body');
-root.reg = fullfile(root.daq,'registered');
-root.benifly = fullfile(root.reg ,'tracked_head_wing');
-root.head = fullfile(root.reg ,'tracked_head_tip');
+root.benifly = fullfile(root.daq ,'tracked_head_wing');
+root.head = fullfile(root.daq ,'tracked_head_tip');
 
 % Select files
 [D,I,N,U,T,~,~,basename] = GetFileData(root.head,'*.mat',false);
 % [D,I,N,U,T,~,~,basename] = GetFileData(root.benifly,'*.csv',false);
 
 % Load function files
-FUNC = cell(N.vel, 1);
-FUNC{1} = load('E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v1\function\ALL_position_function_SOS_Fs_50_T_20_vel_62_freq_8.2_5.05_3.1_1.9_1.15_0.7_0.45_0.25_0.15_amp_1.2_1.95_3.2_5.25_8.55_14_22.85_37.35_61.mat');
-FUNC{2} = load('E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v1\function\ALL_position_function_SOS_Fs_50_T_20_vel_103_freq_9.1_6.1_4.05_2.7_1.8_1.2_0.8_0.55_0.35_amp_1.8_2.7_4_6_9_13.45_20.1_30.1_45.mat');
-FUNC{3} = load('E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v1\function\ALL_position_function_SOS_Fs_50_T_20_vel_148_freq_9.4_6.3_4.25_2.85_1.9_1.3_0.85_0.6_0.4_amp_2.5_3.75_5.55_8.3_12.35_18.4_27.45_40.9_61.mat');
+FUNC = cell(N{1,3}, 1);
+FUNC{1} = load('E:\EXPERIMENTS\MAGNO\Experiment_SOS_body_fixed\functions\ALL_position_function_SOS_Fs_50_T_20_freq_1_3.1_5.3_7.4_9.6_amp_9_5_3_2_1.mat');
 
 %% Get Data %%
 close all
@@ -35,7 +31,7 @@ func_length = 20;
 tintrp = (0:(1/Fs):func_length)';
 debug = false;
 [b,a] = butter(3, Fc/(Fs/2),'low');
-ALL = cell(N.fly,N.vel);
+ALL = cell(N.fly,N{1,3});
 DATA = [I , splitvars(table(num2cell(zeros(N.file,5))))]; % store saccade objects
 DATA.Properties.VariableNames(4:end) = {'reference','body','head','error','dwba',};
 for n = 1:N.file
@@ -43,7 +39,6 @@ for n = 1:N.file
     disp(basename{n})
     % Load DAQ, body, head, & wing data
 	data.daq = load(fullfile(root.daq,  [basename{n} '.mat']),'data','t_p'); % load camera trigger & pattern x-position
-    data.body = load(fullfile(root.body, [basename{n} '.mat']),'bAngles'); % load body angles
 	data.head = load(fullfile(root.head, [basename{n} '.mat']),'head_data'); % load head angles
  	data.benifly = ImportBenifly(fullfile(root.benifly, ...
                             [basename{n} '.csv'])); % load head & wing angles from Benifly
@@ -56,29 +51,26 @@ for n = 1:N.file
     trig_time   = TRIG.time_sync;
     
   	% Filter wing angles
-    lwing = rad2deg(data.benifly.LWing);
-    rwing = rad2deg(data.benifly.RWing);
+    lwing = rad2deg(-data.benifly.LWing);
+    rwing = rad2deg(-data.benifly.RWing);
     lwing = hampel(data.benifly.Time, lwing);
     rwing = hampel(data.benifly.Time, rwing);
 	lwing = filtfilt(b,a,lwing);
     rwing = filtfilt(b,a,rwing);
     
-    % Get pattern, head, & body anlges
+    % Get pattern, head, & body angles
     pat = 3.75*PAT.pos;
-    body = data.body.bAngles;
-	head = data.head.head_data.angle;
+	head = -data.head.head_data.angle;
     
     % Interpolate so all signals have the same times
-    [b_pat, a_pat] = butter(3, 12 / (Fs/2), 'low');
+    [b_pat, a_pat] = butter(3, 20 / (Fs/2), 'low');
     Reference = interp1(PAT.time_sync, pat, tintrp, 'nearest');
     Reference = filtfilt(b_pat, a_pat, Reference);
     Reference = Reference - mean(Reference);
     
-    Body    = interp1(trig_time, body,  tintrp, 'pchip');
-    Body    = Body - mean(Body);
     Head    = interp1(trig_time, head,  tintrp, 'pchip');
     Head    = filtfilt(b, a, Head);
-    Error   = Reference - Body - Head;
+    Error   = Reference  - Head;
     LWing   = interp1(trig_time, lwing, tintrp, 'pchip');
     RWing   = interp1(trig_time, rwing, tintrp, 'pchip');
     dWBA    = interp1(trig_time, lwing-rwing, tintrp, 'pchip');
@@ -86,13 +78,11 @@ for n = 1:N.file
     % Store signals
     n_detrend = 1;
     DATA.reference{n}   = singal_attributes(Reference, tintrp);
-    DATA.body{n}        = singal_attributes(Body, tintrp, [], n_detrend);
     DATA.head{n}        = singal_attributes(Head, tintrp, []);
     DATA.error{n}       = singal_attributes(Error, tintrp, [], n_detrend);
-    DATA.dwba{n}    	= singal_attributes(dWBA, tintrp, 10);
-    DATA.lwing{n}    	= singal_attributes(LWing, tintrp, 10);
-    DATA.rwing{n}       = singal_attributes(RWing, tintrp, 10);
-
+    DATA.dwba{n}    	= singal_attributes(dWBA, tintrp, []);
+    DATA.lwing{n}    	= singal_attributes(LWing, tintrp, []);
+    DATA.rwing{n}       = singal_attributes(RWing, tintrp, []);
 
     % Debug plot.
     if debug
@@ -101,10 +91,9 @@ for n = 1:N.file
         ax(1) = subplot(1,1,1) ; cla ; hold on
             plot(tintrp, DATA.reference{n}.position, 'k', 'LineWidth', 1)
             %plot(tintrp, DATA.error{kk}.detrend, 'g', 'LineWidth', 1)
-            plot(tintrp, DATA.body{n}.detrend, 'r', 'LineWidth', 1)
-            plot(tintrp, 10*DATA.head{n}.position, 'b', 'LineWidth', 1)
-            plot(tintrp, 5*DATA.dwba{n}.position_lpf, 'm', 'LineWidth', 1)
-            leg = legend('Reference','Body','Head','\DeltaWBA', 'Orientation', 'horizontal');
+            plot(tintrp, DATA.head{n}.position, 'b', 'LineWidth', 1)
+            plot(tintrp, DATA.dwba{n}.position, 'm', 'LineWidth', 1)
+            leg = legend('Reference','Head','\DeltaWBA', 'Orientation', 'horizontal');
             xlabel('Time (s)')
             ylabel('(°)')
                    
@@ -128,23 +117,19 @@ for n = 1:N.file
         pause
     end
      
-    IOFreq = flipud(FUNC{I.vel(n)}.All.Freq);
-    clss = 'velocity';
-    SYS_ref2_head_body = frf(tintrp, DATA.reference{n}.(clss), IOFreq, false, ...
-                DATA.body{n}.(clss), DATA.head{n}.(clss));
+    IOFreq = FUNC{I{n,3}}.All.Freq;
+    %IOFreq = flipud(FUNC{I.amp(n)}.All.Freq);
+    SYS_ref2_head  = frf(tintrp, Reference, IOFreq, false, Head);
     %pause
     %close all
-    SYS_ref2_wing = frf(tintrp, DATA.reference{n}.(clss), IOFreq, false, ...
-                        DATA.lwing{n}.(clss), DATA.rwing{n}.(clss), DATA.dwba{n}.(clss));
-    SYS_head2_body_wing = frf(tintrp, DATA.head{n}.(clss), IOFreq, false, ...
-                        DATA.body{n}.(clss), DATA.dwba{n}.(clss));
-    SYS_wing2_body = frf(tintrp, DATA.dwba{n}.(clss), IOFreq, false, DATA.body{n}.(clss));
-    SYS_left2_right = frf(tintrp, DATA.lwing{n}.(clss), IOFreq, false, DATA.rwing{n}.(clss));
+    SYS_ref2_wing       = frf(tintrp, Reference, IOFreq, false, LWing, RWing, dWBA);
+    SYS_head2_wing      = frf(tintrp, Head, IOFreq, false, dWBA);
+    SYS_left2_right  	= frf(tintrp, LWing, IOFreq, false, -RWing);
     
-    SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_ref2_wing, ...
-                                    SYS_head2_body_wing, SYS_wing2_body, SYS_left2_right);
+    SYS_all = CatStructFields(2, SYS_ref2_head, SYS_ref2_wing, ...
+                                    SYS_head2_wing, SYS_left2_right);
     
-    ALL{I.fly(n),I.vel(n)}(end+1,1) = SYS_all;
+    ALL{I.fly(n),I{n,3}}(end+1,1) = SYS_all;
 end
 
 %% Group Data
@@ -153,15 +138,15 @@ fields = fieldnames(ALL{1});
 nfield = length(fields);
 FLY = [];
 GRAND = [];
-for v = 1:N.vel
+for v = 1:N{1,3}
     GRAND.all(v) = cell2struct(cell(nfield,1),fields);
     GRAND.all_trial(v) = cell2struct(cell(nfield,1),fields);
     %GRAND.fly_all(fr) = cell2struct(cell(n_stat_fields,1),stat_fields);
     %GRAND.fly_all(fr) = [];
     for n = 1:N.fly
         for f = 1:nfield
-            FLY.all(n,v).(fields{f})   = cat(3,ALL{n,v}.(fields{f}));
-            FLY.stats(n,v).(fields{f}) = system_stats(FLY.all(n,v).(fields{f}),3);
+            FLY.all(n,v).(fields{f})    = cat(3,ALL{n,v}.(fields{f}));
+            FLY.stats(n,v).(fields{f})  = system_stats(FLY.all(n,v).(fields{f}),3);
             GRAND.all(v).(fields{f}) 	= cat(3,GRAND.all(v).(fields{f}), ...
                                                         FLY.all(n,v).(fields{f}));
 

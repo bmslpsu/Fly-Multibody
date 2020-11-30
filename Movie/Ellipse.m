@@ -14,7 +14,7 @@ classdef Ellipse
         color           % patch face color
         facealpha       % pacth face opacity
      	h               % handles to graphics objects
-    end 
+    end
     
 	properties (SetAccess = private, Hidden = false)
        	centroid       	% centroid coordinate
@@ -129,7 +129,6 @@ classdef Ellipse
             obj.axis.b = [obj.left ; obj.centroid ; obj.right]; % short direction axis (b)
             
             % Rotation properties
-            
          	obj.w = 180 - obj.theta.a; % rotation angle in set reference frame
             obj.R = [cosd(obj.w) -sind(obj.w); sind(obj.w) cosd(obj.w)]; % rotation matrix
             
