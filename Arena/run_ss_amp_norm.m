@@ -21,7 +21,7 @@ clear ; close all ; clc
 
 root        = 'C:\Users\BC\Box\Git\Fly-Multibody\Arena\functions';
 F           = [];
-T           = 20;
+T           = 10;
 Fs          = 200;
 A           = 3.75*[16 11 7 5 3 2 1];
 norm_vel   	= 250;
@@ -29,13 +29,13 @@ res         = 3.75;
 cent        = 45;
 showplot    = true;
 
-n_amp = length(A);
+n_amp = length(A); 
 freq_all = nan(n_amp,1);
 for a = 1:n_amp
     All = make_sos(T, Fs, res, F, A(a), norm_vel, cent, showplot, root);
     freq_all(a) = All.Freq;
-    %pause
-    %close all
+%     pause
+%     close all
 end
 disp(freq_all)
 
