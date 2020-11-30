@@ -22,7 +22,7 @@ clear ; close all ; clc
 root        = 'C:\Users\BC\Box\Git\Fly-Multibody\Arena\functions';
 F           = [];
 T           = 20;
-Fs          = 50;
+Fs          = 500;
 res         = 3.75;
 cent        = 45;
 showplot    = true;
@@ -40,11 +40,11 @@ showplot    = true;
 A = 1*[1 1 1 1 1 1 1 1];
 F = linspace(2.55, 19, length(A))';
 
-% A = 2*[1 1 1 1 1 1 1 1];
-% F = linspace(2.45, 18, length(A))';
+A = 2*[1 1 1 1 1 1 1 1];
+F = linspace(2.45, 18, length(A))';
 
-% A = 3*[1 1 1 1 1 1 1 1];
-% F = linspace(2.3, 16.8, length(A))';
+A = 3*[1 1 1 1 1 1 1 1];
+F = linspace(2.3, 16.8, length(A))';
 
 All = make_sos(T, Fs, res, F, A, [], cent, showplot, root);
 
