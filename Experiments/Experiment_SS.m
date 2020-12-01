@@ -1,5 +1,5 @@
-function [] = Experiment_SS_amp(Fn)
-%% Experiment_SOS: runs a experiment using the LED arena and fly panel
+function [] = Experiment_SS(Fn)
+%% Experiment_SS: runs a experiment using the LED arena and fly panel
 % Fn is the fly number
 daqreset
 imaqreset
@@ -14,7 +14,7 @@ n_pause = 0.2;              % seconds for each pause between panel commands
 n_rep = 10;                 % # of repetitions
 patID = 1;                  % pattern ID
 yPos = 5;                   % 30 deg spatial frequency
-xUpdate = 500;              % function update rate
+xUpdate = 150;              % function update rate
 FPS = 100;                  % camera frame rate
 nFrame = FPS*n_tracktime;   % # of frames to log
 Fs = 5000;                  % DAQ sampling rate [Hz]
@@ -29,11 +29,12 @@ freq = [0.7 1.5 10.6 1 2.1 3.5 5.3]'; % make sure same order as on SD card
 [s,~] = MC_USB_1208FS_PLUS(Fs,AI,AO);
 
 % Camera Trigger Signal
-t = 0:1/s.Rate:n_tracktime;
+off = 0.1;
+t = 0:1/s.Rate:n_tracktime + off;
 TRIG = ((1/2)*(square(2*pi*FPS*t,5) - 1)');
 TRIG(TRIG==-1) = 4;
-TRIG(1:20) = 0;
-TRIG(end-20:end) = 0;
+end_off = round(Fs*off);
+TRIG(end-end_off:end) = 0;
 
 % Camera Setup
 [vid,src] = Basler_acA640_750um(nFrame);
@@ -46,7 +47,8 @@ freqI = (1:n_freq)'; % oscillation frequency indicies
 freqI_all = nan(n_freq*n_rep,1);
 pp = 0;
 for kk = 1:n_rep
-    freq_rand = freqI(randperm(n_freq),:);    % reshuffle randomly
+    %freq_rand = freqI(randperm(n_freq),:);    % reshuffle randomly
+    freq_rand = freqI;    % reshuffle randomly
     freqI_all(pp+1:pp+n_freq,1) = freq_rand;  % add rep
     pp = kk*n_freq;
 end
@@ -62,6 +64,7 @@ n_trial = n_rep * n_freq;
 
 %% EXPERIMENT LOOP
 disp('Start Experiment:')
+% Panel_com('quiet_mode_off')
 for ii = 1:n_trial
     fprintf('Trial: %i  Freq: %1.2f Amp: %1.2f \n', ii, freq_all(ii), amp_all(ii))
     preview(vid) % open video preview window
@@ -111,7 +114,7 @@ for ii = 1:n_trial
     disp('Saving...')
     disp('-----------------------------------------------------------------')
     fname = ['fly_' num2str(Fn) '_trial_' num2str(ii) '_freq_' ...
-        num2str(freq_all(ii)) '_amp_' num2str(amp_all(ii)) '.mat'];
+        num2str(freq_all(ii)) '_amp_' num2str(amp_all(ii)) '_xupdate_' num2str(xUpdate) '.mat'];
     save(fullfile(root,fname),'-v7.3','data','t_p','vidData','t_v');
     Panel_com('stop')
 end

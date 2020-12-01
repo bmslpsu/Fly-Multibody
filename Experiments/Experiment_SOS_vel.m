@@ -1,21 +1,20 @@
-function [] = Experiment_SOS_sweep(Fn)
+function [] = Experiment_SOS_vel(Fn)
 %% Experiment_SOS_norm: runs a experiment using the LED arena and fly panel
 % Fn is the fly number
 daqreset
 imaqreset
 % Fn = 0;
 %% Set directories & experimental parameters
-root = 'C:\BC\Experiment_SOS_vel_v1';
+root = 'C:\BC\Experiment_SOS_vel_v1_xupdate_150';
+% root = 'C:\BC\Experiment_SOS_vel_v1_head_fixed';
 
 %% EXPERIMENTAL PARAMETERS
-n_tracktime = 21;           % length(func)/fps; seconds for each EXPERIMENT
-% n_resttime = 1;         	% seconds for each REST
+n_tracktime = 20 + 1;     	% length(func)/fps; seconds for each EXPERIMENT
 n_pause = 0.2;              % seconds for each pause between panel commands
 n_rep = 20;                 % # of repetitions
 patID = 1;                  % pattern ID
 yPos = 5;                   % 30 deg spatial frequency
-% funcID = 1;             	% position function ID
-xUpdate = 50;               % function update rate
+xUpdate = 149;           	% function update rate
 FPS = 100;                  % camera frame rate
 nFrame = FPS*n_tracktime;   % # of frames to log
 Fs = 5000;                  % DAQ sampling rate [Hz]
@@ -31,9 +30,7 @@ off = 0.1;
 t = 0:1/s.Rate:n_tracktime + off;
 TRIG = ((1/2)*(square(2*pi*FPS*t,5) - 1)');
 TRIG(TRIG==-1) = 4;
-% start_off = round(Fs * 0.5*(1/FPS));
 end_off = round(Fs*off);
-% TRIG(1:start_off) = 0;
 TRIG(end-end_off:end) = 0;
 
 % subplot(1,2,1)
@@ -50,11 +47,11 @@ TRIG(end-end_off:end) = 0;
 [vid,src] = Basler_acA640_750um(nFrame);
 
 %% Set variable to control positionn function
-func = [1 2 3]';  % position function indicies
-vel = [62 103 148]'; % normalizee veloctiy of each SOS function
-n_func = length(func);	% # of functions
+vel = [103 148 62]'; % normalize veloctiy of each SOS function in order in PControl
+n_func = length(vel);	% # of functions
+func = (1:n_func)';  % position function indicies
 
-% Create sequence of randomly shuffled frequencies
+% Create sequence of randomly shuffled functions
 func_all = nan(n_func*n_rep,1);
 pp = 0;
 for kk = 1:n_rep
@@ -62,12 +59,13 @@ for kk = 1:n_rep
     func_all(pp+1:pp+n_func,1) = func_rand;  % add rep
     pp = kk*n_func;
 end
+vel_all = vel(func(func_all));
 
 n_trial = n_rep * n_func;
 
 %% EXPERIMENT LOOP
 disp('Start Experiment:')
-for ii = 1:n_trial
+for ii = 1:3
     fprintf('Trial: %i   Vel = %i \n', ii, vel(func_all(ii)))
     preview(vid) % open video preview window
     
