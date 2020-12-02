@@ -15,27 +15,37 @@ function [SYSTEM] = frf(time,ref,IOFv,debug,varargin)
 ftol = 0.01;
 
 IOFv    = IOFv(:);
-nState  = length(varargin) + 1; % # of output states
+nState  = length(varargin);     % # of output states
 nPoint  = length(time);         % # of data points in time domain
 nFpoint = ceil(nPoint/2);       % # of data points in frequency domain
-% nFpoint = 1000;                 % # of data points in frequency domain
 Fs      = 1/mean(diff(time));   % sampling rate [Hz]
 
 State = cellfun(@(x) x(:),varargin,'UniformOutput',false); % store inputs in cells as column vectors
 State = cat(2,State{:}); % store inputs in cells as column vectors
-State(:,end+1)  = sum(State,2); % last state is the sum of all states
 
-% Get state names from input variables
-Names = string(nan(1,nState));
-for jj = 1:nState-1
-    Names(jj) = inputname(4 + jj);
+% Last state is the sum of all states if more than 1 state
+if size(State,2) > 1
+    State(:,end+1)  = sum(State,2);
+    nState = nState + 1;
+    
+    % Get state names from input variables
+    Names = string(nan(1,nState));
+    for jj = 1:nState-1
+        Names(jj) = inputname(4 + jj);
+    end
+    Names(nState) = "All";
+else
+    % Get state names from input variables
+    Names = string(nan(1,nState));
+    for jj = 1:nState
+        Names(jj) = inputname(4 + jj);
+    end
 end
-Names(nState) = "All";
 
 % Convert reference to frequency domain
 refName = string(inputname(2));
-[refFv, refMag, refPhase, refFreq] = FFT(time,ref);
-% [refFreq, refFv, refMag, refPhase] = chirpz_transform(time,ref,0,20,nFpoint);
+% [refFv, refMag, refPhase, refFv] = FFT(time,ref);
+[refFreq, refFv, refMag, refPhase] = chirpz(ref,Fs,0,Fs/2);
 [~, refIOMag, refIOPhase, IOidx] = getfreqpeaks(refFv, refMag, refPhase, IOFv, ftol, false);
 refIOFreq = refFreq(IOidx);
 nIO = length(IOFv);  % # of frequencies present
@@ -51,9 +61,9 @@ IOPhase	= nan(nIO,nState);
 IOFreq 	= nan(nIO,nState);
 IOCohr 	= nan(nIO,nState);
 for jj = 1:nState
-    [Fv, Mag(:,jj), Phase(:,jj), Freq(:,jj)] = FFT(time,State(:,jj));
-    %[Freq(:,jj), Fv, Mag(:,jj), Phase(:,jj)] = chirpz_transform(time,State(:,jj),0,20,nFpoint);
-    
+    %[Fv, Mag(:,jj), Phase(:,jj), Freq(:,jj)] = FFT(time,State(:,jj));
+    [Freq(:,jj), Fv, Mag(:,jj), Phase(:,jj)] = chirpz(State(:,jj),Fs,0,Fs/2);
+   
     [~, IOMag(:,jj),IOPhase(:,jj),IOidx] = getfreqpeaks(Fv, Mag(:,jj), Phase(:,jj), IOFv, ftol, false);
     IOFreq(:,jj) = Freq(IOidx,jj);
     [Cohr(:,jj),~] = mscohere(ref,State(:,jj),[],[],Fv,Fs);
@@ -61,11 +71,11 @@ for jj = 1:nState
 end
 
 % Convert state outputs to frequency response functions
-FRF                 = Freq ./ refFreq;
-Gain                = Mag ./ refMag;
-PhaseDiff        	= Phase - refPhase;
-FRF_Gain            = abs(FRF);
-FRF_PhaseDiff       = angle(FRF);
+% FRF              	= Freq ./ refFreq;
+% Gain            	= Mag ./ refMag;
+% PhaseDiff       	= Phase - refPhase;
+% FRF_Gain         	= abs(FRF);
+% FRF_PhaseDiff   	= angle(FRF);
 IOFRF               = IOFreq ./ refIOFreq;
 IOGain              = IOMag ./ refIOMag;
 IOPhaseDiff         = IOPhase - refIOPhase;
@@ -80,6 +90,8 @@ IOPhaseDiff(IOPhaseDiff < -lim2) = IOPhaseDiff(IOPhaseDiff < -lim2) + 2*pi;
 
 IOFRF_PhaseDiff(IOFRF_PhaseDiff >  lim1) = IOFRF_PhaseDiff(IOFRF_PhaseDiff >  lim1) - 2*pi;
 IOFRF_PhaseDiff(IOFRF_PhaseDiff < -lim2) = IOFRF_PhaseDiff(IOFRF_PhaseDiff < -lim2) + 2*pi;
+
+IOFRF_TimeDiff = (IOFRF_PhaseDiff ./ (2*pi)) .* repmat(1 ./ IOFv, [1 nState]);
 
 % Calculate weights
 % IOWeight = IOGain(:,1:end-1) ./ IOGain(:,end);
@@ -122,6 +134,7 @@ SYSTEM.IOPhase      	= IOPhase;
 SYSTEM.IOGain           = IOGain;
 SYSTEM.IOPhaseDiff      = IOPhaseDiff;
 SYSTEM.IOFRF            = IOFRF;
+SYSTEM.IOFRF_TimeDiff   = IOFRF_TimeDiff;
 % SYSTEM.IOFRF_Gain       = IOFRF_Gain;
 % SYSTEM.IOFRF_PhaseDiff  = IOFRF_PhaseDiff;
 

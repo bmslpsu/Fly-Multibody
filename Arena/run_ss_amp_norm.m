@@ -32,7 +32,7 @@ showplot    = true;
 n_amp = length(A); 
 freq_all = nan(n_amp,1);
 for a = 1:n_amp
-    All = make_sos(T, Fs, res, F, A(a), norm_vel, cent, showplot, root);
+    All = make_sos(T, Fs, res, F, A(a), norm_vel, cent, showplot, []);
     freq_all(a) = All.Freq;
     pause
     close all

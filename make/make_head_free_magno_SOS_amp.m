@@ -6,7 +6,8 @@ function [] = make_head_free_magno_SOS_amp(rootdir)
 %       -
 %
 rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_amp_v1';
-filename = 'SOS_HeadFree_amp';
+clss = 'velocity';
+filename = ['SOS_HeadFree_amp_v1_' num2str(clss)];
 
 %% Setup Directories %%
 root.daq = rootdir; clear rootdir
@@ -143,19 +144,20 @@ for n = 1:N.file
         linkaxes(ax,'x')
         pause
     end
-     
+    
     IOFreq = FUNC{I.amp(n)}.All.Freq;
-    clss = 'velocity';
-    SYS_ref2_head_body = frf(tintrp, DATA.reference{n}.(clss), IOFreq, false, ...
-                DATA.body{n}.(clss), DATA.head{n}.(clss));
-    %pause
-    %close all
-    SYS_ref2_wing = frf(tintrp, DATA.reference{n}.(clss), IOFreq, false, ...
-                        DATA.lwing{n}.(clss), DATA.rwing{n}.(clss), DATA.dwba{n}.(clss));
-    SYS_head2_body_wing = frf(tintrp, DATA.head{n}.(clss), IOFreq, false, ...
-                        DATA.body{n}.(clss), DATA.dwba{n}.(clss));
-    SYS_wing2_body = frf(tintrp, DATA.dwba{n}.(clss), IOFreq, false, DATA.body{n}.(clss));
-    SYS_left2_right = frf(tintrp, DATA.lwing{n}.(clss), IOFreq, false, DATA.rwing{n}.(clss));
+    REF = DATA.reference{n}.(clss);
+    BODY = DATA.body{n}.(clss);
+    HEAD = DATA.head{n}.(clss);
+    dWBA = DATA.dwba{n}.(clss);
+    LWING = DATA.lwing{n}.(clss);
+    RWING = DATA.rwing{n}.(clss);
+    
+    SYS_ref2_head_body = frf(tintrp, REF , IOFreq, false, BODY, HEAD);
+    SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, LWING, RWING, dWBA);
+    SYS_head2_body_wing = frf(tintrp, HEAD, IOFreq, false, BODY, dWBA);
+    SYS_wing2_body = frf(tintrp, dWBA, IOFreq, false, BODY);
+    SYS_left2_right = frf(tintrp, LWING, IOFreq, false, RWING);
     
     SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_ref2_wing, ...
                                     SYS_head2_body_wing, SYS_wing2_body, SYS_left2_right);

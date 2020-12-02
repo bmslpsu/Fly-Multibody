@@ -42,7 +42,7 @@ norm_vel   	= 62;
 % norm_vel   	= 100;
 
 n_amp = length(A);
-All = make_sos(T, Fs, res, F, A, norm_vel, cent, showplot, root);
+All = make_sos(T, Fs, res, F, A, norm_vel, cent, showplot, []);
 
 disp('Freq')
 disp(All.Freq)

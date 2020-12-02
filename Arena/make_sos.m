@@ -110,11 +110,17 @@ X_step = res * round(X / res);
 dX_step = central_diff(X_step, 1/Fs);
 func  = round( (X_step / res) + cent); % function in panel position
 
-[Fv, mag.X , phase.X] = FFT(tt, X);
-[~, mag.dX , phase.dX] = FFT(tt, dX);
+% [Fv, mag.X , phase.X] = FFT(tt, X);
+% [~, mag.dX , phase.dX] = FFT(tt, dX);
+% [~, mag.X_step , phase.X_step] = FFT(tt, X_step);
+% [~, mag.dX_step , phase.dX_step] = FFT(tt, dX_step);
 
-[~, mag.X_step , phase.X_step] = FFT(tt, X_step);
-[~, mag.dX_step , phase.dX_step] = FFT(tt, dX_step);
+f1 = 0;
+f2 = Fs/2;
+[~,Fv,mag.X,phase.X] = chirpz(X,Fs,f1,f2);
+[~,~,mag.dX,phase.dX] = chirpz(dX,Fs,f1,f2);
+[~,~,mag.X_step,phase.X_step] = chirpz(X_step,Fs,f1,f2);
+[~,~,mag.dX_step,phase.dX_step] = chirpz(dX_step,Fs,f1,f2);
 
 % Assign outputs
 All.func = func;
@@ -131,7 +137,7 @@ All.X_step = X_step;
 All.dX_step = dX_step;
 All.Fv = Fv;
 All.mag = mag;
-All.phase = mag;
+All.phase = phase;
 All.freq_res = freq_res;
 
 if showplot
@@ -151,10 +157,12 @@ if showplot
     ax(3) = subplot(4,1,3) ; cla ; hold on; ylabel('Position (°)')
         h_smooth(3) = plot(Fv, mag.X, 'k');
         h_step(2) = plot(Fv, mag.X_step, 'r');
+        h_true(1) = plot(F, A, 'g.', 'MarkerSize', 12);
 
     ax(4) = subplot(4,1,4) ; cla ; hold on; ylabel('Velocity (°/s)') ; xlabel('Frequency (Hz)')
         h_smooth(4) = plot(Fv, mag.dX, 'k');  
         h_step(3) = plot(Fv, mag.dX_step, 'r');
+        h_true(2) = plot(F, 2*pi*A.*F, 'g.', 'MarkerSize', 12);
 
     set(h_smooth, 'LineWidth', 1)
     set(h_step, 'LineWidth', 0.75)

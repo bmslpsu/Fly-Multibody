@@ -19,14 +19,14 @@ function [] = run_sos_custom(T, Fs, res, F, A, norm_vel, cent, root)
 clear ; close all ; clc
 
 root        = 'C:\Users\BC\Box\Git\Fly-Multibody\Arena\functions';
-T           = 20;
+T           = 10;
 Fs          = 200;
 res         = 3.75;
 cent        = 45;
 showplot    = true;
 
-F           = 15;
-A           = 10;
+F           = 1;
+A           = 3.75*5;
 
 All = make_sos(T, Fs, res, F, A, [], cent, showplot, []);
 
