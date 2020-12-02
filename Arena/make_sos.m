@@ -108,8 +108,8 @@ dX_mean = mean(abs(dX));
 
 X_step = res * round(X / res);
 dX_step = central_diff(X_step, 1/Fs);
-% func  = round( (X_step / res) + cent); % function in panel position
-func  = (X / res) + cent; % function in panel position
+func  = round( (X_step / res) + cent); % function in panel position
+% func  = (X / res) + cent; % function in panel position
 
 % [Fv, mag.X , phase.X] = FFT(tt, X);
 % [~, mag.dX , phase.dX] = FFT(tt, dX);
