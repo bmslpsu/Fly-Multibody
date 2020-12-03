@@ -35,7 +35,7 @@ for file = 1:nfile
         end
     end
 
-    [regvid,trf] = register_video_translation(vidData, crop_xy, trf_set);
+    [regvid,trf] = register_video(vidData, crop_xy);
 
     save(fullfile(regdir,FILES{file}),'-v7.3','regvid','trf','t_v','crop_xy')
 end
