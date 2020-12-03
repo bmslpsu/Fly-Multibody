@@ -19,10 +19,10 @@ function [] = run_sos_amp(T, Fs, res, F, A, norm_vel, cent, root)
 
 clear ; close all ; clc
 
-root        = 'C:\Users\BC\Box\Git\Fly-Multibody\Arena\functions';
+root        = 'C:\Users\boc5244\Documents\MATLAB\func';
 F           = [];
 T           = 20;
-Fs          = 100;
+Fs          = 400.63;
 res         = 3.75;
 cent        = 45;
 showplot    = true;
