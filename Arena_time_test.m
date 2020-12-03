@@ -8,10 +8,11 @@ T = All.time(end);
 
 [TRIG,PAT] = sync_pattern_trigger(t_p(1:end-1), data(1:end-1,2), T, data(1:end-1,1), false, [], false, false);
 
-pat_time = PAT.time_sync(PAT.sync:PAT.end_idx+2) - 1/5000;
-pat_pos = 3.75*PAT.pos(PAT.sync:PAT.end_idx+2);
-pat_pos = interp1(pat_time, pat_pos, (0:(1/Fs):T)', 'linear');
-pat_time = (0:(1/Fs):T)';
+pat_time = PAT.time_sync(PAT.sync:PAT.end_idx+5) - 0*1/5000;
+pat_pos = 3.75*PAT.pos(PAT.sync:PAT.end_idx+5);
+tinrtp = (0:(1/Fs):T)';
+pat_pos = interp1(pat_time, pat_pos, tinrtp, 'linear');
+pat_time = tinrtp;
 % pat_vel = diff(pat_pos) / (1/Fs);
 % pat_vel = [pat_vel(1) ; pat_vel];
 pat_vel = central_diff(pat_pos, 1/Fs);

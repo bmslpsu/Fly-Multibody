@@ -198,10 +198,10 @@ if ~isempty(root)
     end
     if norm_vel
         fname = sprintf(['position_function_%s_Fs_%1.2f_T_%1.0f_vel_%1.0f_amp_' ...
-                            str_amp 'freq_' str_freq '.mat'], func_type, Fs, T, norm_vel);
+                            str_amp '_freq_' str_freq '.mat'], func_type, Fs, T, norm_vel);
     else
         fname = sprintf(['position_function_%s_Fs_%1.2f_T_%1.0f_amp_' ...
-                            str_amp 'freq_' str_freq '.mat'], func_type, Fs, T);
+                            str_amp '_freq_' str_freq '.mat'], func_type, Fs, T);
     end
     fname_all = ['ALL_' fname];
     all_dir = fullfile(root, 'All');
