@@ -73,10 +73,10 @@ for n = 1:dim(3)
     end
     reg = imwarp(frame, trf{n}, 'OutputView', sz);
     regvid(:,:,n) = reg;
-    %regvid(:,:,n) = imrotate(reg, 90-refangle, 'crop');
+    regvid(:,:,n) = imrotate(reg, 90-refangle, 'crop');
     fixed = (fixed*n + reg)/(n+1);
 end
-% regvid = fliplr(regvid);
+regvid = fliplr(regvid);
 disp('DONE')
 toc
 end
