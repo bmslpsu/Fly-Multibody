@@ -12,8 +12,8 @@ clc
 
 Fv = DATA.reference{1}.Fv;
 
-% fname = 'position';
-fname = 'velocity';
+fname = 'position';
+% fname = 'velocity';
 
 MAG.ref = cell(N.fly, N{1,3});
 MAG.body = cell(N.fly, N{1,3});
@@ -74,7 +74,7 @@ for f = 1:n_field
     end
 end
 
-set(ax , 'Color', 'none', 'LineWidth', 1.5, 'FontSize', 11, 'Box', 'off', 'XLim', [0.5 16])
+set(ax , 'Color', 'none', 'LineWidth', 1.5, 'FontSize', 11, 'Box', 'off', 'XLim', [0.1 16])
 set(ax(1,:), 'YLim', [-1 160])
 % set(ax(2,:), 'YLim', [-0.1 2])
 % set(ax(3,:), 'YLim', [-1 30])

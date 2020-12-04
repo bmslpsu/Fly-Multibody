@@ -13,17 +13,17 @@ clc
 % pI = [1 2 6 8 9 11 13];
 % T = ["ref2body", "ref2head", "ref2wing", "head2body", "head2wing", "wing2body", "left2right"];
 
-% T = ["ref2body", "ref2head","ref2gaze"];
-% pI = [1 2 3];
-% yL = [1 0.6 1];
+T = ["ref2body", "ref2head","ref2gaze"];
+pI = [1 2 3];
+yL = [1 0.6 1];
 
-T = ["ref2body_fixed"];
-pI = [1];
-yL = 1.2;
+% T = ["ref2body_fixed"];
+% pI = [1];
+% yL = 1.2;
 
 n_plot = length(pI);
 n_freq = length(GRAND.all(1).IOFv(:,1,1));
-fI = 1:n_freq;
+fI = 2:n_freq;
 n_freq_plot = length(fI);
 cc = hsv(n_freq);
 
@@ -97,7 +97,7 @@ for v = 1:N{1,3}
             
         end
         if n==1
-            leg(v,n) = legend(squeeze(h(v,n,:)), string(IOFv(:,v)), 'Box', 'off', 'Location', 'eastoutside');
+            leg(v,n) = legend(squeeze(h(v,n,:)), string(IOFv(:,v)), 'Box', 'off', 'Location', 'east');
         end
         title(T(n))
         uistack(squeeze(hh.patch(v,n,:)), 'top')

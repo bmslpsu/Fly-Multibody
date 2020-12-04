@@ -19,7 +19,7 @@ function [] = run_sos_amp(T, Fs, res, F, A, norm_vel, cent, root)
 
 clear ; close all ; clc
 
-root        = 'C:\Users\boc5244\Documents\MATLAB\func';
+root        = 'C:\Users\BC\Box\Git\Fly-Multibody\Arena\functions';
 F           = [];
 T           = 20;
 Fs          = 400.63;
@@ -42,14 +42,23 @@ showplot    = true;
 % A = 2*[1 1 1 1 1 1 1 1];
 % F = linspace(2.45, 18, length(A))';
 
+% A = 1*ones(7,1);
+% F = linspace(2.55, 17.55, length(A))';
+% 
+% A = 2*ones(7,1);
+% F = linspace(2.4, 16.5, length(A))';
+% 
+% A = 3*ones(7,1);
+% F = linspace(2.35, 15, length(A))';
+
 A = 1*ones(7,1);
-F = linspace(2.55, 17.55, length(A))';
+F = linspace(2.55, 15, length(A))';
 
 A = 2*ones(7,1);
-F = linspace(2.4, 16.5, length(A))';
+F = linspace(2.15, 13.05, length(A))';
 
 A = 3*ones(7,1);
-F = linspace(2.35, 15, length(A))';
+F = linspace(1.9, 11.85, length(A))';
 
 All = make_sos(T, Fs, res, F, A, [], cent, showplot, []);
 

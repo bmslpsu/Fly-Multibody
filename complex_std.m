@@ -1,10 +1,11 @@
-function [mu, r_std, gain_mu, phase_mu, gain_std, phase_std] = complex_std(r, img, norm)
+function [mu, r_std, gain_mu, phase_mu, gain_std, phase_std] = complex_std(r, img, norm, rmv_out)
 %% complex_std: standard deviation in the complex plane
 %
 %   INPUT:
 %       r           :   real parts
 %       img         :   imaginary parts
 %       norm        :   normalize to mean or median
+%       rmv_out     :   remove outliers before computing stats (boolean)
 %
 %   OUTPUT:
 %       mu          : mean or median value
@@ -12,6 +13,10 @@ function [mu, r_std, gain_mu, phase_mu, gain_std, phase_std] = complex_std(r, im
 %      	gain_std  	: gain std
 %      	phase_std  	: gain std
 %
+
+if nargin < 4
+    rmv_out = [];
+end
 
 r = r(:);
 img = img(:);
@@ -42,30 +47,15 @@ nimg = img - mu(2);
 % Find vectors from mean to points
 R = sqrt(nr.^(2) + nimg.^(2));
 
-% Remove extreme outliers
-% out_test = true;
-% R_rmv_out = R;
-% I_out_all = false(size(R));
-% pp = 1;
-% while out_test
-%     R_old = R_rmv_out;
-%     [R_rmv_out,I_out] = rmoutliers(R_rmv_out, 'grubbs');
-%     test = I_out_all;
-%     I_out_all = I_out_all & I_out;
-% 
-%     if length(R_old) ~= length(R_rmv_out)
-%         n_out = sum(I_out);
-%         warning('%i outliers detected on iteration %i', n_out, pp)
-%     else
-%         out_test = false;
-%     end
-%     pp = pp + 1;
-% end
-
-[R_rmv_out,I_out] = rmoutliers(R, 'grubbs');
-if length(R) ~= length(R_rmv_out)
-    n_out = sum(I_out);
-    warning('%i outliers detected', n_out)
+if ~isempty(rmv_out)
+    [R_rmv_out,I_out] = rmoutliers(R, 'grubbs');
+    if length(R) ~= length(R_rmv_out)
+        n_out = sum(I_out);
+        warning('%i outliers detected', n_out)
+    end
+else
+   R_rmv_out = R;
+   I_out = false(length(R), 1);
 end
 
 % Mean/median gain & phase with outliers removed

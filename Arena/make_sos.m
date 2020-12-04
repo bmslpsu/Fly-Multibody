@@ -19,18 +19,18 @@ function [All] = make_sos(T, Fs, res, F, A, norm_vel, cent, showplot, root)
 
 % DEBUGGING 
 % clear ; close all ; clc
-% root        = 'C:\Users\BC\Box\Git\Fly-Multibody\Arena\functions';
 % root        = [];
-% % F           = [0.7 1.3 2.5 3.75 5.3 9];
+% % F         = [0.7 1.3 2.5 3.75 5.3 9];
 % F           = [];
 % T           = 20;
 % Fs          = 500;
 % A           = 3.75*16;
-% norm_vel   	= 250;
+% norm_vel 	= 250;
 % res         = 3.75;
 % cent        = 45;
 % showplot    = true;
 
+% Check inputs
 assert( (length(T) == 1) && (T > 0), '"T" must be a positive scalar')
 assert(all(F > 0), 'Frequencies must be positive')
 assert( (cent/round(cent) == 1) && (cent >=1) && (cent <= 360/res), ...
@@ -48,7 +48,6 @@ else
     assert(length(A)==length(F), 'ampltidue and frequency vectors must be equal length if ''norm_vel'' is not specified')
     N = length(F);
 end
-
 
 if isempty(norm_vel)
     norm_vel = false;
@@ -116,12 +115,13 @@ func  = round( (X_step / res) + cent); % function in panel position
 % [~, mag.X_step , phase.X_step] = FFT(tt, X_step);
 % [~, mag.dX_step , phase.dX_step] = FFT(tt, dX_step);
 
+% Fs_int = fix(Fs);
 f1 = 0;
-f2 = Fs/2;
-[~,Fv,mag.X,phase.X] = chirpz(X,Fs,f1,f2);
-[~,~,mag.dX,phase.dX] = chirpz(dX,Fs,f1,f2);
-[~,~,mag.X_step,phase.X_step] = chirpz(X_step,Fs,f1,f2);
-[~,~,mag.dX_step,phase.dX_step] = chirpz(dX_step,Fs,f1,f2);
+f2 = fix(Fs)/2;
+[~,Fv,mag.X,phase.X] = chirpz(X, Fs, f1, f2);
+[~,~,mag.dX,phase.dX] = chirpz(dX, Fs, f1, f2);
+[~,~,mag.X_step,phase.X_step] = chirpz(X_step, Fs, f1, f2);
+[~,~,mag.dX_step,phase.dX_step] = chirpz(dX_step, Fs, f1, f2);
 
 % Assign outputs
 All.func = func;
@@ -170,7 +170,7 @@ if showplot
     set(ax, 'LineWidth', 1.5,  'FontSize', 10)
     set(ax(1:2), 'XLim', [-0.5 T])
     %set(ax(3:4), 'XLim', [0.9*min(F) 1.1*max(F)])
-    set(ax(3:4), 'XLim', [0 21])
+    set(ax(3:4), 'XLim', [0 1.1*F(end)])
     set(ax([1,3]), 'XTickLabels', [])
     linkaxes(ax(1:2), 'x')
     linkaxes(ax(3:4), 'x')
@@ -183,11 +183,11 @@ if ~isempty(root)
     str_amp = '';
 	A_round = 0.05*round(A/0.05);
     for n = 1:N
-        str_freq = [str_freq  num2str(F(n)) '_'];
+        str_amp = [str_amp  num2str(A(n)) '_'];
         if n < N
-            str_amp = [str_amp  num2str(A_round(n)) '_'];
+            str_freq = [str_freq  num2str(F(n)) '_'];
         else
-            str_amp = [str_amp  num2str(A_round(n))];
+            str_freq = [str_freq  num2str(F(n))];
         end
     end
     str_freq = strtrim(str_freq);
@@ -201,7 +201,7 @@ if ~isempty(root)
                             str_amp '_freq_' str_freq '.mat'], func_type, Fs, T, norm_vel);
     else
         fname = sprintf(['position_function_%s_Fs_%1.2f_T_%1.0f_amp_' ...
-                            str_amp '_freq_' str_freq '.mat'], func_type, Fs, T);
+                            str_amp 'freq_' str_freq '.mat'], func_type, Fs, T);
     end
     fname_all = ['ALL_' fname];
     all_dir = fullfile(root, 'All');
