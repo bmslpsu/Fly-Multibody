@@ -51,7 +51,7 @@ F = linspace(2.4, 16.5, length(A))';
 A = 3*ones(7,1);
 F = linspace(2.35, 15, length(A))';
 
-All = make_sos(T, Fs, res, F, A, [], cent, showplot, root);
+All = make_sos(T, Fs, res, F, A, [], cent, showplot, []);
 
 disp('Freq')
 disp(All.Freq)

@@ -99,7 +99,7 @@ Phase = deg2rad(randi(359,N,1)); % random initial phase of each frequency compon
 X = zeros(length(tt),1);
 Y = zeros(length(tt),N);
 for n = 1:N % each frequency component
-    Y(:,n) = A(n)*sin(2*pi*F(n)*tt + Phase(n)); 
+    Y(:,n) = A(n)*cos(2*pi*F(n)*tt + Phase(n)); 
     X = X + Y(:,n);
 end
 dX = central_diff(X, 1/Fs);

@@ -48,7 +48,7 @@ TRIG(end-end_off:end) = 0;
 [vid,src] = Basler_acA640_750um(nFrame);
 
 %% Set variable to control positionn function
-n_func = length(val) % # of functions
+n_func = length(val); % # of functions
 func = (1:n_func)'; % position function indicies
 
 % Create sequence of randomly shuffled functions
