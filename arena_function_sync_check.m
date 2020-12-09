@@ -51,7 +51,7 @@ ax(3) = subplot(4,1,3) ; hold on ;  ylabel('Velocity (°/s)')
 ax(4) = subplot(4,1,4) ; hold on ;  ylabel('Phase (°)')
     plot(Fv, rad2deg(all_phase_pos), 'k')
     plot(Fv, rad2deg(pat_phase_pos), 'r')
-    plot(All.Freq, rad2deg(All.Phase) - 180, 'g.', 'MarkerSize', 12);
+    plot(All.Freq, rad2deg(All.Phase), 'g.', 'MarkerSize', 12);
     
 set(ax, 'LineWidth', 1, 'Box', 'off', 'YGrid', 'on')
 set(ax(2:end), 'XLim', [0.05 max(All.Freq) + 2])

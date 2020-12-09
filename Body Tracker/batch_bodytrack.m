@@ -37,7 +37,7 @@ mkdir(bodydir)
 for file = 1:nfile
     disp(FILES(file))
     disp('---------------------------------------')
-    load(fullfile(PATH,FILES(file)),'vidData','t_v')
+    load(fullfile(PATH,char(FILES(file))),'vidData','t_v')
     
    	close all
     
