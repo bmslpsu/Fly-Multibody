@@ -87,7 +87,7 @@ for n = 1:N
             if check < freq_res
                disp(['Warning: ' num2str(F(n)) ...
                    ' is a prime multiple of ' num2str(F(f)), ...
-                   '   change A = ' num2str(A(n)/3.75)]) 
+                   '   change A = ' num2str(A(n)/3.75)])
             end
         end
     end
@@ -170,7 +170,7 @@ if showplot
     set(ax, 'LineWidth', 1.5,  'FontSize', 10)
     set(ax(1:2), 'XLim', [-0.5 T])
     %set(ax(3:4), 'XLim', [0.9*min(F) 1.1*max(F)])
-    set(ax(3:4), 'XLim', [0 1.1*F(end)])
+    set(ax(3:4), 'XLim', [0 1.1*max(F)])
     set(ax([1,3]), 'XTickLabels', [])
     linkaxes(ax(1:2), 'x')
     linkaxes(ax(3:4), 'x')
@@ -183,7 +183,7 @@ if ~isempty(root)
     str_amp = '';
 	A_round = 0.05*round(A/0.05);
     for n = 1:N
-        str_amp = [str_amp  num2str(A(n)) '_'];
+        str_amp = [str_amp  num2str(0.01*round(A(n)/0.01)) '_'];
         if n < N
             str_freq = [str_freq  num2str(F(n)) '_'];
         else
@@ -198,7 +198,7 @@ if ~isempty(root)
     end
     if norm_vel
         fname = sprintf(['position_function_%s_Fs_%1.2f_T_%1.0f_vel_%1.0f_amp_' ...
-                            str_amp '_freq_' str_freq '.mat'], func_type, Fs, T, norm_vel);
+                            str_amp 'freq_' str_freq '.mat'], func_type, Fs, T, norm_vel);
     else
         fname = sprintf(['position_function_%s_Fs_%1.2f_T_%1.0f_amp_' ...
                             str_amp 'freq_' str_freq '.mat'], func_type, Fs, T);

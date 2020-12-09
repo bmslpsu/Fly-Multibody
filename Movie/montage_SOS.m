@@ -15,12 +15,12 @@ function [MOV] = montage_SOS(rootdir,rootpat,vidFs,export)
 %
 
 % Example Input %
-% clear ; clc ; close all
-% export = false;
-% vidFs = 50;
-pat_ypos = 5;
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v1';
-% rootpat = 'C:\Users\BC\Box\Git\Arena\Patterns';
+clear ; clc ; close all
+export = true;
+vidFs = 50;
+pat_ypos = 6;
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_amp_v3';
+rootpat = 'C:\Users\BC\Box\Git\Arena\Patterns';
 
 if ~isfolder(rootdir)
     dirflag = false;
@@ -80,7 +80,7 @@ body_data    	= load(fullfile(PATH.body_track,FILE.raw),'bAngles','imgstats','in
 disp('DONE')
 
 %% Get pattern data & sync with start of visual stimulus
-func_time = 20;
+func_time = 10;
 [TRIG,PAT] = sync_pattern_trigger(raw_data.t_p, raw_data.data(:,2), func_time, ...
                         raw_data.data(:,1), true, [], false, false);
 trig_time = TRIG.time_sync;
@@ -110,7 +110,7 @@ FLY.int_lwing 	= FLY.lwing(TRIG.range);
 FLY.int_rwing  	= FLY.rwing(TRIG.range);
 FLY.int_wba     = FLY.wba(TRIG.range);
 
-Fc_pat = 15;
+Fc_pat = 20;
 [b,a] = butter(3, Fc_pat/(FLY.Fs/2), 'low'); % make lpf
 pat_filt = filtfilt(b, a, 3.75*PAT.pos_intrp_exp);
 PAT.norm = pat_filt - mean(pat_filt);
@@ -197,12 +197,12 @@ ax(3) = subplot(16,2,(16+1):(16+4))  ; cla ; hold on
         ylabel('Stimulus (°)','Color','w','FontSize',fontsize)
      	h.pat = animatedline('Color','g','LineWidth',linewidth); % for pattern angle
 ax(4) = subplot(16,2,(16+4+1):(16+2*4)) ; cla; hold on
-        ylabel('Head (°)','Color','w','FontSize',fontsize)
-        h.head = animatedline('Color','c','LineWidth',linewidth); % for head angle
-ax(5) = subplot(16,2,(16+2*4+1):(16+3*4)) ; cla; hold on
         ylabel('Body (°)','Color','w','FontSize',fontsize)
     	xlabel('Time (s)','Color','w','FontSize',fontsize)
         h.body = animatedline('Color','r','LineWidth',linewidth); % for body angle
+ax(5) = subplot(16,2,(16+2*4+1):(16+3*4)) ; cla; hold on
+        ylabel('Head (°)','Color','w','FontSize',fontsize)
+        h.head = animatedline('Color','c','LineWidth',linewidth); % for head angle
 ax(6) = subplot(16,2,(16+3*4+1):(16+4*4)) ; cla; hold on
         ylabel('\DeltaWBA (°)','Color','w','FontSize',fontsize)
     	xlabel('Time (s)','Color','w','FontSize',fontsize)
@@ -212,9 +212,9 @@ set(ax(3:end), 'FontSize', 12, 'Color', 'k', 'YColor', 'w', 'XColor', 'w', 'Font
     'LineWidth', 1.5, 'XLim', [-0.2 round(FLY.int_time(end))])
 set(ax(end),'XTick', 0:2:round(FLY.int_time(end)))
 set(ax(3:end-1), 'XTickLabel', [], 'XColor', 'none')
-set(ax(3), 'YLim', 109*[-1 1])
-set(ax(4), 'YLim', 10*[-1 1], 'YTick', 5 *[-1 0 1])
-set(ax(6), 'YLim', 10*[-1 1], 'YTick', 5 *[-1 0 1])
+set(ax(3), 'YLim', 12*[-1 1])
+set(ax(5), 'YLim', 7*[-1 1], 'YTick', 5 *[-1 0 1])
+set(ax(6), 'YLim', 7*[-1 1], 'YTick', 5 *[-1 0 1])
 linkaxes(ax(1:2), 'xy')
 linkaxes(ax(3:end),'x')
 align_Ylabels_ax(ax(3:end)')
@@ -226,7 +226,7 @@ colormap(cmap)
 iter = round(FLY.Fs/vidFs); % # of frames to skip per iteration to acheive desired frame rate
 expframe = circshift(mod(1:FLY.nframe,iter)==1,0); % which frames to export
 pat_image = 255*pattern_data.pattern.Pats(1,:,1,pat_ypos);
-bright_scale = 1.7;
+bright_scale = 1.3;
 disp('Exporting Video...')
 tic
 for jj = 1:FLY.nframe % for each frame
@@ -239,7 +239,7 @@ for jj = 1:FLY.nframe % for each frame
             win = jj;
         end
         Frame.raw = uint8(round(bright_scale*mean(FLY.raw(:,:,win), 3))); % current raw frame        
-        Frame.reg = uint8(round(bright_scale*mean(FLY.reg(:,:,win), 3))); % current registered frame
+        Frame.reg = uint8(round(1*mean(FLY.reg(:,:,win), 3))); % current registered frame
         
         % Display raw video
         subplot(16,2,1:2:15); cla; hold on; axis image
@@ -311,13 +311,13 @@ for jj = 1:FLY.nframe % for each frame
  	subplot(16,2,(16+4+1):(16+2*4)); hold on
         addpoints(h.pat, FLY.int_time(jj), PAT.norm(jj))
     
-    % Head plot
+    % Body plot
     subplot(16,2,(16+4+1):(16+2*4)); hold on
-        addpoints(h.head, FLY.int_time(jj), FLY.int_head(jj) + FLY.body_reg)
-    
-   	% Body plot
-    subplot(16,2,(16+2*4+1):(16+3*4)); hold on
         addpoints(h.body, FLY.int_time(jj), FLY.int_body(jj))
+        
+    % Head plot
+    subplot(16,2,(16+2*4+1):(16+3*4)); hold on
+        addpoints(h.head, FLY.int_time(jj), FLY.int_head(jj) + FLY.body_reg)
         
    	% WBA plot
 	subplot(16,2,(16+3*4+1):(16+4*4)); hold on

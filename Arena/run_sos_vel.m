@@ -1,4 +1,4 @@
-function [] = run_sos_amp_norm(T, Fs, res, F, A, norm_vel, cent, root)
+function [] = run_sos_vel(T, Fs, res, F, A, norm_vel, cent, root)
 %% run_sos_amp_norm: makes normalized velocity ss functions
 %
 %   INPUT:
@@ -22,24 +22,30 @@ clear ; close all ; clc
 root        = 'C:\Users\BC\Box\Git\Fly-Multibody\Arena\functions';
 F           = [];
 T           = 20;
-Fs          = 150;
+Fs          = 400.63;
 res         = 3.75;
 cent        = 45;
 showplot    = true;
 
 %A        	= 3.75*[0.49 0.65 0.77 1.01 1.44 2 3 5 7 13];
 
-A        	= logspace((log(1.8)/log(10)),(log(45)/log(10)), 9)';
-norm_vel 	= 103;
+% A        	= logspace((log(1.8)/log(10)),(log(45)/log(10)), 9)';
+% norm_vel 	= 103;
+% 
+% A           = logspace((log(2.5)/log(10)),(log(61)/log(10)), 9)';
+% norm_vel   	= 148;
+% 
+% A           = logspace((log(1.2)/log(10)),(log(61)/log(10)), 9)';
+% norm_vel   	= 62;
 
-A           = logspace((log(2.5)/log(10)),(log(61)/log(10)), 9)';
-norm_vel   	= 148;
+A           = logspace((log(0.55)/log(10)),(log(17.5)/log(10)), 9)';
+norm_vel   	= 41.8;
 
-A           = logspace((log(1.2)/log(10)),(log(61)/log(10)), 9)';
-norm_vel   	= 62;
-
-% A           = logspace((log(1.35)/log(10)),(log(61)/log(10)), 12)';
-% norm_vel   	= 100;
+% A           = logspace((log(1)/log(10)),(log(32)/log(10)), 9)';
+% norm_vel   	= 70;
+% 
+% A           = logspace((log(1.5)/log(10)),(log(52)/log(10)), 9)';
+% norm_vel   	= 95;
 
 n_amp = length(A);
 All = make_sos(T, Fs, res, F, A, norm_vel, cent, showplot, []);

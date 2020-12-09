@@ -12,11 +12,14 @@ clc
 % pI = [1 2 3 6 8 9 11 13];
 % T = ["ref2body", "ref2head", "ref2gaze", "ref2wing", "head2body", "head2wing", "wing2body", "left2right"];
 
-pI = [1 2 3 8];
-T = ["ref2body", "ref2head", "ref2gaze", "head2body"];
+% pI = [1 2 3 8];
+% T = ["ref2body", "ref2head", "ref2gaze", "head2body"];
 
 % pI = [1];
 % T = ["ref2body_fixed"];
+
+pI = [1 2 3];
+T = ["ref2head", "ref2wing", "head2wing"];
 
 n_plot = length(pI);
 cc = hsv(n_plot);
@@ -29,8 +32,8 @@ clear ax h
 ax = gobjects(4,n_plot);
 shift_I = {6:8, 8, 6, 6:8};
 phase_lim = [-100 0 nan 0];
-fI = (2:8)';
-for v = 3
+fI = (1:5)';
+for v = 1
     for n = 1:n_plot
         IOFv = GRAND.fly_stats(v).mean.IOFv.mean;
         n_freq = length(IOFv);
@@ -83,7 +86,7 @@ for v = 3
     end
 end
 set(h.line(1:3,:),'Marker','.','MarkerFaceColor','none','MarkerSize', 15')
-set(ax, 'LineWidth', 1.5, 'FontSize', 10, 'XLim', [-0.5 20],...
+set(ax, 'LineWidth', 1.5, 'FontSize', 10, 'XLim', [-0.5 12],...
     'XGrid','on','YGrid','on','box','on')
 
 linkaxes(ax, 'x')
