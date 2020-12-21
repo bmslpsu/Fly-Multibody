@@ -4,7 +4,7 @@ function [] = batch_register(root, crop_xy, trf_set)
 %   INPUT:
 %       root        :   root directory
 %       crop_xy  	:   crop rectangle or boolean to manually crop
-%       trf_set     :   prior affine2D cell array for eaach frame
+%       trf_set     :   prior affine2D cell array for each frame
 %
 %   OUTPUT:
 %       -
@@ -32,6 +32,7 @@ for file = 1:nfile
     if file == 1
         if length(crop_xy) == 1
             [~, crop_xy] = imcrop(vidData(:,:,:,1));
+            close
         end
     end
 
