@@ -183,7 +183,7 @@ classdef Ellipse
                              	'MarkerFaceColor', 'none', 'MarkerEdgeColor', pcolor, 'MarkerSize', 20);
                             
             obj.h.center 	= plot(obj.center(1), obj.center(2), '.', ... % center
-                             	'MarkerFaceColor', 'none', 'MarkerEdgeColor', pcolor, 'MarkerSize', 30); 
+                             	'MarkerFaceColor', 'none', 'MarkerEdgeColor', pcolor, 'MarkerSize', 20); 
                             
          	obj.h.top       = plot(obj.top(1), obj.top(2), '.', ... % top
                              	'MarkerFaceColor', 'none', 'MarkerEdgeColor', pcolor, 'MarkerSize', 20);

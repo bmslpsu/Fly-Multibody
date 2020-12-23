@@ -6,8 +6,8 @@ function [] = make_head_free_magno_SOS_vel_head_fixed(rootdir)
 %   OUTPUTS:
 %       -
 %
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v1_head_fixed';
-filename = 'SOS_HeadFixed_vel';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2_head_fixed';
+filename = 'SOS_HeadFixed_vel_v2';
 
 %% Setup Directories %%
 root.daq = rootdir; clear rootdir

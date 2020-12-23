@@ -38,12 +38,12 @@ showplot    = true;
 % A           = logspace((log(1.2)/log(10)),(log(61)/log(10)), 9)';
 % norm_vel   	= 62;
 
-A           = logspace((log(0.55)/log(10)),(log(17.5)/log(10)), 9)';
-norm_vel   	= 41.8;
+% A           = logspace((log(0.55)/log(10)),(log(17.5)/log(10)), 9)';
+% norm_vel   	= 41.8;
 
-% A           = logspace((log(1)/log(10)),(log(32)/log(10)), 9)';
-% norm_vel   	= 70;
-% 
+% A         = logspace((log(1)/log(10)),(log(32)/log(10)), 9)';
+% norm_vel	= 70;
+
 % A           = logspace((log(1.5)/log(10)),(log(52)/log(10)), 9)';
 % norm_vel   	= 95;
 

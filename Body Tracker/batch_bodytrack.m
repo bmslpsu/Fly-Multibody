@@ -6,7 +6,7 @@ function [] = batch_bodytrack(root, playback, heading_debug, par)
 %       playback    :   playback rate (show a frame in increments of "playback").
 %                       If false, then onlt show the 1st frame. (default = 1)
 %       head_debug  :   always bring up the heading angle check window if true
-%       par         :   use parallel processing 
+%       par         :   use parallel processing
 %
 %   OUTPUT:
 %       -

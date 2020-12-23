@@ -65,7 +65,7 @@ if isnan(start_idx)
 elseif ~isempty(start_idx)
     PAT.sync = start_idx; % set start point if specified
 elseif isempty(start_idx)
-    PAT.sync = find(abs(PAT.diff)>0,1,'first')+1; % where pattern first moves (start of experiment)
+    PAT.sync = find(abs(PAT.diff)>0,1,'first')+2; % where pattern first moves (start of experiment)
 end
 
 PAT.sync_time	= daq_time(PAT.sync); % start time

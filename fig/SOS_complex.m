@@ -4,7 +4,7 @@ root = 'E:\DATA\Magno_Data\Multibody';
 [FILE,PATH] = uigetfile({'*.mat', 'DAQ-files'}, ...
     'Select head angle trials', root, 'MultiSelect','off');
 
-load(fullfile(PATH,FILE),'DATA','ALL','FUNC','GRAND','FLY','D','I','U','N')
+load(fullfile(PATH,FILE),'DATA','FUNC','GRAND','FLY','D','I','U','N')
 
 %% FRF
 clearvars -except DATA ALL GRAND FLY FUNC D I U N root
@@ -13,17 +13,21 @@ clc
 % pI = [1 2 6 8 9 11 13];
 % T = ["ref2body", "ref2head", "ref2wing", "head2body", "head2wing", "wing2body", "left2right"];
 
-% T = ["ref2body", "ref2head","ref2gaze"];
-% pI = [1 2 3];
-% yL = [1 0.6 1];
+T = ["ref2body", "ref2head","ref2gaze"];
+pI = [1 2 3];
+yL = [1.5 1.5 1.5];
+
+% T = ["temp"];
+% pI = [1];
+% yL = [1.5];
 
 % T = ["ref2body_fixed"];
 % pI = [1];
 % yL = 1.2;
 
-T = ["ref2head","ref2wing"];
-pI = [1 2];
-yL = [1 0.5];
+% T = ["ref2head","ref2wing"];
+% pI = [1 2];
+% yL = [1 0.5];
 
 n_plot = length(pI);
 n_freq = length(GRAND.all(1).IOFv(:,1,1));
@@ -66,15 +70,18 @@ for v = 1:N{1,3}
         [ax_cm,h_cm] = ComplexAxes(0:0.2:yL(n));
         set(ax_cm, 'Color', 'none', 'XColor', 'none', 'YColor', 'none')
         for f = 1:length(fI)
-            plot(r(fI(f),:), im(fI(f),:), '.', 'MarkerSize', mrksz, ...
+            plot(r(fI(f),:), im(fI(f),:), '.', 'Color', [0 0 0 0.3], 'MarkerSize', mrksz, ...
                     'MarkerFaceColor', 'none', 'MarkerEdgeColor', 0.9*cc(f,:));
                         
-            n_std = 2;
+            n_std = 1;
             [mu, r_std, gain_mu, phase_mu, gain_std, phase_std] = ...
                 complex_std(r(fI(f),:), im(fI(f),:), 'median');
-            
-            h(v,n,f) = plot(mu(1), mu(2), '.', 'MarkerSize', 15, ...
-                'MarkerFaceColor', 'none', 'MarkerEdgeColor', cc(f,:));
+%             
+%             h(v,n,f) = plot(mu(1), mu(2), '.', 'MarkerSize', 15, ...
+%                 'MarkerFaceColor', 'none', 'MarkerEdgeColor', cc(f,:));
+
+            h(v,n,f) = scatter(mu(1), mu(2), 15, 'MarkerFaceColor', cc(f,:), ...
+                'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', 0.3);
             
             Gain{n}(f,v) = gain_std;
             Phase{n}(f,v) = phase_std;
@@ -84,7 +91,7 @@ for v = 1:N{1,3}
             theta = rad2deg(atan2(x(2), y(2)));
             b = 2*pi*gain_mu*(rad2deg(phase_std) / 360);
             
-            elps = Ellipse(mu, n_std*gain_std, n_std*b, ...
+            elps = Ellipse(mu, 2*n_std*gain_std, 2*n_std*b, ...
                 'ellipse', theta, 0, cc(f,:), 0.4);
 %             elps = Ellipse(mu, n_std*2*r_std, n_std*2*r_std, ...
 %                 'ellipse', theta, 0, cc(f,:), 0.4);

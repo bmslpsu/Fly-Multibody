@@ -4,13 +4,12 @@ root = 'E:\DATA\Magno_Data\Multibody';
 [FILE,PATH] = uigetfile({'*.mat', 'DAQ-files'}, ...
     'Select head angle trials', root, 'MultiSelect','off');
 
-load(fullfile(PATH,FILE),'DATA','ALL','GRAND','FLY','D','I','U','N')
+load(fullfile(PATH,FILE),'DATA','GRAND','FLY','D','I','U','N')
 
-%% FFT of all wavelengths by fly
+%% Time
 clearvars -except DATA ALL GRAND FLY D I U N root
 clc
 
-%% FRF
 pI = [1 2 3 6];
 T = ["body", "head", "gaze", "wing"];
 n_plot = length(pI);
@@ -20,7 +19,7 @@ Fv = DATA.reference{1}.Fv;
 time = GRAND.all(1).Time(:,:,1);
 
 fig = figure (2) ; clf
-set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 3*n_plot 8])
+set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2*n_plot 6])
 movegui(fig, 'center')
 clear ax h
 ax = gobjects(n_plot,1);
@@ -34,7 +33,7 @@ for n = 1:n_plot
         end
         %plot(time, squeeze(GRAND.all(v).State(:,pI(n),:)), 'LineWidth', 0.5)
         [h.patch(1,n),h.line(1,n)] = PlotPatch(GRAND.all_trial(v).State.median(:,pI(n)),...
-                  GRAND.all_trial(v).State.std(:,pI(n)), time, 1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
+                  GRAND.all_trial(v).State.std(:,pI(n)), time, 0, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
 
 end
 % set(h.line(1:2,:),'Marker','.','MarkerFaceColor','none','MarkerSize', 20')
