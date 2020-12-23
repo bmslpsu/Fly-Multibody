@@ -5,7 +5,7 @@ daqreset
 imaqreset
 % Fn = 0;
 %% Set directories & experimental parameters
-root = 'C:\BC\Experiment_SOS_vel_v2';
+root = 'C:\BC\Experiment_SOS_vel_v2_head_fixed';
 % val = [1 2 3]'; % amplitude of each SOS function in order in PControl
 val = [42 70 95]'; % amplitude of each SOS function in order in PControl
 name = 'vel'; % name of identifier at end of file name
