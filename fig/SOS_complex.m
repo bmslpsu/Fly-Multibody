@@ -17,9 +17,9 @@ T = ["ref2body", "ref2head","ref2gaze"];
 pI = [1 2 3];
 yL = [1.5 1.5 1.5];
 
-% T = ["temp"];
-% pI = [1];
-% yL = [1.5];
+T = ["temp"];
+pI = [1];
+yL = [1.5];
 
 % T = ["ref2body_fixed"];
 % pI = [1];

@@ -1,5 +1,5 @@
-function [] = SOS_frf()
-%% SOS_frf:
+function [] = SOS_frf_save()
+%% SOS_frf_save:
 root = 'E:\DATA\Magno_Data\Multibody';
 [FILE,PATH] = uigetfile({'*.mat', 'DAQ-files'}, ...
     'Select head angle trials', root, 'MultiSelect','off');
@@ -12,11 +12,11 @@ clc
 % pI = [1 2 3 6 8 9 11 12];
 % T = ["ref2body", "ref2head", "ref2gaze", "ref2wing", "head2body", "head2wing", "wing2body", "left2right"];
 
-% pI = [1 2 3 8];
-% T = ["ref2body", "ref2head", "ref2gaze", "head2body"];
+pI = [1 2 3 8];
+T = ["ref2body", "ref2head", "ref2gaze", "head2body"];
 
-pI = [1];
-T = ["ref2body_fixed"];
+% pI = [1];
+% T = ["ref2body_fixed"];
 
 % pI = [1 2 3];
 % T = ["ref2head", "ref2wing", "head2wing"];
@@ -33,11 +33,12 @@ ax = gobjects(4,n_plot);
 
 shift_I = {3:7, 5, 6, 3:7};
 phase_lim = [0 nan nan 0];
+fI = (1:7)';
 
 % shift_I = {7:9, 9, 9, 9, 9, 1:9, 3:7, 7, 6, 3:7};
 % phase_lim = [0 nan nan 0 0 0 nan 0 -100 0 nan 0];
-fI = (1:7)';
-for v = 3
+% fI = (1:9)';
+for v = 1
     for n = 1:n_plot
         IOFv = GRAND.fly_stats(v).mean.IOFv.mean;
         n_freq = length(IOFv);
@@ -57,7 +58,7 @@ for v = 3
         ax(2,n) = subplot(5,n_plot,subI(2)); hold on
             %gain_all = squeeze(GRAND.all(v).IOGain(:,pI(n),:));
             gain_all = squeeze(GRAND.fly_all(v).mean.IOGain(:,pI(n),:));
-            plot(IOFv(fI), gain_all((fI),:), 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
+            %plot(IOFv(fI), gain_all((fI),:), 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
             gain_med = GRAND.fly_stats(v).mean.IOGain.mean(fI,pI(n));
             gain_std = GRAND.fly_stats(v).mean.IOGain.std(fI,pI(n));
             [h.patch(2,n),h.line(2,n)] = PlotPatch(gain_med,...
@@ -70,7 +71,7 @@ for v = 3
             phase_all = rad2deg(squeeze(GRAND.fly_all(v).circ_mean.IOPhaseDiff(:,pI(n),:)));
             shift_all = any((1:n_freq)' == shift_I{n},2) & (phase_all > phase_lim(n));
             phase_all(shift_all) = phase_all(shift_all) - 360;  
-            plot(IOFv(fI), phase_all((fI),:), 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
+            %plot(IOFv(fI), phase_all((fI),:), 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
      
             phase_med = rad2deg(GRAND.fly_stats(v).circ_mean.IOPhaseDiff.circ_mean(:,pI(n)));
             phase_std = rad2deg(GRAND.fly_stats(v).circ_mean.IOPhaseDiff.circ_std(:,pI(n)));
@@ -82,7 +83,7 @@ for v = 3
                   
         ax(4,n) = subplot(5,n_plot,subI(4)); hold on
             timediff_all = 1000 * (phase_all ./360) .* (1 ./IOFv);
-            plot(IOFv(fI), timediff_all((fI),:), 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
+            %plot(IOFv(fI), timediff_all((fI),:), 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
             
             timediff_med = 1000 * (phase_med ./360) .* (1 ./IOFv);
             timediff_std = 1000 * (phase_std ./360) .* (1 ./IOFv);
@@ -92,7 +93,7 @@ for v = 3
         ax(5,n) = subplot(5,n_plot,subI(5)); hold on
             %cohr_all = squeeze(GRAND.all(v).Cohr(:,pI(n),:));
             cohr_all = squeeze(GRAND.fly_all(v).mean.Cohr(:,pI(n),:));
-            plot(Fv, cohr_all, 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
+            %plot(Fv, cohr_all, 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
             cohr_med = GRAND.fly_stats(v).mean.Cohr.mean(:,pI(n));
             cohr_std = GRAND.fly_stats(v).mean.Cohr.std(:,pI(n));
             [h.patch(5,n),h.line(5,n)] = PlotPatch(cohr_med,...
@@ -115,7 +116,7 @@ linkaxes(ax(4,:), 'y')
 linkaxes(ax(5,:), 'y')
 
 XLabelHC = get(ax(end,:), 'XLabel');
-set([XLabelHC], 'String', 'Frequency (Hz)')
+set([XLabelHC{:}], 'String', 'Frequency (Hz)')
 
 YLabelHC = get(ax(1,1), 'YLabel');
 set([YLabelHC], 'String', 'Magnitude (°)')
@@ -129,7 +130,7 @@ YLabelHC = get(ax(5,1), 'YLabel');
 set([YLabelHC], 'String', 'Coherence')
 
 set(ax(1,1:end),'YLim',[0 100])
-set(ax(2,1:end),'YLim',[0 1.3])
+set(ax(2,1:end-1),'YLim',[0 1.3])
 set(ax(3,1:end),'YLim',[-300 200])
 set(ax(4,1:end),'YLim',300*[-1 1])
 set(ax(5,1:end),'YLim',[0 1])

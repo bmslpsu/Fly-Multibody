@@ -51,8 +51,8 @@ tintrp = (0:(1/Fs):func_length)';
 debug = false;
 [b,a] = butter(3, Fc/(Fs/2),'low');
 ALL = cell(N.fly,N{1,3});
-DATA = [I , splitvars(table(num2cell(zeros(N.file,5))))]; % store saccade objects
-DATA.Properties.VariableNames(4:end) = {'reference','body','head','error','dwba',};
+DATA = [I , splitvars(table(num2cell(zeros(N.file,7))))];
+DATA.Properties.VariableNames(4:end) = {'reference','body','head','error','dwba','lwing','rwing'};
 for n = 1:N.file
     %disp(kk)
     disp(basename{n})

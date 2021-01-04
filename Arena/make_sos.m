@@ -76,18 +76,27 @@ else
 end
 F = freq_res * round(F / freq_res); % round frequencies to nearest resolution point
 
-% Check for prime multiples
-Prime = nan(N);
-for n = 1:N
-    for f = 1:N
-        if (n ~= f) && (F(n) > F(f))
-            %P(n,f) = mod(F(n), F(f));
-            Prime(n,f) = F(n) / F(f);
-            check = rem(Prime(n,f),1);
-            if check < freq_res
-               disp(['Warning: ' num2str(F(n)) ...
-                   ' is a prime multiple of ' num2str(F(f)), ...
-                   '   change A = ' num2str(A(n)/3.75)])
+% Check for prime multiples & shift up conflicting frequencies
+prime_check = false(size(F));
+while ~all(prime_check)
+    Prime = nan(N);
+    for n = 1:N
+        for f = 1:N
+            if (F(n) >= F(f))
+                %P(n,f) = mod(F(n), F(f));
+                Prime(n,f) = F(n) / F(f);
+                check = rem(Prime(n,f),1);
+                if (check < freq_res) && (F(n) ~= F(f))
+                    newF = F(n) + freq_res;
+                    disp(['Warning: ' num2str(F(n)) ...
+                       ' is a prime multiple of ' num2str(F(f)), ...
+                       '  /  change A = ' num2str(A(n)/3.75) ...
+                       '  /  changing ' num2str(F(n)) ' to ' num2str(newF)])
+                    F(n) = newF;
+                    prime_check = false(size(F));
+                else
+                    prime_check(n) = true;
+                end
             end
         end
     end
@@ -197,11 +206,11 @@ if ~isempty(root)
         func_type = "SOS";
     end
     if norm_vel
-        fname = sprintf(['position_function_%s_Fs_%1.2f_T_%1.0f_vel_%1.0f_amp_' ...
-                            str_amp 'freq_' str_freq '.mat'], func_type, Fs, T, norm_vel);
+        fname = sprintf(['position_function_%s_Fs_%1.2f_T_%1.0f_vel_' num2str(norm_vel) ...
+            '_amp_' str_amp 'freq_' str_freq '.mat'], func_type, Fs, T);
     else
-        fname = sprintf(['position_function_%s_Fs_%1.2f_T_%1.0f_amp_' ...
-                            str_amp 'freq_' str_freq '.mat'], func_type, Fs, T);
+        fname = sprintf(['position_function_%s_Fs_%1.2f_T_%1.0f' ...
+            '_amp_' str_amp 'freq_' str_freq '.mat'], func_type, Fs, T);
     end
     fname_all = ['ALL_' fname];
     all_dir = fullfile(root, 'All');
