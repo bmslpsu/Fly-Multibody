@@ -1,22 +1,18 @@
-function [] = Experiment_SOS_sweep(Fn)
-%% Experiment_SOS_norm: runs a experiment using the LED arena and fly panel
+function [] = Experiment_static_wave(Fn)
+%% Experiment_static_wave: runs a experiment using the LED arena and fly panel
 % Fn is the fly number
 daqreset
 imaqreset
 % Fn = 0;
 %% Set directories & experimental parameters
-root = 'C:\BC\Experiment_SOS_amp_v3_head_fixed';
-val = [1 2 3]'; % amplitude of each SOS function in order in PControl
-% val = [42 70 95]'; % amplitude of each SOS function in order in PControl
-name = 'amp'; % name of identifier at end of file name
+root = 'C:\BC\Experiment_static_wave_head_fixed';
+name = 'wave'; % name of identifier at end of file name
 
 %% EXPERIMENTAL PARAMETERS
-n_tracktime = 20 + 1;     	% length(func)/fps; seconds for each EXPERIMENT
+n_tracktime = 20 + 1;     	% length(func)/fps seconds for each EXPERIMENT
 n_pause = 0.2;              % seconds for each pause between panel commands
 n_rep = 20;                 % # of repetitions
 patID = 1;                  % pattern ID
-yPos = 5;                   % 30 deg spatial frequency
-xUpdate = 400;           	% function update rate
 FPS = 100;                  % camera frame rate
 nFrame = FPS*n_tracktime;   % # of frames to log
 Fs = 5000;                  % DAQ sampling rate [Hz]
@@ -48,25 +44,32 @@ TRIG(end-end_off:end) = 0;
 %% Camera Setup
 [vid,src] = Basler_acA640_750um(nFrame);
 
-%% Set variable to control positionn function
-n_func = length(val); % # of functions
-func = (1:n_func)'; % position function indicies
+%% Set variable to control y-position function
+val = 7.5*[0 3 4 8 inf]';   % [°] wavelengths
+n_val = length(val);       	% # of values
+ypos = [1 4 5 7 12];    	% pattern y-pos corresponding to each wavelength
 
-% Create sequence of randomly shuffled functions
-func_all = nan(n_func*n_rep,1);
+% Create sequence of randomly shuffled frequencies
+val_all = nan(n_val*n_rep,1);
 pp = 0;
 for kk = 1:n_rep
-    func_rand = func(randperm(n_func),:);    % reshuffle randomly
-    func_all(pp+1:pp+n_func,1) = func_rand;  % add rep
-    pp = kk*n_func;
+    val_rand = val(randperm(n_val),:);    % reshuffle randomly
+    val_all(pp+1:pp+n_val,1) = val_rand;  % add rep
+    pp = kk*n_val;
 end
-val_all = val(func(func_all)); % true values (amplitude, velocity, etc.)
-n_trial = n_rep * n_func;
+
+% y-pos index vector
+ypos_all = val_all;
+for kk = 1:length(ypos)
+    ypos_all(ypos_all==val(kk)) = ypos(kk);
+end
+
+n_trial = n_rep * n_val;
 
 %% EXPERIMENT LOOP
 disp('Start Experiment:')
 for ii = 1:n_trial
-    fprintf('Trial: %i   Amp = %i \n', ii, val_all(ii))
+    fprintf('Trial: %i   val = %f \n', ii, val_all(ii))
     preview(vid) % open video preview window
     
     Panel_com('stop')
@@ -81,15 +84,15 @@ for ii = 1:n_trial
     disp('Play Stimulus:')
     Panel_com('set_pattern_id', patID);	% set pattern
     pause(n_pause)
-    Panel_com('set_position', [1, yPos]); % set starting position (xpos,ypos)
+    Panel_com('set_position', [randi(96), ypos_all(ii)]); % set starting position (xpos,ypos)
     pause(n_pause)
-    Panel_com('set_posfunc_id',[1,func_all(ii)]); % arg1 = channel (x=1,y=2); arg2 = funcID
+    Panel_com('set_posfunc_id',[1,1]); % arg1 = channel (x=1,y=2); arg2 = funcID
     pause(n_pause)
-	Panel_com('set_funcX_freq', xUpdate); % update rate for x-channel
+	Panel_com('set_funcX_freq', 50); % update rate for x-channel
     pause(n_pause)
     Panel_com('set_funcY_freq', 50); % update rate for y-channel
     pause(n_pause)
-    Panel_com('set_mode', [4,0]); % 0=open,1=closed,2=fgen,3=vmode,4=pmode
+    Panel_com('set_mode', [0,0]); % 0=open,1=closed,2=fgen,3=vmode,4=pmode
     pause(n_pause)
     Panel_com('send_gain_bias', [0 0 0 0])
 	
