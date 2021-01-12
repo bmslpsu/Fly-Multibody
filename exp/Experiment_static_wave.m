@@ -5,7 +5,7 @@ daqreset
 imaqreset
 % Fn = 0;
 %% Set directories & experimental parameters
-root = 'C:\BC\Experiment_static_wave_head_fixed';
+root = 'C:\BC\Experiment_static_wave';
 name = 'wave'; % name of identifier at end of file name
 
 %% EXPERIMENTAL PARAMETERS
