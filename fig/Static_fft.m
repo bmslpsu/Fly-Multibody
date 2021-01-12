@@ -30,6 +30,7 @@ n_field = length(fnames);
 for f = 1:n_field
     for v = 1:N.wave
         All.fly_mean.(fnames(f)){v} = cat(2, All.fly_stats.(fnames(f))(:,v).mean);
+        All.all_trial.(fnames(f)){v} = cat(2, All.(fnames(f)){:,v});
     end
 end
 
@@ -46,35 +47,52 @@ for w = [2:N.wave, 1]
     subI = pp + (0:2)*N.wave;
     ax(1,pp) = subplot(3,N.wave,subI(1)); cla ; hold on ; title(num2str(U.wave{1}(w)))
         mag_mean = All.wave_stats.head(w).mean;        
-        plot(All.Fv{w}, All.head{w}, 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.25)
+        plot(All.all_trial.Fv{w}, All.all_trial.head{w}, 'Color', [0.5 0.5 0.5 0.2], 'LineWidth', 0.25)
+        %plot(All.fly_mean.Fv{w}, All.fly_mean.head{w}, 'b')
         plot(Fv, mag_mean, 'k', 'LineWidth', 0.75)
 
-        xline(11,'--r')
-        xline(18,'--r')
+        xline(12,'--r')
+        xline(19,'--r')
         
     ax(2,pp) = subplot(3,N.wave,subI(2)); cla ; hold on ; title(num2str(U.wave{1}(w)))
         mag_mean = All.wave_stats.body(w).mean;        
-        plot(All.Fv{w}, All.body{w}, 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.25)
+        plot(All.all_trial.Fv{w}, All.all_trial.body{w}, 'Color', [0.5 0.5 0.5 0.2], 'LineWidth', 0.25)
         plot(Fv, mag_mean, 'k', 'LineWidth', 0.75)
 
-        xline(11,'--r')
-        xline(18,'--r')
+        xline(12,'--r')
+        xline(19,'--r')
         
     ax(3,pp) = subplot(3,N.wave,subI(3)); cla ; hold on ; title(num2str(U.wave{1}(w)))
         mag_mean = All.wave_stats.dwba(w).mean;        
-        plot(All.Fv{w}, All.dwba{w}, 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.25)
+        plot(All.all_trial.Fv{w}, All.all_trial.dwba{w}, 'Color', [0.5 0.5 0.5 0.2], 'LineWidth', 0.25)
         plot(Fv, mag_mean, 'k', 'LineWidth', 0.75)
 
-        xline(11,'--r')
-        xline(18,'--r')
+        xline(12,'--r')
+        xline(19,'--r')
         
     pp = pp + 1;
 end
-set(ax, 'XLim', [0.5 40])
+set(ax, 'XLim', [1 40])
 linkaxes(ax, 'x')
 for p = 1:3
     linkaxes(ax(p,:), 'y')
 end
+
+set(ax, 'Color', 'none', 'LineWidth', 1.2, 'FontSize', 10, 'Box', 'off')
+set(ax(:,2:end), 'XColor', 'none', 'YColor', 'none')
+set(ax(1:end-1,:), 'XColor', 'none')
+
+YLabelHC = get(ax(1,1), 'YLabel');
+set([YLabelHC], 'String', 'Head (°)')
+YLabelHC = get(ax(2,1), 'YLabel');
+set([YLabelHC], 'String', 'Body (°)')
+YLabelHC = get(ax(3,1), 'YLabel');
+set([YLabelHC], 'String', '\DeltaWBA (°)')
+
+XLabelHC = get(ax(3,1), 'XLabel');
+set([XLabelHC], 'String', 'Frequency (Hz)')
+
+set(ax, 'YLim', [-0.1 1])
 
 %% Save
 savedir = 'E:\DATA\Magno_Data\Multibody\processed';

@@ -1,4 +1,4 @@
-function [All] = make_sos(T, Fs, res, F, A, norm_vel, cent, showplot, root)
+function [All] = make_sos(T, Fs, res, F, A, norm_vel, cent, Phase, showplot, root)
 %% make_sos: makes sum-of-sine position function
 %
 %   INPUT:
@@ -25,7 +25,7 @@ function [All] = make_sos(T, Fs, res, F, A, norm_vel, cent, showplot, root)
 % T           = 20;
 % Fs          = 500;
 % A           = 3.75*16;
-% norm_vel 	= 250;
+% norm_vel    = 250;
 % res         = 3.75;
 % cent        = 45;
 % showplot    = true;
@@ -43,7 +43,7 @@ A = A(:);
 if isempty(A)
     N = length(F); % # of frequency components
 elseif isempty(F)
-   N = length(A); % # of frequency components
+    N = length(A); % # of frequency components
 else
     assert(length(A)==length(F), 'ampltidue and frequency vectors must be equal length if ''norm_vel'' is not specified')
     N = length(F);
@@ -102,8 +102,16 @@ while ~all(prime_check)
     end
 end
 
+% Set phase
+if isempty(Phase)
+    disp('Randomizing phase')
+    Phase = randi(359,N,1); % randomize initial phase of each frequency component [°]
+elseif length(Phase) == 1 % same phase for all frequency components [°]
+    Phase = repmat(Phase, [N,1]);
+end
+Phase = deg2rad(Phase); % [rad]
+
 % Generate SOS signal
-Phase = deg2rad(randi(359,N,1)); % random initial phase of each frequency component [rad]
 X = zeros(length(tt),1);
 Y = zeros(length(tt),N);
 for n = 1:N % each frequency component

@@ -46,6 +46,24 @@ subplot(2,1,1) ; hold on
 subplot(2,1,2) ; hold on
     plot(fv,phs)
 
+%%
+close all
+clear
+clc
+
+fs = 100;
+fn = fs/2;	% nyquist frequency [Hz]
+T = 20;
+t = (0:(1/fs):T)';
+n = length(t);
+a = 10;
+f = 2;
+x = a*cos(2*pi*f*t) + 3*cos(4*pi*f*t);
+win = hamming(n);
+y = win.*x;
+
+plot(t,x,t,y)
+
 
 
 

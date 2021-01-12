@@ -3,7 +3,7 @@ function [] = Hist_kinematics()
 root = 'E:\DATA\Magno_Data\Multibody';
 [FILES,PATH] = uigetfile({'*.mat', 'DAQ-files'}, ...
     'Select head angle trials', root, 'MultiSelect','on');
-
+FILES = cellstr(FILES);
 n_file = length(FILES);
 ALL = cell(n_file,1);
 labels = string(zeros(n_file,1));
@@ -85,24 +85,44 @@ fig = figure (1) ; clf
 set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 3*n_val 2*n_name])
 ax = gobjects(n_name,n_val);
 pp = 1;
+spread = 0.2;
+cc = jet(n_file);
+rng(1)
 for f = 1:n_name
+    jitter = rand(size(comb_stats.fly.G{1})) * spread - (spread/2);
+    G = comb_stats.fly.G{1};
     for v = 1:n_val
         ax(f,v) = subplot(n_name,n_val,pp); cla ; hold on
         title(['p = ' num2str(P.fly(f,v))])
-            b = boxchart(comb_stats.fly.(names(f)){v}, 'GroupByColor', comb_stats.fly.G{v});
-            set(b, 'BoxFaceAlpha', 0.5, 'MarkerStyle', '.', 'Notch', 'off')
+            %b = boxchart(comb_stats.fly.(names(f)){v}, 'GroupByColor', comb_stats.fly.G{v});
+            %set(b, 'BoxFaceAlpha', 0.5, 'MarkerStyle', 'none', 'Notch', 'off')
+            bx = boxplot(comb_stats.fly.(names(f)){v}, comb_stats.fly.G{v}, ...
+            'Width', 0.5, 'Symbol', '', 'Whisker', 2, 'OutlierSize', 0.5);
+        
+            h = get(bx(5,:),{'XData','YData'});
+            for c = 1:size(h,1)
+               patch(h{c,1},h{c,2}, cc(c,:), 'EdgeColor', 'none', 'FaceAlpha', 0.2);
+            end
+
+            set(findobj(ax(f,v),'tag','Median'), 'Color', 'k','LineWidth', 1);
+            set(findobj(ax(f,v),'tag','Box'), 'Color', 'none');
+            set(findobj(ax(f,v),'tag','Upper Whisker'), 'Color', 'k','LineStyle','-');
+            set(findobj(ax(f,v),'tag','Lower Whisker'), 'Color', 'k','LineStyle','-');
+            ax(f,v).Children = ax(f,v).Children([end 1:end-1]); 
 
             if v == 1
                ylabel([char(names(f)) '(°)']) 
             end
+            
+            plot(G + jitter, comb_stats.fly.(names(f)){v}, '.', 'Color', 'r')
         
         pp = pp + 1;
     end
 end
-leg = legend(labels, 'Box', 'off', 'Interpreter', 'none');
-leg.Position = [0.25 0.95 0.45 0.05];
+leg = legend(labels, 'Box', 'off', 'Interpreter', 'none', 'Orientation', 'horizontal');
+leg.Position = [0.33 0.04 0.45 0.05];
 
-set(ax, 'Color', 'none', 'LineWidth', 1.5, 'XColor', 'none')
+set(ax, 'Color', 'none', 'LineWidth', 1.5, 'XColor', 'none', 'Box', 'off')
 for f = 1:n_name
     linkaxes(ax(f,:), 'xy')
 end

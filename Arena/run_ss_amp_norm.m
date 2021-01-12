@@ -19,24 +19,49 @@ function [] = run_ss_amp_norm(T, Fs, res, F, A, norm_vel, cent, root)
 
 clear ; close all ; clc
 
-root        = 'C:\Users\BC\Box\Git\Fly-Multibody\Arena\functions';
+root        = 'C:\Users\BC\Box\Git\Fly-Multibody\arena\functions';
 F           = [];
 T           = 10;
-Fs          = 150;
+Fs          = 400.63;
 A           = 3.75*[16 11 7 5 3 2 1];
 norm_vel   	= 250;
 res         = 3.75;
 cent        = 45;
+Phase       = -90;
 showplot    = true;
+
+% All = make_sos(T, Fs, res, F, A, norm_vel, cent, showplot, []);
+% disp('Freq')
+% disp(All.Freq)
+% disp('Mean Vel')
+% disp(mean(abs(All.dX)))
+% disp('Median Vel')
+% disp(median(abs(All.dX)))
 
 n_amp = length(A); 
 freq_all = nan(n_amp,1);
+med_vel_all = nan(n_amp,1);
+mean_vel_all = nan(n_amp,1);
 for a = 1:n_amp
-    All = make_sos(T, Fs, res, F, A(a), norm_vel, cent, showplot, []);
+    All = make_sos(T, Fs, res, F, A(a), norm_vel, cent, Phase, showplot, []);
     freq_all(a) = All.Freq;
-    pause
-    close all
+    med_vel_all(a) = median(abs(All.dX));
+    mean_vel_all(a) = mean(abs(All.dX));
+%     pause
+%     close all
 end
 disp(freq_all)
+
+%% Custom
+% root        = 'C:\Users\BC\Box\Git\Fly-Multibody\arena\functions';
+% F           = 12;
+% T           = 10;
+% Fs          = 400.63;
+% A           = 3.75*[16 11 7 5 3 2 1];
+% norm_vel   	= 250;
+% res         = 3.75;
+% cent        = 45;
+% Phase       = -90;
+% showplot    = true;
 
 end

@@ -13,7 +13,7 @@ clc
 Fv = DATA.reference{1}.Fv;
 
 fname = 'position';
-fname = 'velocity';
+% fname = 'velocity';
 
 MAG.ref = cell(N.fly, N{1,3});
 MAG.body = cell(N.fly, N{1,3});

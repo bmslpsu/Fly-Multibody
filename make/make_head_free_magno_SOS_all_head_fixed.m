@@ -14,15 +14,15 @@ exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-3}; % version of experiment (v1, v2, ...)
 exp_ver = exp_name{1}{end-2}; % % type of stimuli (vel or pos)
 
-% clss = 'position';
-clss = 'velocity';
+clss = 'position';
+% clss = 'velocity';
 filename = ['SOS_HeadFixed_' exp_typ '_' exp_ver '_' num2str(clss)];
 
 %% Setup Directories %%
 root.base = rootdir; clear rootdir
 root.body = fullfile(root.base,'tracked_body');
 root.reg = fullfile(root.base,'registered');
-root.benifly = fullfile(root.reg ,'tracked_wing');
+root.benifly = fullfile(root.reg ,'tracked_head_wing');
 root.func = fullfile(root.base ,'function');
 
 % Load function files

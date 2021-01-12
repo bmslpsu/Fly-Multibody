@@ -8,8 +8,8 @@ function [] = make_head_free_magno_SOS_all(rootdir)
 %       -
 %
 
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2';
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_amp_v3';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2';
+% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_amp_v3';
 exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-1}; % type of stimuli (vel or pos)
 exp_ver = exp_name{1}{end}; % version of experiment (v1, v2, ...)
@@ -113,6 +113,14 @@ for n = 1:N.file
         plot(tintrp, DATA.reference{n}.position, 'k', 'LineWidth', 1)
         pause
     end
+    
+    hold on
+    plot(DATA.reference{n}.Fv, DATA.reference{n}.mag.position, 'k', 'LineWidth', 1)
+    plot(DATA.head{n}.Fv, DATA.head{n}.mag.position, 'r', 'LineWidth', 1)
+    xlim([0.1 15])
+    ylim([0 3])
+    pause
+    cla
     
     % Debug plot
     if debug

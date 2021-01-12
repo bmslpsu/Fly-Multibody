@@ -8,8 +8,8 @@ function [] = make_head_free_magno_static(rootdir)
 %       -
 %
 
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_static_wave';
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_static_wave_head_fixed';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_static_wave';
+% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_static_wave_head_fixed';
 
 %% Setup Directories %%
 root.base = rootdir; clear rootdir
@@ -21,15 +21,16 @@ head_test = exist(root.head, 'file');
 
 if head_test == 7
     filename = 'Static_HeadFree';
+    
+    % Select files
+    [D,I,N,U,T,~,~,basename] = GetFileData(root.head,'*.mat',false);
+    % [D,I,N,U,T,~,~,basename] = GetFileData(root.benifly,'*.csv',false);
 else
 	filename = 'Static_HeadFixed';
+    
+	% Select files
+    [D,I,N,U,T,~,~,basename] = GetFileData(root.body,'*.mat',false);
 end
-
-% Select files
-% [D,I,N,U,T,~,~,basename] = GetFileData(root.head,'*.mat',false);
-% [D,I,N,U,T,~,~,basename] = GetFileData(root.benifly,'*.csv',false);
-[D,I,N,U,T,~,~,basename] = GetFileData(root.body,'*.mat',false);
-
 
 %% Get Data %%
 close all
@@ -109,7 +110,7 @@ for n = 1:N.file
             leg = legend('Body','Head','\DeltaWBA', 'Orientation', 'horizontal');
             xlabel('Time (s)')
             ylabel('(°)')
-                   
+          	
        	set(gcf, 'Color', 'w')
        	set(ax, 'Linewidth', 2)
         linkaxes(ax,'x')

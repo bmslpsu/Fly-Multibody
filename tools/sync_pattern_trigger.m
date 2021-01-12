@@ -45,7 +45,7 @@ end
 % Camera trigger signal pulses and times
 TRIG.pos                = round(trigger); % trigger values
 TRIG.diff               = diff(TRIG.pos); % trigger derivative (rising edge triggers frame)
-[TRIG.pks,TRIG.locs]    = findpeaks(TRIG.diff); % where each frame starts.
+[TRIG.pks,TRIG.locs]    = findpeaks(TRIG.diff, 'MinPeakHeight', 1.5); % where each frame starts.
 TRIG.locs               = TRIG.locs + 1; % this is where the frame starts
 if add1
     TRIG.locs = [1 ; TRIG.locs]; % add 1st frame

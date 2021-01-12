@@ -25,6 +25,7 @@ T           = 20;
 Fs          = 400.63;
 res         = 3.75;
 cent        = 45;
+Phase       = [];
 showplot    = true;
 
 %A              = 3.75*[0.49 0.65 0.77 1.01 1.44 2 3 5 7 13];
@@ -60,7 +61,7 @@ A          	= logspace((log(0.75)/log(10)),(log(42)/log(10)), 10)';
 norm_vel  	= 90;
 
 n_amp = length(A);
-All = make_sos(T, Fs, res, F, A, norm_vel, cent, showplot, root);
+All = make_sos(T, Fs, res, F, A, norm_vel, cent, Phase, showplot, []);
 
 disp('Freq')
 disp(All.Freq)

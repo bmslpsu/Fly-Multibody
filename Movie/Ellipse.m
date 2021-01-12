@@ -143,7 +143,7 @@ classdef Ellipse
             obj.border          = obj.centroid + obj.border_shift; % border in center reference frame
         end
         
-        function obj = draw(obj,theta,showpoints)
+        function obj = draw(obj, theta, showpoints)
             %DRAW Draw the shape
             %   Draw patch,centroid, center, border, surrounding points, axes
             %

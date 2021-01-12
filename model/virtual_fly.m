@@ -1,5 +1,5 @@
-classdef FlyModel
-    %FLYMODEL construct a 2D animation of a fly
+classdef virtual_fly
+    %virtual_fly: construct a 2D animation of a fly
     %   Draws fly at given orientation
     %   Can be updated iteratively
     %
@@ -22,8 +22,8 @@ classdef FlyModel
     end
 
     methods
-        function obj = FlyModel(center, dim, head_color, body_color, alpha)
-            %FLYMODEL Construct initial fly
+        function obj = virtual_fly(center, dim, head_color, body_color, alpha)
+            %virtual_fly: Construct initial fly
             % 	center	: rotation point
             %  	dim  	: dimension structure
             %
@@ -51,7 +51,8 @@ classdef FlyModel
                 head_a = dim.a2;
                 head_b = dim.b2;
                 wing_L = 0.75*body_a;
-                rot_offset = dim.d;
+                %rot_offset = -(body_a/2) - dim.d;
+                rot_offset = dim.rot_off;
             else
                 body_a = dim;
                 body_b = 0.4*body_a;
@@ -125,7 +126,7 @@ classdef FlyModel
             
             % Set colors
             set([obj.body.h.center], 'Marker', '.', 'MarkerEdgeColor', [0.6 0.6 0.6], ...
-                'MarkerSize', 20*obj.body.a);
+                'MarkerSize', 10*obj.body.a);
             uistack(obj.body.h.center, 'top')
             set([obj.body.h.centroid], 'Marker', '.', 'MarkerEdgeColor', [0.5 0 0], ...
                 'MarkerSize', 25*obj.body.a);
