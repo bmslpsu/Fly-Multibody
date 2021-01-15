@@ -42,6 +42,12 @@ if isempty(add1)
    add1 = false; % default
 end
 
+% Remove weird 0 at end of time vector (sometimes)
+zrI = ((1:length(daq_time))' > 2) & (daq_time <=0);
+daq_time = daq_time(~zrI);
+daq_pattern = daq_pattern(~zrI);
+trigger = trigger(~zrI);
+
 % Camera trigger signal pulses and times
 TRIG.pos                = round(trigger); % trigger values
 TRIG.diff               = diff(TRIG.pos); % trigger derivative (rising edge triggers frame)

@@ -1,5 +1,5 @@
-function [] = make_head_free_magno_SOS_all(rootdir)
-%% make_head_free_magno_SOS_amp:
+function [] = make_head_free_magno_SS(rootdir)
+%% make_head_free_magno_SS:
 %
 %   INPUTS:
 %       rootdir    	:   root directory
@@ -7,16 +7,16 @@ function [] = make_head_free_magno_SOS_all(rootdir)
 %   OUTPUTS:
 %       -
 %
+warning('off', 'signal:findpeaks:largeMinPeakHeight')
 
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2';
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_amp_v3';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250';
 exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-1}; % type of stimuli (vel or pos)
 exp_ver = exp_name{1}{end}; % version of experiment (v1, v2, ...)
 
-% clss = 'position';
-clss = 'velocity';
-filename = ['SOS_HeadFree_' exp_typ '_' exp_ver '_' num2str(clss)];
+clss = 'position';
+% clss = 'velocity';
+filename = ['SS_HeadFree_' exp_typ '_' exp_ver '_' num2str(clss)];
 
 %% Setup Directories %%
 root.base = rootdir; clear rootdir
@@ -35,6 +35,8 @@ for f = 1:n_cond
     FUNC{f} = load(fullfile(root.func, func_list(f).name));
     FUNC{f}.name = func_list(f).name;
 end
+forder = [4 7 1 2 3 5 6];
+FUNC = FUNC(forder,1);
 
 % Select files
 [D,I,N,U,T,~,~,basename] = GetFileData(root.head,'*.mat',false);
@@ -44,16 +46,32 @@ end
 close all
 clc
 
+scd.thresh = [20, 1, 3, 0];
+scd.true_thresh = 220;
+scd.Fc_detect = [40 nan];
+scd.Fc_ss = [20 nan];
+scd.amp_cut = 5;
+scd.dur_cut = 1;
+scd.direction = 0;
+scd.direction = 0;
+scd.pks = [];
+scd.sacd_length = nan;
+scd.min_pkdist = 0.5;
+scd.min_pkwidth = 0.02;
+scd.min_pkprom = 50;
+scd.min_pkthresh = 0;
+scd.boundThresh = [0.2 40];
+
 Fs = 100;
 Fc = 40;
-func_length = 20;
+func_length = 10;
 tintrp = (0:(1/Fs):func_length)';
-debug = false;
+debug = true;
 [b,a] = butter(3, Fc/(Fs/2),'low');
 ALL = cell(N.fly,N{1,3});
 DATA = [I , splitvars(table(num2cell(zeros(N.file,7))))];
-DATA.Properties.VariableNames(4:end) = {'reference','body','head','error','dwba','lwing','rwing'};
-for n = 1:N.file
+DATA.Properties.VariableNames(5:end) = {'reference','body','head','error','dwba','lwing','rwing'};
+for n = 53:N.file
     %disp(kk)
     disp(basename{n})
     % Load DAQ, body, head, & wing data
@@ -85,10 +103,13 @@ for n = 1:N.file
 	head = data.head.head_data.angle;
     
     % Interpolate so all signals have the same times
-    [b_pat, a_pat] = butter(3, 20 / (Fs/2), 'low');
+    Fc_pat_ratio = 2;
+    %[b_pat, a_pat] = butter(3, 20 / (Fs/2), 'low');
+    [b_pat, a_pat] = butter(3, Fc_pat_ratio * D.freq(n) / (Fs/2), 'low');
     Reference = interp1(PAT.time_sync, pat, tintrp, 'nearest');
-    Reference = filtfilt(b_pat, a_pat, Reference);
     Reference = Reference - mean(Reference);
+    Reference = 3.75*round(Reference/3.75);
+    %Reference = filtfilt(b_pat, a_pat, Reference);
     
     Body    = interp1(trig_time, body,  tintrp, 'pchip');
     Body    = Body - mean(Body);
@@ -99,29 +120,38 @@ for n = 1:N.file
     RWing   = -interp1(trig_time, rwing, tintrp, 'pchip');
     dWBA    = interp1(trig_time, lwing-rwing, tintrp, 'pchip');
     
+    % Detect & remove saccades
+    body_scd = saccade_v1(Body, tintrp, scd.thresh, scd.true_thresh, scd.Fc_detect, ...
+                            scd.Fc_ss, scd.amp_cut, scd.dur_cut , scd.direction, scd.pks, ...
+                            scd.sacd_length, scd.min_pkdist, scd.min_pkwidth, scd.min_pkprom, ...
+                            scd.min_pkthresh, scd.boundThresh, false);
+%     figure (1)
+%     pause
+%     close all
+    
     % Store signals
-    n_detrend = 1;
+    n_detrend = 7;
     DATA.reference{n}   = singal_attributes(Reference, tintrp);
-    DATA.body{n}        = singal_attributes(Body, tintrp, [], n_detrend);
-    DATA.head{n}        = singal_attributes(Head, tintrp, []);
+    DATA.body{n}        = singal_attributes(body_scd.shift.IntrpPosition, tintrp, [], n_detrend);
+    DATA.body{n}        = singal_attributes(DATA.body{n}.detrend, tintrp, [], []);
+    DATA.head{n}        = singal_attributes(Head, tintrp, [], n_detrend);
+    DATA.head{n}        = singal_attributes(DATA.head{n}.detrend, tintrp, [], []);
     DATA.error{n}       = singal_attributes(Error, tintrp, [], n_detrend);
-    DATA.dwba{n}    	= singal_attributes(dWBA, tintrp, []);
+    DATA.dwba{n}    	= singal_attributes(dWBA, tintrp, 1.5 * D.freq(n), n_detrend);
+    DATA.dwba{n}        = singal_attributes(DATA.dwba{n}.detrend, tintrp, [], []);
+    DATA.dwba{n}        = singal_attributes(DATA.dwba{n}.position, tintrp, 1.5 * D.freq(n), []);
+    
     DATA.lwing{n}    	= singal_attributes(LWing, tintrp, []);
     DATA.rwing{n}       = singal_attributes(RWing, tintrp, []);
     
-    if median(DATA.reference{n}.mag.velocity) > 8
-        plot(tintrp, DATA.reference{n}.position, 'k', 'LineWidth', 1)
-        pause
-    end
-    
-    hold on
-    plot(DATA.reference{n}.Fv, DATA.reference{n}.mag.position, 'k', 'LineWidth', 1)
-    plot(DATA.head{n}.Fv, DATA.head{n}.mag.position, 'r', 'LineWidth', 1)
-    xlim([0.1 15])
-    ylim([0 3])
-    pause
-    cla
-    
+%     hold on
+%     plot(tintrp, DATA.body{n}.trend, 'g--', 'LineWidth', 1)
+%     plot(tintrp, Body, 'k', 'LineWidth', 1)
+%     plot(tintrp, DATA.body{n}.position, 'b', 'LineWidth', 1)
+%     plot(tintrp, DATA.body{n}.detrend, 'r', 'LineWidth', 1)
+%     pause
+%     cla
+
     % Debug plot
     if debug
         figure (100)
@@ -142,6 +172,13 @@ for n = 1:N.file
         pause
     end
     
+%     hold on
+%     plot(DATA.reference{n}.time, DATA.reference{n}.position)
+%     plot(FUNC{I{n,3}}.All.time, FUNC{I{n,3}}.All.X, 'r')
+%     plot(FUNC{I{n,3}}.All.time, FUNC{I{n,3}}.All.X_step, 'g')
+%     pause
+%     cla
+    
     IOFreq = sort(FUNC{I{n,3}}.All.Freq, 'ascend');
     REF = DATA.reference{n}.(clss);
     BODY = DATA.body{n}.(clss);
@@ -154,10 +191,10 @@ for n = 1:N.file
     SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, LWING, RWING, dWBA);
     SYS_head2_body_wing = frf(tintrp, HEAD, IOFreq, false, BODY, dWBA);
     SYS_wing2_body = frf(tintrp, dWBA, IOFreq, false, BODY);
-    SYS_left2_right = frf(tintrp, LWING, IOFreq, false, RWING);
+    %SYS_left2_right = frf(tintrp, LWING, IOFreq, false, RWING);
     
     SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_ref2_wing, ...
-                                    SYS_head2_body_wing, SYS_wing2_body, SYS_left2_right);
+                                    SYS_head2_body_wing, SYS_wing2_body);
     
     ALL{I.fly(n),I{n,3}}(end+1,1) = SYS_all;
 end
@@ -198,6 +235,26 @@ for v = 1:N{1,3}
         end
     end
     GRAND.all_trial(v) = structfun(@(x) system_stats(x,3), GRAND.all(v), 'UniformOutput', false);
+end
+
+%%
+fig = figure (1);
+set(fig, 'Color', 'w', 'Units', 'inches')
+ax = gobjects(N.amp,1);
+cc = hsv(N.amp);
+pp = 1;
+for a = fliplr(1:N.amp)
+    ax(a) = subplot(N.amp,1,pp); cla ; hold on
+    plot(FUNC{a}.All.time, FUNC{a}.All.X, 'LineWidth', 1, 'Color', 'k')
+        %plot(squeeze(GRAND.all(a).Time), squeeze(GRAND.all(a).State(:,1,:)), ...
+            %'LineWidth', 0.25, 'Color', [0.5 0.5 0.5 0.3])
+%     plot(median(squeeze(GRAND.all(a).Time),2), median(squeeze(GRAND.all(a).State(:,1,:)),2), ...
+%         'LineWidth', 1, 'Color', [cc(a,:) 1])
+    [h1,h2] = PlotPatch(10*median(squeeze(GRAND.all(a).State(:,4,:)),2), ...
+        10*std(squeeze(GRAND.all(a).State(:,4,:)),[],2), ...
+        median(squeeze(GRAND.all(a).Time),2),...
+        1,1,cc(a,:), 0.7*cc(a,:), 0.2, 2);
+    pp = pp + 1;
 end
 
 %% SAVE

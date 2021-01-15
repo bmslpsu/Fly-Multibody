@@ -1,5 +1,5 @@
-function [] = run_ss_amp_norm(T, Fs, res, F, A, norm_vel, cent, root)
-%% run_ss_amp_norm: makes normalized velocity ss functions
+function [] = run_ss_vel_norm(T, Fs, res, F, A, norm_vel, cent, root)
+%% run_ss_vel_norm: makes normalized velocity ss functions
 %
 %   INPUT:
 %       T           :   total time [s]
@@ -27,9 +27,9 @@ cent        = 45;
 Phase       = -90;
 showplot    = true;
 
-A           = 3.75;
-norm_vel   	= [];
-F           = [0.7 1 1.5 2.1 2.5 5.3 10.6];
+A           = 3.75*[16 11 7 5 3 2 1];
+norm_vel   	= 250;
+F           = [];
 
 % All = make_sos(T, Fs, res, F, A, norm_vel, cent, showplot, []);
 % disp('Freq')
@@ -39,15 +39,15 @@ F           = [0.7 1 1.5 2.1 2.5 5.3 10.6];
 % disp('Median Vel')
 % disp(median(abs(All.dX)))
 
-n_freq = length(F);
-freq_all = nan(n_freq,1);
-med_vel_all = nan(n_freq,1);
-mean_vel_all = nan(n_freq,1);
-for f = 1:n_freq
-    All = make_sos(T, Fs, res, F(f), A, norm_vel, cent, Phase, showplot, []);
-    freq_all(f) = All.Freq;
-    med_vel_all(f) = median(abs(All.dX));
-    mean_vel_all(f) = mean(abs(All.dX));
+n_amp = length(A); 
+freq_all = nan(n_amp,1);
+med_vel_all = nan(n_amp,1);
+mean_vel_all = nan(n_amp,1);
+for a = 1:n_amp
+    All = make_sos(T, Fs, res, F, A(a), norm_vel, cent, Phase, showplot, []);
+    freq_all(a) = All.Freq;
+    med_vel_all(a) = median(abs(All.dX));
+    mean_vel_all(a) = mean(abs(All.dX));
 %     pause
 %     close all
 end
