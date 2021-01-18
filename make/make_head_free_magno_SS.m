@@ -46,6 +46,7 @@ FUNC = FUNC(forder,1);
 close all
 clc
 
+% Body saccade detection parameters
 scd.thresh = [20, 1, 3, 0];
 scd.true_thresh = 220;
 scd.Fc_detect = [40 nan];
@@ -69,9 +70,10 @@ tintrp = (0:(1/Fs):func_length)';
 debug = true;
 [b,a] = butter(3, Fc/(Fs/2),'low');
 ALL = cell(N.fly,N{1,3});
-DATA = [I , splitvars(table(num2cell(zeros(N.file,7))))];
-DATA.Properties.VariableNames(5:end) = {'reference','body','head','error','dwba','lwing','rwing'};
-for n = 53:N.file
+DATA = [D , splitvars(table(num2cell(zeros(N.file,8))))];
+DATA.Properties.VariableNames(5:end) = {'reference','body','head','error',...
+    'dwba','lwing','rwing','body_saccade'};
+for n = 250:N.file
     %disp(kk)
     disp(basename{n})
     % Load DAQ, body, head, & wing data
@@ -131,18 +133,18 @@ for n = 53:N.file
     
     % Store signals
     n_detrend = 7;
-    DATA.reference{n}   = singal_attributes(Reference, tintrp);
-    DATA.body{n}        = singal_attributes(body_scd.shift.IntrpPosition, tintrp, [], n_detrend);
-    DATA.body{n}        = singal_attributes(DATA.body{n}.detrend, tintrp, [], []);
-    DATA.head{n}        = singal_attributes(Head, tintrp, [], n_detrend);
-    DATA.head{n}        = singal_attributes(DATA.head{n}.detrend, tintrp, [], []);
-    DATA.error{n}       = singal_attributes(Error, tintrp, [], n_detrend);
-    DATA.dwba{n}    	= singal_attributes(dWBA, tintrp, 1.5 * D.freq(n), n_detrend);
-    DATA.dwba{n}        = singal_attributes(DATA.dwba{n}.detrend, tintrp, [], []);
-    DATA.dwba{n}        = singal_attributes(DATA.dwba{n}.position, tintrp, 1.5 * D.freq(n), []);
-    
-    DATA.lwing{n}    	= singal_attributes(LWing, tintrp, []);
-    DATA.rwing{n}       = singal_attributes(RWing, tintrp, []);
+    DATA.body_saccade{n}    = body_scd;
+    DATA.reference{n}       = singal_attributes(Reference, tintrp);
+    DATA.body{n}            = singal_attributes(body_scd.shift.IntrpPosition, tintrp, [], n_detrend);
+    DATA.body{n}            = singal_attributes(DATA.body{n}.detrend, tintrp, [], []);
+    DATA.head{n}            = singal_attributes(Head, tintrp, [], n_detrend);
+    %DATA.head{n}        = singal_attributes(DATA.head{n}.detrend, tintrp, [], []);
+    DATA.error{n}           = singal_attributes(Error, tintrp, [], n_detrend);
+    DATA.dwba{n}            = singal_attributes(dWBA, tintrp, 1.5 * D.freq(n), n_detrend);
+    DATA.dwba{n}            = singal_attributes(DATA.dwba{n}.detrend, tintrp, [], []);
+    DATA.dwba{n}            = singal_attributes(DATA.dwba{n}.position, tintrp, 1.5 * D.freq(n), []);
+    DATA.lwing{n}           = singal_attributes(LWing, tintrp, []);
+    DATA.rwing{n}           = singal_attributes(RWing, tintrp, []);
     
 %     hold on
 %     plot(tintrp, DATA.body{n}.trend, 'g--', 'LineWidth', 1)
@@ -161,7 +163,7 @@ for n = 53:N.file
             %plot(tintrp, DATA.error{kk}.detrend, 'g', 'LineWidth', 1)
             plot(tintrp, DATA.body{n}.position, 'r', 'LineWidth', 1)
             plot(tintrp, DATA.head{n}.position, 'b', 'LineWidth', 1)
-            plot(tintrp, 5*DATA.dwba{n}.position_lpf, 'm', 'LineWidth', 1)
+            %plot(tintrp, 5*DATA.dwba{n}.position_lpf, 'm', 'LineWidth', 1)
             leg = legend('Reference','Body','Head','\DeltaWBA', 'Orientation', 'horizontal');
             xlabel('Time (s)')
             ylabel('(°)')
@@ -184,17 +186,20 @@ for n = 53:N.file
     BODY = DATA.body{n}.(clss);
     HEAD = DATA.head{n}.(clss);
     dWBA = DATA.dwba{n}.(clss);
-    LWING = DATA.lwing{n}.(clss);
-    RWING = DATA.rwing{n}.(clss);
+    %LWING = DATA.lwing{n}.(clss);
+    %RWING = DATA.rwing{n}.(clss);
+    
+    %SYS_ref2_head_body = frf(tintrp, REF , IOFreq, false, BODY, HEAD);
+    %SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, LWING, RWING, dWBA);
+    %SYS_head2_body_wing = frf(tintrp, HEAD, IOFreq, false, BODY, dWBA);
+    %SYS_wing2_body = frf(tintrp, dWBA, IOFreq, false, BODY);
     
     SYS_ref2_head_body = frf(tintrp, REF , IOFreq, false, BODY, HEAD);
-    SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, LWING, RWING, dWBA);
-    SYS_head2_body_wing = frf(tintrp, HEAD, IOFreq, false, BODY, dWBA);
-    SYS_wing2_body = frf(tintrp, dWBA, IOFreq, false, BODY);
-    %SYS_left2_right = frf(tintrp, LWING, IOFreq, false, RWING);
-    
-    SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_ref2_wing, ...
-                                    SYS_head2_body_wing, SYS_wing2_body);
+	SYS_head2_body = frf(tintrp, HEAD, IOFreq, false, BODY, dWBA);
+    SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, dWBA);
+    %SYS_wing2_body = frf(tintrp, dWBA, IOFreq, false, BODY);
+
+    SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_head2_body, SYS_ref2_wing);
     
     ALL{I.fly(n),I{n,3}}(end+1,1) = SYS_all;
 end
@@ -250,12 +255,49 @@ for a = fliplr(1:N.amp)
             %'LineWidth', 0.25, 'Color', [0.5 0.5 0.5 0.3])
 %     plot(median(squeeze(GRAND.all(a).Time),2), median(squeeze(GRAND.all(a).State(:,1,:)),2), ...
 %         'LineWidth', 1, 'Color', [cc(a,:) 1])
-    [h1,h2] = PlotPatch(10*median(squeeze(GRAND.all(a).State(:,4,:)),2), ...
-        10*std(squeeze(GRAND.all(a).State(:,4,:)),[],2), ...
+    [h1,h2] = PlotPatch(median(squeeze(GRAND.all(a).State(:,1,:)),2), ...
+        std(squeeze(GRAND.all(a).State(:,1,:)),[],2), ...
         median(squeeze(GRAND.all(a).Time),2),...
-        1,1,cc(a,:), 0.7*cc(a,:), 0.2, 2);
+        0, 1, [0 0 1], 0.7*[0 0 1], 0.2, 1);
+    [h1,h2] = PlotPatch(median(squeeze(GRAND.all(a).State(:,3,:)),2), ...
+        std(squeeze(GRAND.all(a).State(:,3,:)),[],2), ...
+        median(squeeze(GRAND.all(a).Time),2),...
+        0, 1, [1 0 0], 0.7*[1 0 0], 0.2, 1);
     pp = pp + 1;
 end
+
+%%
+fig = figure (2); clf
+set(fig, 'Color', 'w', 'Units', 'inches')
+ax = gobjects(3,1);
+cc = hsv(N.amp);
+pp = 1;
+for a = fliplr(1:N.amp)
+    ax(1) = subplot(3,1,1) ; hold on
+        plot(GRAND.fly_stats(a).mean.IOFv.mean, GRAND.fly_stats(a).mean.IOGain.mean(1), '*b')
+      	plot(GRAND.fly_stats(a).mean.IOFv.mean, GRAND.fly_stats(a).mean.IOGain.mean(2), '*r')
+        plot(GRAND.fly_stats(a).mean.IOFv.mean, GRAND.fly_stats(a).mean.IOGain.mean(3), '*m')
+
+    ax(2) = subplot(3,1,2) ; hold on
+        plot(GRAND.fly_stats(a).mean.IOFv.mean, rad2deg(GRAND.fly_stats(a).mean.IOPhaseDiff.mean(1)), '*b')
+      	plot(GRAND.fly_stats(a).mean.IOFv.mean, rad2deg(GRAND.fly_stats(a).mean.IOPhaseDiff.mean(2)), '*r')
+        plot(GRAND.fly_stats(a).mean.IOFv.mean, rad2deg(GRAND.fly_stats(a).mean.IOPhaseDiff.mean(3)), '*m')
+        plot(GRAND.fly_stats(a).mean.IOFv.mean, rad2deg(GRAND.fly_stats(a).mean.IOPhaseDiff.mean(4)), '*g')
+        
+    ax(3) = subplot(3,1,3) ; hold on
+        %plot(GRAND.fly_stats(a).mean.Fv.mean, GRAND.fly_stats(a).mean.Cohr.mean(:,1), 'b')
+      	%plot(GRAND.fly_stats(a).mean.Fv.mean, GRAND.fly_stats(a).mean.Cohr.mean(:,2), 'r')
+        %plot(GRAND.fly_stats(a).mean.Fv.mean, GRAND.fly_stats(a).mean.Cohr.mean(:,3), 'm')
+    	plot(GRAND.fly_stats(a).mean.IOFv.mean, GRAND.fly_stats(a).mean.IOCohr.mean(:,1), '*b')
+      	plot(GRAND.fly_stats(a).mean.IOFv.mean, GRAND.fly_stats(a).mean.IOCohr.mean(:,2), '*r')
+        plot(GRAND.fly_stats(a).mean.IOFv.mean, GRAND.fly_stats(a).mean.IOCohr.mean(:,3), '*m')
+        plot(GRAND.fly_stats(a).mean.IOFv.mean, GRAND.fly_stats(a).mean.IOCohr.mean(:,4), '*g')
+        
+    pp = pp + 1;
+end
+set(ax, 'LineWidth', 1.5)
+set(ax(1), 'YLim', [0 1])
+set(ax(3), 'YLim', [0 1])
 
 %% SAVE
 disp('Saving...')

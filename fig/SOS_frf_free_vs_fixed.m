@@ -7,14 +7,18 @@ root = 'E:\DATA\Magno_Data\Multibody\Processed';
 [HeadFixed_file,HeadFixed_path] = uigetfile({'*.mat'}, ...
     'Select head fixed data', root, 'MultiSelect','off');
 
+[BodyFixed_file,BodyFixed_path] = uigetfile({'*.mat'}, ...
+    'Select body fixed data', root, 'MultiSelect','off');
+
 HeadFree = load(fullfile(HeadFree_path,HeadFree_file),'FRF_data','FUNC','U','N');
 HeadFixed = load(fullfile(HeadFixed_path,HeadFixed_file),'FRF_data','FUNC','U','N');
+BodyFixed = load(fullfile(BodyFixed_path,BodyFixed_file),'FRF_data','FUNC','U','N');
 
 %%
 clc
-clearvars -except HeadFree HeadFixed HeadFree_file HeadFree_file HeadFixed_file
+clearvars -except HeadFree HeadFixed BodyFixed HeadFree_file HeadFree_file HeadFixed_file BodyFixed_file
 
-trf_names = ["ref2body", "ref2body", "ref2gaze", "ref2head"];
+trf_names = ["ref2body", "ref2body", "ref2gaze", "ref2head", "ref2head"];
 n_cond = HeadFree.N{1,3};
 n_plot = length(trf_names);
 cc = hsv(n_plot);
@@ -40,6 +44,9 @@ for v = 1:n_cond
         [h.patch(1,v,4),h.line(1,v,4)] = PlotPatch(HeadFree.FRF_data.(trf_names(4)).grand_mean(v).mag,...
                   HeadFree.FRF_data.(trf_names(4)).grand_std(v).mag, HeadFree.FRF_data.IOFv{v}, ...
                   1, 1, cc(4,:), 0.7*cc(4,:), 0.2, 1);
+        [h.patch(1,v,5),h.line(1,v,5)] = PlotPatch(BodyFixed.FRF_data.(trf_names(5)).grand_mean(v).mag,...
+                  BodyFixed.FRF_data.(trf_names(5)).grand_std(v).mag, BodyFixed.FRF_data.IOFv{v}, ...
+                  1, 1, cc(5,:), 0.7*cc(5,:), 0.2, 1);
               
     ax(2,v) = subplot(5,n_cond,subI(2)); hold on
         [h.patch(2,v,1),h.line(2,v,1)] = PlotPatch(HeadFree.FRF_data.(trf_names(1)).grand_mean(v).gain,...
@@ -54,6 +61,9 @@ for v = 1:n_cond
         [h.patch(2,v,4),h.line(2,v,4)] = PlotPatch(HeadFree.FRF_data.(trf_names(4)).grand_mean(v).gain,...
                   HeadFree.FRF_data.(trf_names(4)).grand_std(v).gain, HeadFree.FRF_data.IOFv{v}, ...
                   1, 1, cc(4,:), 0.7*cc(4,:), 0.2, 1);
+        [h.patch(2,v,5),h.line(2,v,5)] = PlotPatch(BodyFixed.FRF_data.(trf_names(5)).grand_mean(v).gain,...
+                  BodyFixed.FRF_data.(trf_names(5)).grand_std(v).gain, BodyFixed.FRF_data.IOFv{v}, ...
+                  1, 1, cc(5,:), 0.7*cc(5,:), 0.2, 1);
               
     ax(3,v) = subplot(5,n_cond,subI(3)); hold on
         yline(0, '--k', 'LineWidth', 1)
@@ -69,6 +79,9 @@ for v = 1:n_cond
         [h.patch(3,v,4),h.line(3,v,4)] = PlotPatch(HeadFree.FRF_data.(trf_names(4)).grand_mean(v).phase,...
                   HeadFree.FRF_data.(trf_names(4)).grand_std(v).phase, HeadFree.FRF_data.IOFv{v}, ...
                   1, 1, cc(4,:), 0.7*cc(4,:), 0.2, 1);
+        [h.patch(3,v,5),h.line(3,v,5)] = PlotPatch(BodyFixed.FRF_data.(trf_names(5)).grand_mean(v).phase,...
+                  BodyFixed.FRF_data.(trf_names(5)).grand_std(v).phase, BodyFixed.FRF_data.IOFv{v}, ...
+                  1, 1, cc(5,:), 0.7*cc(5,:), 0.2, 1);
               
     ax(4,v) = subplot(5,n_cond,subI(4)); hold on
         yline(1, '--k', 'LineWidth', 1)
@@ -84,6 +97,9 @@ for v = 1:n_cond
         [h.patch(4,v,4),h.line(4,v,4)] = PlotPatch(HeadFree.FRF_data.(trf_names(4)).grand_mean(v).error,...
                   HeadFree.FRF_data.(trf_names(4)).grand_std(v).error, HeadFree.FRF_data.IOFv{v}, ...
                   1, 1, cc(4,:), 0.7*cc(4,:), 0.2, 1);
+        [h.patch(4,v,5),h.line(4,v,5)] = PlotPatch(BodyFixed.FRF_data.(trf_names(5)).grand_mean(v).error,...
+                  BodyFixed.FRF_data.(trf_names(5)).grand_std(v).error, BodyFixed.FRF_data.IOFv{v}, ...
+                  1, 1, cc(5,:), 0.7*cc(5,:), 0.2, 1);
               
     ax(5,v) = subplot(5,n_cond,subI(5)); hold on
         [h.patch(5,v,1),h.line(5,v,1)] = PlotPatch(HeadFree.FRF_data.(trf_names(1)).grand_mean(v).IO_coherence,...
@@ -98,10 +114,13 @@ for v = 1:n_cond
         [h.patch(5,v,4),h.line(5,v,4)] = PlotPatch(HeadFree.FRF_data.(trf_names(4)).grand_mean(v).IO_coherence,...
                   HeadFree.FRF_data.(trf_names(4)).grand_std(v).IO_coherence, HeadFree.FRF_data.IOFv{v}, ...
                   1, 1, cc(4,:), 0.7*cc(4,:), 0.2, 1);
-
+        [h.patch(5,v,5),h.line(5,v,5)] = PlotPatch(BodyFixed.FRF_data.(trf_names(5)).grand_mean(v).IO_coherence,...
+                  BodyFixed.FRF_data.(trf_names(5)).grand_std(v).IO_coherence, BodyFixed.FRF_data.IOFv{v}, ...
+                  1, 1, cc(5,:), 0.7*cc(5,:), 0.2, 1);
 end
 leg_label = trf_names;
 leg_label(2) = leg_label(2) + "_head-fixed";
+leg_label(5) = leg_label(5) + "_body-fixed";
 leg = legend(squeeze(h.line(1,1,:)), leg_label, ...
     'Box', 'off', 'interpreter', 'none', 'Orientation', 'horizontal');
 leg.Position  = [0.17 0.95 0.63 0.05];
@@ -197,13 +216,16 @@ set([YLabelHC], 'String', 'R^{2}')
 %% Save time constant data
 head_free_filedata = textscan(HeadFree_file, '%s', 'delimiter', '._');
 head_fixed_filedata = textscan(HeadFixed_file, '%s', 'delimiter', '._');
+body_fixed_filedata = textscan(BodyFixed_file, '%s', 'delimiter', '._');
 head_free_name = [];
 head_fixed_name = [];
+body_fixed_name = [];
 for n = 2:5
     head_free_name = [head_free_name '_' char(head_free_filedata{1}(n))];
     head_fixed_name = [head_fixed_name '_' char(head_fixed_filedata{1}(n))]; 
+    body_fixed_name = [body_fixed_name '_' char(body_fixed_filedata{1}(n))]; 
 end
-fname = ['TimeConstant' head_free_name head_fixed_name]; 
+fname = ['TimeConstant' head_free_name head_fixed_name body_fixed_name]; 
 
 root = 'E:\DATA\Magno_Data\Multibody';
 savedir = fullfile(root,'processed');

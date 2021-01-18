@@ -412,8 +412,8 @@ classdef saccade_v1
                 locs(locs_rmv) = [];
 
                 % Exclude saccades in very beginning and end of signal
-                %window = round(obj.n*0.005); % window length at start & end to ignore saccades [samples]
-                window = 0;
+                window = round(obj.n*0.1); % window length at start & end to ignore saccades [samples]
+                %window = 0;
                 I = (locs > window) & (locs < (obj.n - (window+1))); % saccades inside middle window
                 obj.peaks.index = locs(I);             
                 

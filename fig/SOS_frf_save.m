@@ -10,12 +10,16 @@ load(fullfile(PATH,FILE),'DATA','FUNC','GRAND','FLY','D','I','U','N')
 clc
 clearvars -except FILE DATA ALL GRAND FLY FUNC D I U N root
 
-% pI = [1 2 3 8 6];
+% pI = [1 2 3 4];
 % T = ["ref2body", "ref2head", "ref2gaze", "head2body", "ref2wing"];
 % n_plot = length(pI);
 
+% pI = [1 2];
+% T = ["ref2body", "ref2wing"];
+% n_plot = length(pI);
+
 pI = [1];
-T = ["ref2body"];
+T = ["ref2head"];
 n_plot = length(pI);
 
 FRF_data = [];
@@ -121,6 +125,7 @@ v = 2;
 for n = 1:n_plot
     subI = n + (0:4)*n_plot;
     ax(1,n) = subplot(5,n_plot,subI(1)); hold on ; title(T(n), 'interpreter', 'none')
+        plot(FRF_data.IOFv{v}, GRAND.fly_stats(1).mean.refIOMag.mean, '*-', 'Color', 'k', 'LineWidth', 0.5)
         plot(FRF_data.IOFv{v}, FRF_data.(T(n)).fly(v).mag, 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
         [h.patch(1,n),h.line(1,n)] = PlotPatch(FRF_data.(T(n)).grand_mean(v).mag,...
                   FRF_data.(T(n)).grand_std(v).mag, FRF_data.IOFv{v}, 1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
@@ -177,8 +182,8 @@ set([YLabelHC], 'String', 'Time difference (ms)')
 YLabelHC = get(ax(5,1), 'YLabel');
 set([YLabelHC], 'String', 'Coherence')
 
-set(ax(1,1:end),'YLim',[0 100])
-set(ax(2,1:end-1),'YLim',[0 1.3])
+% set(ax(1,1:end),'YLim',[0 3.2])
+set(ax(2,1:end),'YLim',[0 1])
 set(ax(3,1:end),'YLim',[-300 200])
 set(ax(4,1:end),'YLim',300*[-1 1])
 set(ax(5,1:end),'YLim',[0 1])
