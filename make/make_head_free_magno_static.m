@@ -7,6 +7,7 @@ function [] = make_head_free_magno_static(rootdir)
 %   OUTPUTS:
 %       -
 %
+warning('off', 'signal:findpeaks:largeMinPeakHeight')
 
 rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_static_wave';
 % rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_static_wave_head_fixed';
@@ -36,6 +37,23 @@ end
 close all
 clc
 
+% Body saccade detection parameters
+scd.thresh = [20, 1, 3, 0];
+scd.true_thresh = 220;
+scd.Fc_detect = [40 nan];
+scd.Fc_ss = [20 nan];
+scd.amp_cut = 5;
+scd.dur_cut = 1;
+scd.direction = 0;
+scd.direction = 0;
+scd.pks = [];
+scd.sacd_length = nan;
+scd.min_pkdist = 0.5;
+scd.min_pkwidth = 0.02;
+scd.min_pkprom = 50;
+scd.min_pkthresh = 0;
+scd.boundThresh = [0.2 40];
+
 Fs = 100;
 Fc = 40;
 func_length = 20;
@@ -43,8 +61,9 @@ startI = round(5000*0.5);
 tintrp = (0:(1/Fs):func_length)';
 debug = false;
 [b,a] = butter(3, Fc/(Fs/2),'low');
-DATA = [I , splitvars(table(num2cell(zeros(N.file,7))))];
-DATA.Properties.VariableNames(4:end) = {'reference','body','head','error','dwba','lwing','rwing'};
+DATA = [D , splitvars(table(num2cell(zeros(N.file,8))))];
+DATA.Properties.VariableNames(4:end) = {'reference','body','head','error',...
+    'dwba','lwing','rwing','body_saccade'};
 for n = 1:N.file
     %disp(kk)
     disp(basename{n})
@@ -89,15 +108,22 @@ for n = 1:N.file
     RWing   = -interp1(trig_time, rwing, tintrp, 'pchip');
     dWBA    = interp1(trig_time, lwing-rwing, tintrp, 'pchip');
     
+    % Detect & remove saccades
+    body_scd = saccade_v1(Body, tintrp, scd.thresh, scd.true_thresh, scd.Fc_detect, ...
+                            scd.Fc_ss, scd.amp_cut, scd.dur_cut , scd.direction, scd.pks, ...
+                            scd.sacd_length, scd.min_pkdist, scd.min_pkwidth, scd.min_pkprom, ...
+                            scd.min_pkthresh, scd.boundThresh, false);
+
     % Store signals
     n_detrend = 1;
-    DATA.reference{n}   = nan;
-    DATA.body{n}        = singal_attributes(Body, tintrp, [], n_detrend);
-    DATA.head{n}        = singal_attributes(Head, tintrp, []);
-    DATA.error{n}       = nan;
-    DATA.dwba{n}    	= singal_attributes(dWBA, tintrp, []);
-    DATA.lwing{n}    	= singal_attributes(LWing, tintrp, []);
-    DATA.rwing{n}       = singal_attributes(RWing, tintrp, []);
+    DATA.body_saccade{n}    = body_scd;
+    DATA.reference{n}       = nan;
+    DATA.body{n}            = singal_attributes(body_scd.shift.IntrpPosition, tintrp, [], n_detrend);
+    DATA.head{n}            = singal_attributes(Head, tintrp, []);
+    DATA.error{n}           = nan;
+    DATA.dwba{n}            = singal_attributes(dWBA, tintrp, []);
+    DATA.lwing{n}           = singal_attributes(LWing, tintrp, []);
+    DATA.rwing{n}           = singal_attributes(RWing, tintrp, []);
     
     % Debug plot
     if debug

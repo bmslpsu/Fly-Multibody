@@ -20,11 +20,10 @@ clearvars -except HeadFree HeadFixed BodyFixed HeadFree_file HeadFree_file HeadF
 
 trf_names = ["ref2body", "ref2body", "ref2gaze", "ref2head", "ref2head"];
 n_cond = HeadFree.N{1,3};
-n_plot = length(trf_names);
-cc = hsv(n_plot);
+cc = [0.9 0 0 ; 1 0.6 0.1; 0.5 0.3 1 ; 0 0.4 1 ; 0 0.8 0.2];
 
 fig = figure (1) ; clf
-set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2.5*n_cond 5*2])
+set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2*n_cond 5*1.8])
 movegui(fig, 'center')
 clear ax h
 ax = gobjects(5,n_cond);
@@ -66,7 +65,7 @@ for v = 1:n_cond
                   1, 1, cc(5,:), 0.7*cc(5,:), 0.2, 1);
               
     ax(3,v) = subplot(5,n_cond,subI(3)); hold on
-        yline(0, '--k', 'LineWidth', 1)
+        yline(0, '--', 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
         [h.patch(3,v,1),h.line(3,v,1)] = PlotPatch(HeadFree.FRF_data.(trf_names(1)).grand_mean(v).phase,...
                   HeadFree.FRF_data.(trf_names(1)).grand_std(v).phase, HeadFree.FRF_data.IOFv{v}, ...
                   1, 1, cc(1,:), 0.7*cc(1,:), 0.2, 1);
@@ -84,7 +83,7 @@ for v = 1:n_cond
                   1, 1, cc(5,:), 0.7*cc(5,:), 0.2, 1);
               
     ax(4,v) = subplot(5,n_cond,subI(4)); hold on
-        yline(1, '--k', 'LineWidth', 1)
+        yline(1, '--', 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
         [h.patch(4,v,1),h.line(4,v,1)] = PlotPatch(HeadFree.FRF_data.(trf_names(1)).grand_mean(v).error,...
                   HeadFree.FRF_data.(trf_names(1)).grand_std(v).error, HeadFree.FRF_data.IOFv{v}, ...
                   1, 1, cc(1,:), 0.7*cc(1,:), 0.2, 1);
@@ -130,13 +129,12 @@ for a = 1:size(ax,1)
     linkaxes(ax(a,:), 'y')
 end
 
-delete(h.patch)
+% delete(h.patch)
 
-set(h.line, 'Marker', '.','MarkerFaceColor', 'none', 'MarkerSize', 11, 'LineWidth', 1.5)
-set(ax, 'Color', 'none', 'LineWidth', 1.2, 'FontSize', 10, 'XLim', [0.2 20],...
-    'XGrid', 'on', 'YGrid', 'off', 'Box', 'on')
+set(h.line, 'Marker', '.','MarkerFaceColor', 'none', 'MarkerSize', 10, 'LineWidth', 1)
+set(ax, 'Color', 'none', 'LineWidth', 1, 'FontSize', 10, 'XLim', [0.2 20],...
+    'XGrid', 'off', 'YGrid', 'off', 'Box', 'off')
 set(ax, 'XTick', [0.1, 1 10])
-set(ax,'XScale','log')
 
 XLabelHC = get(ax(end,:), 'XLabel');
 set([XLabelHC{:}], 'String', 'Frequency (Hz)')
@@ -153,14 +151,20 @@ YLabelHC = get(ax(5,1), 'YLabel');
 set([YLabelHC], 'String', 'Coherence')
 
 set(ax(1,1:end),'YLim',[0 65])
-set(ax(2,1:end-1),'YLim',[0 1.1])
-set(ax(3,1:end),'YLim',[-250 250])
+set(ax(2,1:end-1),'YLim',[0 1])
+set(ax(3,1:end),'YLim',[-250 150])
 set(ax(5,1:end),'YLim',[0 1])
 set(ax(1:end-1,:), 'XTickLabel', [])
 set(ax(:,2:end), 'YTickLabels', [])
 
+set(ax(1:end-1,:), 'XColor', 'none')
+set(ax(:,2:end), 'YColor', 'none')
+
 set(ax,'XScale','log')
+% set(ax,'XScale','linear')
 % align_Ylabels(fig)
+
+% delete(h.line(:,:,[2 5]))
 
 %% Time constant
 time_const = [];
@@ -182,7 +186,8 @@ for v = 1:n_cond
 end
 G = [1*ones(size(time_const(v).body_head_free)) ; 2*ones(size(time_const(v).body_head_fixed)) ; ...
         3*ones(size(time_const(v).gaze_head_free))];
-
+G_all = repmat(G, [n_cond 1]);
+    
 fig = figure (2) ; clf
 set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2.5*n_cond 2*2])
 movegui(fig, 'center')
@@ -212,6 +217,71 @@ YLabelHC = get(ax(1,1), 'YLabel');
 set([YLabelHC], 'String', 'Time constant (ms)')
 YLabelHC = get(ax(2,1), 'YLabel');
 set([YLabelHC], 'String', 'R^{2}')
+
+%% All time constant
+clc
+fig = figure (3) ; clf
+set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2.5 2*2])
+movegui(fig, 'center')
+clear ax h
+
+time_const_keep = time_const_all(:);
+r2_const_keep = r2_all(:);
+G_keep = G_all(:);
+r2_check = r2_const_keep < 0.5;
+disp(['Removing ' num2str(sum(r2_check,'all')) ' of ' num2str(numel(r2_check)) ' flies'])
+
+time_const_keep = time_const_keep(~r2_check);
+r2_const_keep = r2_const_keep(~r2_check);
+G_keep = G_keep(~r2_check);
+
+rng(1)
+spread = 0.3;
+jitter = rand(size(G_keep)) * spread - (spread/2);
+
+ax(1,1) = subplot(2,1,1); hold on
+    b = boxchart(time_const_keep,'GroupByColor', G_keep, 'MarkerStyle', '.');
+%     bx = boxplot(time_const_keep, G_keep, ...
+%     'Width', 0.5, 'Symbol', '', 'Whisker', 2, 'OutlierSize', 0.5);
+% 
+%     h = get(bx(5,:),{'XData','YData'});
+%     for c = 1:size(h,1)
+%        patch(h{c,1},h{c,2}, cc(c,:), 'EdgeColor', 'none', 'FaceAlpha', 0.2);
+%     end
+% 
+%     set(findobj(ax(1),'tag','Median'), 'Color', 'k','LineWidth', 1);
+%     set(findobj(ax(1),'tag','Box'), 'Color', 'none');
+%     set(findobj(ax(1),'tag','Upper Whisker'), 'Color', 'k','LineStyle','-');
+%     set(findobj(ax(1),'tag','Lower Whisker'), 'Color', 'k','LineStyle','-');
+%     ax(1).Children = ax(1).Children([end 1:end-1]);
+%     
+%     plot(G_keep + jitter, time_const_keep, '.', 'Color', 'r')
+
+ax(2,1) = subplot(2,1,2); hold on
+    b = boxchart(r2_const_keep,'GroupByColor', G_keep, 'MarkerStyle', '.');
+    
+% fnames = fieldnames(time_const);
+% leg = legend(fnames, 'Box', 'off', 'interpreter', 'none', 'Orientation', 'vertical');
+% leg.Position = [0.29 0.1 0.6 0.14];
+
+linkaxes(ax, 'x')
+for a = 1:size(ax,1)
+    linkaxes(ax(a,:), 'y')
+end
+set(ax(1,:), 'YLim', [-80 0])
+set(ax(2,:), 'YLim', [0 1])
+
+set(ax, 'Color', 'none', 'LineWidth', 1.2, 'FontSize', 10, 'Box', 'off', 'XColor', 'none')
+
+YLabelHC = get(ax(1,1), 'YLabel');
+set([YLabelHC], 'String', 'Time constant (ms)')
+YLabelHC = get(ax(2,1), 'YLabel');
+set([YLabelHC], 'String', 'R^{2}')
+
+%% Stats
+[p,tb,stats] = anova1(time_const_keep, G_keep);
+% [p,tb,stats] = kruskalwallis(time_const_keep, G_keep);
+[c,m] = multcompare(stats, 'alpha', 0.001);
 
 %% Save time constant data
 head_free_filedata = textscan(HeadFree_file, '%s', 'delimiter', '._');

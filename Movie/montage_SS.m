@@ -18,7 +18,8 @@ function [MOV] = montage_SS(rootdir,rootpat,vidFs,export)
 clear ; clc ; close all
 export = true;
 vidFs = 50;
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250';
+% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_amp_3.75';
 rootpat = 'C:\Users\BC\Box\Git\Arena\Patterns';
 
 if ~isfolder(rootdir)
@@ -109,7 +110,7 @@ FLY.int_lwing 	= FLY.lwing(TRIG.range);
 FLY.int_rwing  	= FLY.rwing(TRIG.range);
 FLY.int_wba     = FLY.wba(TRIG.range);
 
-Fc_pat = 20;
+Fc_pat = 12;
 [b,a] = butter(3, Fc_pat/(FLY.Fs/2), 'low'); % make lpf
 pat_filt = filtfilt(b, a, 3.75*PAT.pos_intrp_exp);
 PAT.norm = pat_filt - mean(pat_filt);
@@ -226,8 +227,8 @@ set(ax(end),'XTick', 0:2:round(FLY.int_time(end)))
 set(ax(3:end-1), 'XTickLabel', [], 'XColor', 'none')
 % set(ax(5), 'YLim', 7*[-1 1], 'YTick', 5 *[-1 0 1])
 % set(ax(6), 'YLim', 7*[-1 1], 'YTick', 5 *[-1 0 1])
-dwba_ylim = 5*ceil(max(abs(FLY.int_wba))./5);
-head_ylim = 5*ceil(max(abs(FLY.int_head))./5);
+dwba_ylim = 5*ceil(max(abs(FLY.int_wba - median(FLY.int_wba)))./5);
+head_ylim = 5*ceil(max(abs(FLY.int_head - median(FLY.int_wba)))./5);
 set(ax(6), 'YLim', dwba_ylim*[-1 1], 'YTick', (dwba_ylim)*[-1 0 1])
 set(ax(5), 'YLim', (head_ylim)*[-1 1], 'YTick', head_ylim*[-1 0 1])
 set(ax(3), 'YLim', pat_ylim)
@@ -255,8 +256,10 @@ for jj = 1:FLY.nframe
         else
             win = jj;
         end
-        Frame.raw = uint8(round(bright_scale*mean(FLY.raw(:,:,win), 3))); % raw frame
-        Frame.reg = uint8(round(1*mean(FLY.reg(:,:,win), 3))); % registered frame
+        %Frame.raw = uint8(round(bright_scale*mean(FLY.raw(:,:,win), 3))); % raw frame
+        %Frame.reg = uint8(round(1*mean(FLY.reg(:,:,win), 3))); % registered frame
+        Frame.raw = imadjust(median(FLY.raw(:,:,win), 3)); % raw frame
+        Frame.reg = imadjust(median(FLY.reg(:,:,win), 3)); % registered frame
         pat_pos = 3.75*(mean(PAT.pos_intrp_exp(win)));
         
         % Display raw video
@@ -327,7 +330,7 @@ for jj = 1:FLY.nframe
         
    	% WBA plot
 	set(FIG, 'CurrentAxes', ax(6))
-        addpoints(h.wba, FLY.int_time(jj), FLY.int_wba(jj))
+        addpoints(h.wba, FLY.int_time(jj), FLY.int_wba(jj) - median(FLY.int_wba))
         
     drawnow
     

@@ -1,5 +1,5 @@
-function [] = make_head_free_magno_SS(rootdir)
-%% make_head_free_magno_SS:
+function [] = make_head_free_magno_SS_noWing(rootdir)
+%% make_head_free_magno_SS_noWing:
 %
 %   INPUTS:
 %       rootdir    	:   root directory
@@ -9,14 +9,13 @@ function [] = make_head_free_magno_SS(rootdir)
 %
 warning('off', 'signal:findpeaks:largeMinPeakHeight')
 
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250';
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_amp_3.75';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_amp_15';
 exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-1}; % type of stimuli (vel or pos)
 exp_ver = exp_name{1}{end}; % version of experiment (v1, v2, ...)
 
-% clss = 'position';
-clss = 'velocity';
+clss = 'position';
+% clss = 'velocity';
 filename = ['SS_HeadFree_' exp_typ '_' exp_ver '_' num2str(clss)];
 
 %% Setup Directories %%
@@ -44,7 +43,7 @@ end
 FUNC = FUNC(forder,1);
 
 % Select files
-[D,I,N,U,T,~,~,basename] = GetFileData(root.head,'*.mat',false);
+[D,I,N,U,T,~,~,basename] = GetFileData(root.head,'*.mat',false, 'fly', 'trial', 'freq');
 % [D,I,N,U,T,~,~,basename] = GetFileData(root.benifly,'*.csv',false);
 
 %% Get Data %%
@@ -68,7 +67,7 @@ scd.min_pkprom = 50;
 scd.min_pkthresh = 0;
 scd.boundThresh = [0.2 40];
 
-Fs = 100;
+Fs = 160;
 Fc = 40;
 func_length = 10;
 tintrp = (0:(1/Fs):func_length)';
@@ -76,33 +75,29 @@ debug = false;
 [b,a] = butter(3, Fc/(Fs/2),'low');
 ALL = cell(N.fly,N{1,4});
 DATA = [D , splitvars(table(num2cell(zeros(N.file,8))))];
-DATA.Properties.VariableNames(5:end) = {'reference','body','head','error',...
+DATA.Properties.VariableNames(4:end) = {'reference','body','head','error',...
     'dwba','lwing','rwing','body_saccade'};
-for n = 1:N.file
+for n = 17:N.file
     %disp(kk)
     disp(basename{n})
     % Load DAQ, body, head, & wing data
-	data.daq = load(fullfile(root.base,  [basename{n} '.mat']),'data','t_p'); % load camera trigger & pattern x-position
+	data.daq = load(fullfile(root.base,  [basename{n} '.mat']),'data','t_p','t_v'); % load camera trigger & pattern x-position
     data.body = load(fullfile(root.body, [basename{n} '.mat']),'bAngles'); % load body angles
 	data.head = load(fullfile(root.head, [basename{n} '.mat']),'head_data'); % load head angles
- 	data.benifly = ImportBenifly(fullfile(root.benifly, ...  % load head & wing angles from Benifly
-                            [basename{n} '.csv']));
     
     % Get synced frame times and pattern data
     daq_time    = data.daq.t_p;
     daq_pattern = data.daq.data(:,2);
     trigger     = data.daq.data(:,1);
-    [TRIG,PAT]  = sync_pattern_trigger(daq_time, daq_pattern, func_length, ...
-                        trigger, true, [], false, false);
+    [TRIG,PAT] 	= sync_pattern_trigger(daq_time, daq_pattern, func_length, ...
+                    trigger, true, [], false, false);
+    if length(TRIG.time_sync) == length(data.body.bAngles)
+        % pass
+    else
+        [TRIG,PAT] = sync_pattern_trigger(daq_time, daq_pattern, func_length, ...
+                        trigger, true, [], true, false); 
+    end
     trig_time   = TRIG.time_sync;
-    
-  	% Filter wing angles
-    lwing = rad2deg(data.benifly.LWing);
-    rwing = rad2deg(data.benifly.RWing);
-    lwing = hampel(data.benifly.Time, lwing);
-    rwing = hampel(data.benifly.Time, rwing);
-	lwing = filtfilt(b,a,lwing);
-    rwing = filtfilt(b,a,rwing);
     
     % Get pattern, head, & body anlges
     pat = 3.75*PAT.pos;
@@ -123,9 +118,6 @@ for n = 1:N.file
     Head    = interp1(trig_time, head,  tintrp, 'pchip');
     Head    = filtfilt(b, a, Head);
     Error   = Reference - Body - Head;
-    LWing   = interp1(trig_time, lwing, tintrp, 'pchip');
-    RWing   = -interp1(trig_time, rwing, tintrp, 'pchip');
-    dWBA    = interp1(trig_time, lwing-rwing, tintrp, 'pchip');
     
     % Detect & remove saccades
     body_scd = saccade_v1(Body, tintrp, scd.thresh, scd.true_thresh, scd.Fc_detect, ...
@@ -137,21 +129,17 @@ for n = 1:N.file
 %     close all
     
     % Store signals
-    fc_wing = 1.5 * D.freq(n);
-    n_detrend = 5;
+    n_detrend = 3;
     DATA.body_saccade{n}    = body_scd;
     DATA.reference{n}       = singal_attributes(Reference, tintrp);
     DATA.body{n}            = singal_attributes(body_scd.shift.IntrpPosition, tintrp, [], n_detrend);
-    DATA.head{n}            = singal_attributes(Head, tintrp);
-    DATA.error{n}           = singal_attributes(Error, tintrp);
-    DATA.dwba{n}            = singal_attributes(dWBA, tintrp, fc_wing, n_detrend);
-    DATA.lwing{n}           = singal_attributes(LWing, tintrp, fc_wing, []);
-    DATA.rwing{n}           = singal_attributes(RWing, tintrp, fc_wing, []);
+    DATA.head{n}            = singal_attributes(Head, tintrp, [], []);
+    DATA.error{n}           = singal_attributes(Error, tintrp, [], n_detrend);
     
 %     hold on
 %     plot(tintrp, Body, 'k', 'LineWidth', 1)
-%  	plot(tintrp, body_scd.shift.IntrpPosition, 'b', 'LineWidth', 1)
-%   	plot(tintrp, DATA.body{n}.trend, 'g--', 'LineWidth', 1)
+%     plot(tintrp, body_scd.shift.IntrpPosition, 'b', 'LineWidth', 1)
+%     plot(tintrp, DATA.body{n}.trend, 'g--', 'LineWidth', 1)
 %     plot(tintrp, DATA.body{n}.position, 'r', 'LineWidth', 1)
 %     pause
 %     cla
@@ -165,8 +153,7 @@ for n = 1:N.file
             %plot(tintrp, DATA.error{kk}.detrend, 'g', 'LineWidth', 1)
             plot(tintrp, DATA.body{n}.position, 'r', 'LineWidth', 1)
             plot(tintrp, DATA.head{n}.position, 'b', 'LineWidth', 1)
-            plot(tintrp, 5*DATA.dwba{n}.position, 'm', 'LineWidth', 1)
-            leg = legend('Reference','Body','Head','\DeltaWBA', 'Orientation', 'horizontal');
+            leg = legend('Reference','Body','Head', 'Orientation', 'horizontal');
             xlabel('Time (s)')
             ylabel('(°)')
                    
@@ -179,17 +166,12 @@ for n = 1:N.file
     IOFreq = sort(FUNC{I.freq(n)}.All.Freq, 'ascend');
     REF = DATA.reference{n}.(clss);
     BODY = DATA.body{n}.(clss);
-    HEAD = DATA.head{n}.(clss);
-    dWBA = DATA.dwba{n}.position;
-    %LWING = DATA.lwing{n}.(clss);
-    %RWING = DATA.rwing{n}.(clss);
+    HEAD = DATA.head{n}.(clss);    
     
     SYS_ref2_head_body = frf(tintrp, REF , IOFreq, false, BODY, HEAD);
 	SYS_head2_body = frf(tintrp, HEAD, IOFreq, false, BODY);
-    SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, dWBA);
-    SYS_wing2_body = frf(tintrp, dWBA, IOFreq, false, BODY);
 
-    SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_head2_body, SYS_ref2_wing, SYS_wing2_body);
+    SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_head2_body);
     
     ALL{I.fly(n),I.freq(n)}(end+1,1) = SYS_all;
 end
@@ -232,28 +214,31 @@ end
 %%
 fig = figure (1);
 set(fig, 'Color', 'w', 'Units', 'inches')
-ax = gobjects(N.amp,1);
-cc = hsv(N.amp);
+ax = gobjects(N.freq,1);
+cc = hsv(N.freq);
 pp = 1;
 for a = 1:N.freq
     ax(a) = subplot(N.freq,1,pp); cla ; hold on
-    %plot(FUNC{a}.All.time, FUNC{a}.All.X, 'LineWidth', 1, 'Color', 'k')
-        %plot(squeeze(GRAND.all(a).Time), squeeze(GRAND.all(a).State(:,1,:)), ...
-            %'LineWidth', 0.25, 'Color', [0.5 0.5 0.5 0.3])
+%     plot(FUNC{a}.All.time, FUNC{a}.All.X_step, 'LineWidth', 1, 'Color', 'k')
+%     plot(squeeze(GRAND.all(a).Time), squeeze(GRAND.all(a).refState(:,1,:)), ...
+%         'LineWidth', 0.25)
+    
+        plot(squeeze(GRAND.all(a).Time), squeeze(GRAND.all(a).State(:,2,:)), ...
+            'LineWidth', 0.25, 'Color', [0.5 0.5 0.5 0.3])
 %     plot(median(squeeze(GRAND.all(a).Time),2), median(squeeze(GRAND.all(a).State(:,1,:)),2), ...
 %         'LineWidth', 1, 'Color', [cc(a,:) 1])
-    scl = median(abs(median(squeeze(GRAND.all(a).State(:,1,:)),2))) / median(abs(median(squeeze(GRAND.all(a).State(:,5,:)),2)));
-    [h1,h2] = PlotPatch(scl*median(squeeze(GRAND.all(a).State(:,5,:)),2), ...
-        std(squeeze(GRAND.all(a).State(:,5,:)),[],2), ...
-        median(squeeze(GRAND.all(a).Time),2),...
-        0, 1, [0 0 1], 0.7*[0 0 1], 0.2, 1);
-    [h1,h2] = PlotPatch(median(squeeze(GRAND.all(a).State(:,1,:)),2), ...
+%     scl = median(abs(median(squeeze(GRAND.all(a).State(:,1,:)),2))) / median(abs(median(squeeze(GRAND.all(a).State(:,5,:)),2)));
+%     [h1,h2] = PlotPatch(scl*median(squeeze(GRAND.all(a).State(:,5,:)),2), ...
+%         std(squeeze(GRAND.all(a).State(:,5,:)),[],2), ...
+%         median(squeeze(GRAND.all(a).Time),2),...
+%         0, 1, [0 0 1], 0.7*[0 0 1], 0.2, 1);
+    [h1,h2] = PlotPatch(median(squeeze(GRAND.all(a).State(:,2,:)),2), ...
         std(squeeze(GRAND.all(a).State(:,1,:)),[],2), ...
         median(squeeze(GRAND.all(a).Time),2),...
         0, 1, [1 0 0], 0.7*[1 0 0], 0.2, 1);
     pp = pp + 1;
 end
-% linkaxes(ax)
+linkaxes(ax)
 
 %%
 fig = figure (2); clf
@@ -271,7 +256,7 @@ for a = fliplr(1:N.freq)
         plot(GRAND.fly_stats(a).mean.IOFv.mean, rad2deg(GRAND.fly_stats(a).circ_mean.IOPhaseDiff.circ_mean(1)), '*b')
       	plot(GRAND.fly_stats(a).mean.IOFv.mean, rad2deg(GRAND.fly_stats(a).circ_mean.IOPhaseDiff.circ_mean(2)), '*r')
         plot(GRAND.fly_stats(a).mean.IOFv.mean, rad2deg(GRAND.fly_stats(a).circ_mean.IOPhaseDiff.circ_mean(3)), '*m')
-        plot(GRAND.fly_stats(a).mean.IOFv.mean, rad2deg(GRAND.fly_stats(a).circ_mean.IOPhaseDiff.circ_mean(5)), '*g')
+        %plot(GRAND.fly_stats(a).mean.IOFv.mean, rad2deg(GRAND.fly_stats(a).circ_mean.IOPhaseDiff.circ_mean(5)), '*g')
         
     ax(3) = subplot(3,1,3) ; hold on
         %plot(GRAND.fly_stats(a).mean.Fv.mean, GRAND.fly_stats(a).mean.Cohr.mean(:,1), 'b')
@@ -280,7 +265,7 @@ for a = fliplr(1:N.freq)
     	plot(GRAND.fly_stats(a).mean.IOFv.mean, GRAND.fly_stats(a).mean.IOCohr.mean(:,1), '*b')
       	plot(GRAND.fly_stats(a).mean.IOFv.mean, GRAND.fly_stats(a).mean.IOCohr.mean(:,2), '*r')
         plot(GRAND.fly_stats(a).mean.IOFv.mean, GRAND.fly_stats(a).mean.IOCohr.mean(:,3), '*m')
-        plot(GRAND.fly_stats(a).mean.IOFv.mean, GRAND.fly_stats(a).mean.IOCohr.mean(:,5), '*g')
+        %plot(GRAND.fly_stats(a).mean.IOFv.mean, GRAND.fly_stats(a).mean.IOCohr.mean(:,5), '*g')
         
     pp = pp + 1;
 end

@@ -1,10 +1,11 @@
 function [SYSTEM] = frf(time,ref,IOFv,debug,varargin)
-%% frf: calculates frequency response 
+%% frf: calculates frequency response
 %
 %   INPUT:
-%       time   	:   time vector or sampling frequency
-%       ref     :	reference input
-%       IOFv   	:	input-output frequncies present in data (leave empty to automatically detect)
+%       time        :   time vector or sampling frequency
+%       ref         :	reference input
+%       IOFv        :	input-output frequncies present in data (leave empty to automatically detect)
+%       varargin    :   outputs
 %
 %   OUTPUT:
 %       SYSTEM 	:   structure with system ID attributes
@@ -115,7 +116,7 @@ IOGain              = IOMag ./ refIOMag;
 IOPhaseDiff         = IOPhase - refIOPhase;
 IOFRF_Gain          = abs(IOFRF);
 IOFRF_PhaseDiff     = angle(IOFRF);
-IOFRF_error        	= abs((1 + 0i) - IOFreq);
+IOFRF_error        	= abs((1 + 0i) - IOFRF);
 lim1 = deg2rad(120);
 lim2 = deg2rad(300);
 
@@ -147,7 +148,7 @@ SYSTEM.IOFv             = IOFv;
 SYSTEM.refName          = refName;
 SYSTEM.refState         = ref;
 SYSTEM.refFreq          = refFreq;
-% SYSTEM.refMag        	= refMag;
+SYSTEM.refMag        	= refMag;
 % SYSTEM.refPhase     	= refPhase;
 SYSTEM.refIOFreq     	= refIOFreq;
 SYSTEM.refIOMag       	= refIOMag;
@@ -161,7 +162,7 @@ SYSTEM.IOMag            = IOMag;
 % SYSTEM.IOPhase      	= IOPhase;
 
 % SYSTEM.Gain             = Gain;
-% SYSTEM.PhaseDiff       	= PhaseDiff;
+% SYSTEM.PhaseDiff        = PhaseDiff;
 % SYSTEM.FRF              = FRF;
 % SYSTEM.FRF_Gain         = FRF_Gain;
 % SYSTEM.FRF_PhaseDiff    = FRF_PhaseDiff;

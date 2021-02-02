@@ -10,10 +10,11 @@ clc
 
 T = ["ref2body", "ref2head","ref2gaze"];
 pI = [1 2 3];
-yL = [1.2 1.2 1.2];
+yL = [1 1 1];
 
 n_plot = length(pI);
 n_cond = N{1,3};
+% n_cond = 2;
 % n_freq = length(GRAND.all(1).IOFv(:,1,1));
 % fI = 1:n_freq;
 % n_freq_plot = length(fI);
@@ -21,7 +22,7 @@ n_cond = N{1,3};
 
 fig = figure (1) ; clf
 % set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 3*n_plot 8])
-set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 9 3*n_plot])
+set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 3*n_plot 3*n_cond])
 mrksz = 6;
 
 movegui(fig, 'center')
@@ -41,7 +42,7 @@ for n = 1:n_plot
         subI = v + (n-1)*n_cond;
         ax(v,n) = subplot(n_cond,n_plot,subI);
         %ax(v,n) = subplot(n_plot,n_cond,subI);
-        [ax_cm,h_cm] = ComplexAxes(0:0.2:yL(n));
+        [ax_cm,h_cm] = ComplexAxes(0:0.5:yL(n));
         set(ax_cm, 'Color', 'none', 'XColor', 'none', 'YColor', 'none')
         
         h(v,n,:) = gscatter(R, I, G, cc, '.', 7, false);
@@ -57,14 +58,14 @@ for n = 1:n_plot
             phase_std = FRF_data.(T(n)).grand_std(v).phase(f);
             b = 2*pi*gain_mu*(phase_std/ 360);
             n_std = 1;
-            elps = Ellipse([real(mu(f)) imag(mu(f))], 2*n_std*gain_std, 2*n_std*b, ...
-                'ellipse', theta, 0, cc(f,:), 0.4);
-
-            elps = draw(elps);
-            set(elps.h.patch, 'EdgeColor', 'k')
-            set(elps.h.centroid, 'MarkerSize', 10, 'MarkerEdgeColor', 'k')
-            hh.patch(v,n,f) = elps.h.patch;
-            hh.med(v,n,f) = elps.h.centroid;
+%             elps = Ellipse([real(mu(f)) imag(mu(f))], 2*n_std*gain_std, 2*n_std*b, ...
+%                 'ellipse', theta, 0, cc(f,:), 0.4);
+% 
+%             elps = draw(elps);
+%             set(elps.h.patch, 'EdgeColor', 'k')
+%             set(elps.h.centroid, 'MarkerSize', 10, 'MarkerEdgeColor', 'k')
+%             hh.patch(v,n,f) = elps.h.patch;
+%             hh.med(v,n,f) = elps.h.centroid;
         end
         if n==1
             leg(n,v) = legend(squeeze(h(v,n,:)), string(IOFv), 'Box', 'off', 'Location', 'east');

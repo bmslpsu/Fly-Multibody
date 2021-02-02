@@ -1,5 +1,5 @@
-function [] = make_head_free_magno_SOS_all_head_fixed(rootdir)
-%% make_head_free_magno_SOS_all_head_fixed:
+function [] = make_head_free_magno_SOS_head_fixed(rootdir)
+%% make_head_free_magno_SOS_head_fixed:
 %
 %   INPUTS:
 %       rootdir    	:   root directory
@@ -15,8 +15,8 @@ exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-3}; % version of experiment (v1, v2, ...)
 exp_ver = exp_name{1}{end-2}; % % type of stimuli (vel or pos)
 
-% clss = 'position';
-clss = 'velocity';
+clss = 'position';
+% clss = 'velocity';
 filename = ['SOS_HeadFixed_' exp_typ '_' exp_ver '_' num2str(clss)];
 
 %% Setup Directories %%
@@ -55,7 +55,7 @@ scd.direction = 0;
 scd.direction = 0;
 scd.pks = [];
 scd.sacd_length = nan;
-scd.min_pkdist = 0.5;
+scd.min_pkdist = 0.2;
 scd.min_pkwidth = 0.02;
 scd.min_pkprom = 50;
 scd.min_pkthresh = 0;
@@ -121,17 +121,14 @@ for n = 1:N.file
                             scd.min_pkthresh, scd.boundThresh, false);
     
     % Store signals
-    n_detrend = 7;
+    n_detrend = 5;
     DATA.body_saccade{n}    = body_scd;
     DATA.reference{n}       = singal_attributes(Reference, tintrp);
     DATA.body{n}            = singal_attributes(body_scd.shift.IntrpPosition, tintrp, [], n_detrend);
-    DATA.body{n}            = singal_attributes(DATA.body{n}.detrend, tintrp, [], []);
-    DATA.error{n}           = singal_attributes(Error, tintrp, [], n_detrend);
-    DATA.dwba{n}            = singal_attributes(dWBA, tintrp, [], n_detrend);
-    DATA.dwba{n}            = singal_attributes(DATA.dwba{n}.detrend, tintrp, [], []);
-    %DATA.dwba{n}            = singal_attributes(DATA.dwba{n}.position, tintrp, 1.5 * D.freq(n), []);
-    DATA.lwing{n}           = singal_attributes(LWing, tintrp, []);
-    DATA.rwing{n}           = singal_attributes(RWing, tintrp, []);
+    DATA.error{n}           = singal_attributes(Error, tintrp);
+    DATA.dwba{n}            = singal_attributes(dWBA, tintrp, 20, n_detrend);
+    DATA.lwing{n}           = singal_attributes(LWing, tintrp, 20);
+    DATA.rwing{n}           = singal_attributes(RWing, tintrp, 20);
     
     % Debug plot
     if debug
@@ -156,19 +153,19 @@ for n = 1:N.file
     REF = DATA.reference{n}.(clss);
     BODY = DATA.body{n}.(clss);
     dWBA = DATA.dwba{n}.(clss);
-    LWING = DATA.lwing{n}.(clss);
-    RWING = DATA.rwing{n}.(clss);
+    %LWING = DATA.lwing{n}.(clss);
+    %RWING = DATA.rwing{n}.(clss);
     
     SYS_ref2_body = frf(tintrp, REF , IOFreq, false, BODY);
     SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, dWBA);
+    SYS_wing2_body = frf(tintrp, dWBA, IOFreq, false, BODY);
     
-	SYS_all = CatStructFields(2, SYS_ref2_body, SYS_ref2_wing);
+	SYS_all = CatStructFields(2, SYS_ref2_body, SYS_ref2_wing, SYS_wing2_body);
     
     ALL{I.fly(n),I{n,3}}(end+1,1) = SYS_all;
 end
 
 %% Group Data
-% clc
 fields = fieldnames(ALL{1});
 nfield = length(fields);
 FLY = [];
@@ -176,8 +173,6 @@ GRAND = [];
 for v = 1:N{1,3}
     GRAND.all(v) = cell2struct(cell(nfield,1),fields);
     GRAND.all_trial(v) = cell2struct(cell(nfield,1),fields);
-    %GRAND.fly_all(fr) = cell2struct(cell(n_stat_fields,1),stat_fields);
-    %GRAND.fly_all(fr) = [];
     for n = 1:N.fly
         for f = 1:nfield
             FLY.all(n,v).(fields{f})    = cat(3,ALL{n,v}.(fields{f}));

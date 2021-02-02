@@ -96,21 +96,15 @@ for n = 1:N.file
     %dWBA    = interp1(trig_time, lwing-rwing, tintrp, 'pchip');
     
     % Store signals
-    n_detrend = 7;
     DATA.body_saccade{n}    = [];
     DATA.reference{n}       = singal_attributes(Reference, tintrp);
     DATA.body{n}            = [];
-    DATA.head{n}            = singal_attributes(Head, tintrp, [], n_detrend);
-    %DATA.head{n}        = singal_attributes(DATA.head{n}.detrend, tintrp, [], []);
-    DATA.error{n}           = singal_attributes(Error, tintrp, [], n_detrend);
+    DATA.head{n}            = singal_attributes(Head, tintrp);
+    DATA.error{n}           = singal_attributes(Error, tintrp);
     %DATA.dwba{n}            = singal_attributes(dWBA, tintrp, [], n_detrend);
     %DATA.dwba{n}            = singal_attributes(DATA.dwba{n}.detrend, tintrp, [], []);
     %DATA.lwing{n}           = singal_attributes(LWing, tintrp, []);
     %DATA.rwing{n}           = singal_attributes(RWing, tintrp, []);
-    DATA.dwba{n}            = [];
-    DATA.dwba{n}            = [];
-    DATA.lwing{n}           = [];
-    DATA.rwing{n}           = [];
         
     % Debug plot
     if debug
@@ -148,7 +142,6 @@ for n = 1:N.file
 end
 
 %% Group Data
-% clc
 fields = fieldnames(ALL{1});
 nfield = length(fields);
 FLY = [];
@@ -156,8 +149,6 @@ GRAND = [];
 for v = 1:N{1,3}
     GRAND.all(v) = cell2struct(cell(nfield,1),fields);
     GRAND.all_trial(v) = cell2struct(cell(nfield,1),fields);
-    %GRAND.fly_all(fr) = cell2struct(cell(n_stat_fields,1),stat_fields);
-    %GRAND.fly_all(fr) = [];
     for n = 1:N.fly
         for f = 1:nfield
             FLY.all(n,v).(fields{f})    = cat(3,ALL{n,v}.(fields{f}));

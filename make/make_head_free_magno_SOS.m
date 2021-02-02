@@ -20,7 +20,7 @@ clss = 'position';
 filename = ['SOS_HeadFree_' exp_typ '_' exp_ver '_' num2str(clss)];
 
 %% Setup Directories %%
-root.base = rootdir; clear rootdir
+root.base = rootdir;
 root.body = fullfile(root.base,'tracked_body');
 root.reg = fullfile(root.base,'registered');
 root.benifly = fullfile(root.reg ,'tracked_head_wing');
@@ -56,7 +56,7 @@ scd.direction = 0;
 scd.direction = 0;
 scd.pks = [];
 scd.sacd_length = nan;
-scd.min_pkdist = 0.5;
+scd.min_pkdist = 0.2;
 scd.min_pkwidth = 0.02;
 scd.min_pkprom = 50;
 scd.min_pkthresh = 0;
@@ -126,27 +126,23 @@ for n = 1:N.file
                             scd.min_pkthresh, scd.boundThresh, false);
     
     % Store signals
-    n_detrend = 7;
+    n_detrend = 5;
     DATA.body_saccade{n}    = body_scd;
     DATA.reference{n}       = singal_attributes(Reference, tintrp);
     DATA.body{n}            = singal_attributes(body_scd.shift.IntrpPosition, tintrp, [], n_detrend);
-    DATA.body{n}            = singal_attributes(DATA.body{n}.detrend, tintrp, [], []);
     DATA.head{n}            = singal_attributes(Head, tintrp, [], n_detrend);
-    %DATA.head{n}        = singal_attributes(DATA.head{n}.detrend, tintrp, [], []);
     DATA.error{n}           = singal_attributes(Error, tintrp, [], n_detrend);
-    DATA.dwba{n}            = singal_attributes(dWBA, tintrp, [], n_detrend);
-    DATA.dwba{n}            = singal_attributes(DATA.dwba{n}.detrend, tintrp, [], []);
-    %DATA.dwba{n}            = singal_attributes(DATA.dwba{n}.position, tintrp, 1.5 * D.freq(n), []);
-    DATA.lwing{n}           = singal_attributes(LWing, tintrp, []);
-    DATA.rwing{n}           = singal_attributes(RWing, tintrp, []);
-       
-%     hold on
-%     plot(DATA.reference{n}.Fv, DATA.reference{n}.mag.position, 'k', 'LineWidth', 1)
-%     plot(DATA.head{n}.Fv, DATA.head{n}.mag.position, 'r', 'LineWidth', 1)
-%     xlim([0.1 15])
-%     ylim([0 3])
-%     pause
-%     cla
+    DATA.dwba{n}            = singal_attributes(dWBA, tintrp, 20, n_detrend);
+    DATA.lwing{n}           = singal_attributes(LWing, tintrp, 20);
+    DATA.rwing{n}           = singal_attributes(RWing, tintrp, 20);
+
+    % hold on
+    % plot(tintrp, Body, 'k', 'LineWidth', 1)
+    % plot(tintrp, body_scd.shift.IntrpPosition, 'b', 'LineWidth', 1)
+    % plot(tintrp, DATA.body{n}.trend, 'g--', 'LineWidth', 1)
+    % plot(tintrp, DATA.body{n}.position, 'r', 'LineWidth', 1)
+    % pause
+    % cla
     
     % Debug plot
     if debug
@@ -161,7 +157,7 @@ for n = 1:N.file
             leg = legend('Reference','Body','Head','\DeltaWBA', 'Orientation', 'horizontal');
             xlabel('Time (s)')
             ylabel('(°)')
-                   
+           	
        	set(gcf, 'Color', 'w')
        	set(ax, 'Linewidth', 2)
         linkaxes(ax,'x')
@@ -173,27 +169,20 @@ for n = 1:N.file
     BODY = DATA.body{n}.(clss);
     HEAD = DATA.head{n}.(clss);
     dWBA = DATA.dwba{n}.(clss);
-    LWING = DATA.lwing{n}.(clss);
-    RWING = DATA.rwing{n}.(clss);
-        
-    %SYS_ref2_head_body = frf(tintrp, REF , IOFreq, false, BODY, HEAD);
-    %SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, LWING, RWING, dWBA);
-    %SYS_head2_body_wing = frf(tintrp, HEAD, IOFreq, false, BODY, dWBA);
-    %SYS_wing2_body = frf(tintrp, dWBA, IOFreq, false, BODY);
-    %SYS_left2_right = frf(tintrp, LWING, IOFreq, false, RWING);
-    
+    %LWING = DATA.lwing{n}.(clss);
+    %RWING = DATA.rwing{n}.(clss);
+
     SYS_ref2_head_body = frf(tintrp, REF , IOFreq, false, BODY, HEAD);
 	SYS_head2_body = frf(tintrp, HEAD, IOFreq, false, BODY, dWBA);
     SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, dWBA);
-    %SYS_wing2_body = frf(tintrp, dWBA, IOFreq, false, BODY);
+    SYS_wing2_body = frf(tintrp, dWBA, IOFreq, false, BODY);
     
-	SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_head2_body, SYS_ref2_wing);
+	SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_head2_body, SYS_ref2_wing, SYS_wing2_body);
     
     ALL{I.fly(n),I{n,3}}(end+1,1) = SYS_all;
 end
 
 %% Group Data
-% clc
 fields = fieldnames(ALL{1});
 nfield = length(fields);
 FLY = [];
@@ -201,8 +190,6 @@ GRAND = [];
 for v = 1:N{1,3}
     GRAND.all(v) = cell2struct(cell(nfield,1),fields);
     GRAND.all_trial(v) = cell2struct(cell(nfield,1),fields);
-    %GRAND.fly_all(fr) = cell2struct(cell(n_stat_fields,1),stat_fields);
-    %GRAND.fly_all(fr) = [];
     for n = 1:N.fly
         for f = 1:nfield
             FLY.all(n,v).(fields{f})    = cat(3,ALL{n,v}.(fields{f}));

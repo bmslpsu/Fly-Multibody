@@ -1,8 +1,7 @@
 function [] = Hist_kinematics()
 %% Hist_kinematics: compare kinematics of multiple data sets
 root = 'E:\DATA\Magno_Data\Multibody';
-[FILES,PATH] = uigetfile({'*.mat', 'DAQ-files'}, ...
-    'Select head angle trials', root, 'MultiSelect','on');
+[FILES,PATH] = uigetfile({'*.mat'}, 'Select data files', root, 'MultiSelect','on');
 FILES = cellstr(FILES);
 n_file = length(FILES);
 ALL = cell(n_file,1);
@@ -20,7 +19,7 @@ clearvars -except ALL n_file FILES labels
 clc
 
 stats = cell(n_file,1);
-use_val = true;
+use_val = false;
 time_avg = true;
 for n = 1:n_file
     stats{n} = val_fly_stats(ALL{n}, use_val, time_avg);
@@ -28,7 +27,8 @@ end
 n_val = size(stats{1}.lwing,2);
 
 %% Combine experiments
-names = ["swba", "lwing", "rwing"];
+names = ["swba", "lwing", "rwing", "dwba", "head"];
+% names = ["head"];
 n_name = length(names);
 for f = 1:n_name
     fly_stats.(names(f)) = cell(1,n_val);
@@ -72,11 +72,15 @@ end
 %% Stats
 P.fly = nan(n_name, n_val);
 P.all = nan(n_name, n_val);
+F.fly = nan(n_name, n_val);
+F.all = nan(n_name, n_val);
 for f = 1:n_name
     for v = 1:n_val
         %P.fly(f,v) = anova1(comb_stats.fly.(names(f)){v}, comb_stats.fly.G{v}, 'off');
         P.fly(f,v) = kruskalwallis(comb_stats.fly.(names(f)){v}, comb_stats.fly.G{v}, 'off');
         P.all(f,v) = kruskalwallis(comb_stats.all.(names(f)){v}, comb_stats.all.G{v}, 'off');
+        F.fly(f,v) = vartestn(comb_stats.fly.(names(f)){v}, comb_stats.fly.G{v}, 'Display', 'off');
+        F.all(f,v) = vartestn(comb_stats.all.(names(f)){v}, comb_stats.all.G{v}, 'Display', 'off');
     end
 end
     
@@ -135,10 +139,11 @@ set(ax(:,2:end), 'YColor', 'none')
 %% All data points comparison
 fig = figure (3) ; clf
 set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 3*n_val 2*n_name])
+movegui(fig, 'center')
 ax = gobjects(n_name,n_val);
 h = gobjects(n_name, n_val, n_file);
 pp = 1;
-h_bins = {30:0.5:150, 15:0.5:75, 15:0.5:75, -15:0.1:15};
+h_bins = {30:0.5:150, 15:0.5:75, 15:0.5:75, -10:0.1:10, -25:0.1:25};
 cmap = jet(n_file+2);
 for f = 1:n_name
     for v = 1:n_val
@@ -156,7 +161,12 @@ for f = 1:n_name
         
         for n = 1:n_file
             mm = median(all_stats.(names(f)){n,v});
+            %sigma = std(all_stats.(names(f)){n,v});
+            sigma = median(abs(all_stats.(names(f)){n,v}));
+            
             xline(mm, 'Color', cmap(n + (n-1)*2,:))
+            xline(sigma, '--', 'Color', cmap(n + (n-1)*2,:))
+            xline(-sigma, '--', 'Color', cmap(n + (n-1)*2,:))
         end
         ax(f,v).YLim(1) = -0.001;
         
@@ -206,15 +216,23 @@ function [stats] = val_fly_stats(dataset, use_val, time_avg)
     end
     
     % Group variables
-    stats.lwing = splitapply(@(x) {cat(2,x{:})}, cellfun(@(x) x.position, DATA.lwing, ...
-        'UniformOutput', false), val_fly_group);
-    stats.rwing = splitapply(@(x) {cat(2,x{:})}, cellfun(@(x) -x.position, DATA.rwing, ...
-        'UniformOutput', false), val_fly_group);
-    stats.dwba = splitapply(@(x) {cat(2,x{:})}, cellfun(@(x) x.position, DATA.dwba, ...
-        'UniformOutput', false), val_fly_group);
-    stats.swba = cellfun(@(x,y) x + y, stats.lwing, stats.rwing, ...
-            'UniformOutput', false);
-    stats.dwba = cellfun(@(x) x - median(x,'all'), stats.dwba, 'UniformOutput', false);
+    if ~isobject([DATA.dwba{:}]') % no wing data
+        stats.lwing = splitapply(@(x) {cat(2,x{:})}, cellfun(@(x) 0*x.position, DATA.head, ...
+            'UniformOutput', false), val_fly_group);
+        stats.rwing = stats.lwing;
+        stats.dwba = stats.lwing;
+        stats.swba = stats.lwing;
+    else
+        stats.lwing = splitapply(@(x) {cat(2,x{:})}, cellfun(@(x) x.position, DATA.lwing, ...
+            'UniformOutput', false), val_fly_group);
+        stats.rwing = splitapply(@(x) {cat(2,x{:})}, cellfun(@(x) -x.position, DATA.rwing, ...
+            'UniformOutput', false), val_fly_group);
+        stats.dwba = splitapply(@(x) {cat(2,x{:})}, cellfun(@(x) x.position, DATA.dwba, ...
+            'UniformOutput', false), val_fly_group);
+        stats.swba = cellfun(@(x,y) x + y, stats.lwing, stats.rwing, ...
+                'UniformOutput', false);
+        stats.dwba = cellfun(@(x) x - median(x,'all'), stats.dwba, 'UniformOutput', false);
+    end    
     
     if ~isobject([DATA.head{:}]') % head-fixed
         stats.head = cellfun(@(x) 0*x, stats.dwba, 'UniformOutput', false);
@@ -232,7 +250,7 @@ function [stats] = val_fly_stats(dataset, use_val, time_avg)
     end
     
     if use_val
-        stats = structfun(@(x) splitapply(@(y) {y}, x, val_group), stats, 'UniformOutput', false);
+        stats = structfun(@(x) splitapply(@(y) {y}, x, findgroups(val_group)), stats, 'UniformOutput', false);
         stats = structfun(@(x) cat(2,x{:}), stats, 'UniformOutput', false);
     end
     
