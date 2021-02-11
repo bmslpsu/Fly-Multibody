@@ -34,7 +34,7 @@ classdef singal_attributes
             obj.Fs = 1 / obj.Ts;
             obj.position = position;
             obj.velocity = central_diff(obj.position, obj.Ts );
-            obj.acceleration = central_diff(obj.position, obj.Ts );
+            obj.acceleration = central_diff(obj.velocity, obj.Ts );
             obj.Fc = Fc;
             
             if ~isempty(n_detrend)

@@ -77,7 +77,7 @@ ALL = cell(N.fly,N{1,4});
 DATA = [D , splitvars(table(num2cell(zeros(N.file,8))))];
 DATA.Properties.VariableNames(4:end) = {'reference','body','head','error',...
     'dwba','lwing','rwing','body_saccade'};
-for n = 17:N.file
+for n = 1:N.file
     %disp(kk)
     disp(basename{n})
     % Load DAQ, body, head, & wing data

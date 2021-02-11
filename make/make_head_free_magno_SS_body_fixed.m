@@ -9,7 +9,8 @@ function [] = make_head_free_magno_SS_body_fixed(rootdir)
 %
 warning('off', 'signal:findpeaks:largeMinPeakHeight')
 
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_amp_3.75_body_fixed';
+% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_amp_3.75_body_fixed';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250_body_fixed';
 exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-3}; % type of stimuli (vel or pos)
 exp_ver = exp_name{1}{end-2}; % version of experiment (v1, v2, ...)
@@ -52,13 +53,13 @@ Fs = 100;
 Fc = 40;
 func_length = 10;
 tintrp = (0:(1/Fs):func_length)';
-debug = false;
+debug = true;
 [b,a] = butter(3, Fc/(Fs/2),'low');
 ALL = cell(N.fly,N{1,4});
 DATA = [D , splitvars(table(num2cell(zeros(N.file,8))))];
 DATA.Properties.VariableNames(5:end) = {'reference','body','head','error',...
     'dwba','lwing','rwing','body_saccade'};
-for n = 1:N.file
+for n = 2:N.file
     %disp(kk)
     disp(basename{n})
     % Load DAQ, body, head, & wing data
@@ -105,12 +106,13 @@ for n = 1:N.file
     
     % Store signals
     fc_wing = 1.5 * D.freq(n);
-    DATA.reference{n}       = singal_attributes(Reference, tintrp);
-    DATA.head{n}            = singal_attributes(Head, tintrp, [], []);
-    DATA.error{n}           = singal_attributes(Error, tintrp, [], []);
-    DATA.dwba{n}            = singal_attributes(dWBA, tintrp, fc_wing, []);
-    DATA.lwing{n}           = singal_attributes(LWing, tintrp, fc_wing, []);
-    DATA.rwing{n}           = singal_attributes(RWing, tintrp, fc_wing, []);
+    n_detrend = 5;
+    DATA.reference{n}	= singal_attributes(Reference, tintrp);
+    DATA.head{n}       	= singal_attributes(Head, tintrp, [], n_detrend);
+    DATA.error{n}     	= singal_attributes(Error, tintrp, [], n_detrend);
+    DATA.dwba{n}       	= singal_attributes(dWBA, tintrp, fc_wing, n_detrend);
+    DATA.lwing{n}    	= singal_attributes(LWing, tintrp, fc_wing, n_detrend);
+    DATA.rwing{n}    	= singal_attributes(RWing, tintrp, fc_wing, n_detrend);
 
     % Debug plot
     if debug
@@ -118,9 +120,8 @@ for n = 1:N.file
         clear ax
         ax(1) = subplot(1,1,1) ; cla ; hold on
             plot(tintrp, DATA.reference{n}.position, 'k', 'LineWidth', 1)
-            %plot(tintrp, DATA.error{kk}.detrend, 'g', 'LineWidth', 1)
             plot(tintrp, DATA.head{n}.position, 'b', 'LineWidth', 1)
-            plot(tintrp, 5*DATA.dwba{n}.position, 'm', 'LineWidth', 1)
+            plot(tintrp, DATA.dwba{n}.position, 'm', 'LineWidth', 1)
             leg = legend('Reference','Head','\DeltaWBA', 'Orientation', 'horizontal');
             xlabel('Time (s)')
             ylabel('(°)')
@@ -134,15 +135,17 @@ for n = 1:N.file
     IOFreq = sort(FUNC{I.freq(n)}.All.Freq, 'ascend');
     REF = DATA.reference{n}.(clss);
     HEAD = DATA.head{n}.(clss);
-    dWBA = DATA.dwba{n}.(clss);
-    %LWING = DATA.lwing{n}.(clss);
-    %RWING = DATA.rwing{n}.(clss);
+    ERROR = DATA.error{n}.(clss);
+    dWBA = DATA.dwba{n}.position;
+    LWING = DATA.lwing{n}.position;
+    RWING = DATA.rwing{n}.position;
     
     SYS_ref2_head = frf(tintrp, REF , IOFreq, false, HEAD);
     SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, dWBA);
     SYS_head2wing = frf(tintrp, HEAD, IOFreq, false, dWBA);
-
-    SYS_all = CatStructFields(2, SYS_ref2_head, SYS_ref2_wing, SYS_head2wing);
+    SYS_ref2_left_right = frf(tintrp, REF, IOFreq, false, LWING, RWING);
+    
+    SYS_all = CatStructFields(2, SYS_ref2_head, SYS_ref2_wing, SYS_head2wing, SYS_ref2_left_right);
     
     ALL{I.fly(n),I.freq(n)}(end+1,1) = SYS_all;
 end

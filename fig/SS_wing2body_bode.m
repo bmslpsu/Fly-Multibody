@@ -1,4 +1,4 @@
-function [] = SS_wing2body_lssa()
+function [] = SS_wing2body_bode()
 %% SS_frf:
 root = 'E:\DATA\Magno_Data\Multibody';
 [FILE,PATH] = uigetfile({'*.mat', 'DAQ-files'}, ...

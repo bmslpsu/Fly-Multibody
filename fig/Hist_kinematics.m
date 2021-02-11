@@ -19,7 +19,7 @@ clearvars -except ALL n_file FILES labels
 clc
 
 stats = cell(n_file,1);
-use_val = false;
+use_val = true;
 time_avg = true;
 for n = 1:n_file
     stats{n} = val_fly_stats(ALL{n}, use_val, time_avg);
@@ -28,7 +28,7 @@ n_val = size(stats{1}.lwing,2);
 
 %% Combine experiments
 names = ["swba", "lwing", "rwing", "dwba", "head"];
-% names = ["head"];
+names = ["head"];
 n_name = length(names);
 for f = 1:n_name
     fly_stats.(names(f)) = cell(1,n_val);
@@ -143,7 +143,8 @@ movegui(fig, 'center')
 ax = gobjects(n_name,n_val);
 h = gobjects(n_name, n_val, n_file);
 pp = 1;
-h_bins = {30:0.5:150, 15:0.5:75, 15:0.5:75, -10:0.1:10, -25:0.1:25};
+% h_bins = {30:0.5:150, 15:0.5:75, 15:0.5:75, -10:0.1:10, -25:0.1:25};
+h_bins = {-25:0.1:25};
 cmap = jet(n_file+2);
 for f = 1:n_name
     for v = 1:n_val
@@ -180,11 +181,11 @@ set(ax, 'Color', 'none', 'LineWidth', 1.5, 'XColor', 'k')
 for f = 1:n_name
     linkaxes(ax(f,:), 'xy')
 end
-linkaxes(ax(2:3,:), 'xy')
+% linkaxes(ax(2:3,:), 'xy')
 set(ax(:,2:end), 'YColor', 'none')
 
-YLabelHC = get(ax(:,1), 'YLabel');
-set([YLabelHC{:}], 'String', 'Probability')
+% YLabelHC = get(ax(:,1), 'YLabel');
+% set([YLabelHC{:}], 'String', 'Probability')
 
 %% Save
 savedir = 'E:\DATA\Magno_Data\Multibody\processed';

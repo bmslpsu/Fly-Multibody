@@ -2,19 +2,18 @@ function [All] = make_sos(T, Fs, res, F, A, norm_vel, cent, Phase, showplot, roo
 %% make_sos: makes sum-of-sine position function
 %
 %   INPUT:
-%       T           :   total time [s]
-%       Fs          :   sampling frequency [Hz]
-%       res         :   arena resolution
-%       F           :   frequencies in signal
-%       A           :   amplitude vector (+/-), can be salar for all same amplitude [°]
-%       norm_vel   	:   peak velocity of each frequency component. "A" must be empty to set this. [°/s]
-%       cent        :   center pixel on arena
-%       showplot  	:   boolean (1= show time & freuency domain of signal)
-%       root:       :   root directory to save position function file. Don't save if empty.
-%
+%     	T           :   total time [s]
+%     	Fs          :   sampling frequency [Hz]
+%     	res         :   arena resolution
+%     	F           :   frequencies in signal
+%      	A           :   amplitude vector (+/-), can be salar for all frequencies with same amplitude [°]
+%    	norm_vel   	:   peak velocity of each frequency component. "A" must be empty to set this. [°/s]
+%    	cent        :   center pixel on arena
+%     	showplot  	:   boolean (1= show time & freuency domain of signal)
+%   	root:       :   root directory to save position function file. Don't save if empty.
 %
 %   OUTPUT:
-%       - 
+%       All         :   structure containing singal attributes
 %
 
 % DEBUGGING 
@@ -28,6 +27,7 @@ function [All] = make_sos(T, Fs, res, F, A, norm_vel, cent, Phase, showplot, roo
 % norm_vel    = 250;
 % res         = 3.75;
 % cent        = 45;
+% phase       = [];
 % showplot    = true;
 
 % Check inputs
@@ -40,7 +40,7 @@ freq_res = 1 / T; % frequency resolution
 tt = (0:1/Fs:T)';  % time vector [s]
 F = F(:);
 A = A(:);
-if isempty(A)
+if isempty(A) % no amplitude set
     N = length(F); % # of frequency components
 elseif isempty(F)
     N = length(A); % # of frequency components

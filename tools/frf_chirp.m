@@ -84,12 +84,14 @@ FRF = Freq ./ refFreq;
 % Bin if specified
 if bin_sz
     n_fv = length(FRF); % total frequency points
-    FRF_binned = FRF; % new vector to store biunned data
-    for k = 1:n_fv
-        win = (k-bin_sz):(k+bin_sz);
-        win(win < 1) = [];
-        win(win > n_fv) = [];
-        FRF_binned(k) = mean(FRF_binned(win));
+    FRF_binned = FRF; % new vector to store binned data
+    for n = 1:nState
+        for k = 1:n_fv
+            win = (k-bin_sz):(k+bin_sz);
+            win(win < 1) = [];
+            win(win > n_fv) = [];
+            FRF_binned(k,n) = mean(FRF_binned(win,n),1);
+        end
     end
     FRF = FRF_binned;
 end

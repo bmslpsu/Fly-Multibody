@@ -25,6 +25,7 @@ T           = 20;
 Fs          = 400.63;
 res         = 3.75;
 cent        = 45;
+phase       = 0;
 showplot    = true;
 
 % A = 1*[1 1 1 1 1 1 1 1];
@@ -60,7 +61,7 @@ F = linspace(2.15, 13.05, length(A))';
 A = 3*ones(7,1);
 F = linspace(1.9, 11.85, length(A))';
 
-All = make_sos(T, Fs, res, F, A, [], cent, showplot, []);
+All = make_sos(T, Fs, res, F, A, [], cent, phase, showplot, []);
 
 disp('Freq')
 disp(All.Freq)

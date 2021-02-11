@@ -10,7 +10,7 @@ function [] = make_head_free_magno_SOS(rootdir)
 warning('off', 'signal:findpeaks:largeMinPeakHeight')
 
 rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2';
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_amp_v3';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_amp_v3';
 exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-1}; % type of stimuli (vel or pos)
 exp_ver = exp_name{1}{end}; % version of experiment (v1, v2, ...)
@@ -72,7 +72,7 @@ ALL = cell(N.fly,N{1,3});
 DATA = [D , splitvars(table(num2cell(zeros(N.file,8))))];
 DATA.Properties.VariableNames(4:end) = {'reference','body','head','error',...
     'dwba','lwing','rwing','body_saccade'};
-for n = 1:N.file
+for n = 160:N.file
     %disp(kk)
     disp(basename{n})
     % Load DAQ, body, head, & wing data
@@ -116,7 +116,7 @@ for n = 1:N.file
     Head    = filtfilt(b, a, Head);
     Error   = Reference - Body - Head;
     LWing   = interp1(trig_time, lwing, tintrp, 'pchip');
-    RWing   = -interp1(trig_time, rwing, tintrp, 'pchip');
+    RWing   = interp1(trig_time, rwing, tintrp, 'pchip');
     dWBA    = interp1(trig_time, lwing-rwing, tintrp, 'pchip');
     
     % Detect & remove saccades
@@ -136,13 +136,13 @@ for n = 1:N.file
     DATA.lwing{n}           = singal_attributes(LWing, tintrp, 20);
     DATA.rwing{n}           = singal_attributes(RWing, tintrp, 20);
 
-    % hold on
-    % plot(tintrp, Body, 'k', 'LineWidth', 1)
-    % plot(tintrp, body_scd.shift.IntrpPosition, 'b', 'LineWidth', 1)
-    % plot(tintrp, DATA.body{n}.trend, 'g--', 'LineWidth', 1)
-    % plot(tintrp, DATA.body{n}.position, 'r', 'LineWidth', 1)
-    % pause
-    % cla
+    hold on
+    plot(tintrp, Body, 'k', 'LineWidth', 1)
+    plot(tintrp, body_scd.shift.IntrpPosition, 'b', 'LineWidth', 1)
+    plot(tintrp, DATA.body{n}.trend, 'g--', 'LineWidth', 1)
+    plot(tintrp, DATA.body{n}.position, 'r', 'LineWidth', 1)
+    pause
+    cla
     
     % Debug plot
     if debug

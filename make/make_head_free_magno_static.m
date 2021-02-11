@@ -33,26 +33,42 @@ else
     [D,I,N,U,T,~,~,basename] = GetFileData(root.body,'*.mat',false);
 end
 
-%% Get Data %%
+%% Get Data
 close all
 clc
 
 % Body saccade detection parameters
-scd.thresh = [20, 1, 3, 0];
-scd.true_thresh = 220;
-scd.Fc_detect = [40 nan];
-scd.Fc_ss = [20 nan];
-scd.amp_cut = 5;
-scd.dur_cut = 1;
-scd.direction = 0;
-scd.direction = 0;
-scd.pks = [];
-scd.sacd_length = nan;
-scd.min_pkdist = 0.5;
-scd.min_pkwidth = 0.02;
-scd.min_pkprom = 50;
-scd.min_pkthresh = 0;
-scd.boundThresh = [0.2 40];
+body_scd.threshold = [20, 1, 3, 0];
+body_scd.true_thresh = 220;
+body_scd.Fc_detect = [40 nan];
+body_scd.Fc_ss = [20 nan];
+body_scd.amp_cut = 5;
+body_scd.dur_cut = 1;
+body_scd.direction = 0;
+body_scd.direction = 0;
+body_scd.pks = [];
+body_scd.sacd_length = nan;
+body_scd.min_pkdist = 0.2;
+body_scd.min_pkwidth = 0.02;
+body_scd.min_pkprom = 50;
+body_scd.min_pkthresh = 0;
+body_scd.boundThresh = [0.2 40];
+
+head_scd.threshold = [40, 1, 2, 0];
+head_scd.true_thresh = 200;
+head_scd.Fc_detect = [15 nan];
+head_scd.Fc_ss = [nan nan];
+head_scd.amp_cut = 4;
+head_scd.dur_cut = 0.1;
+head_scd.direction = 0;
+head_scd.direction = 0;
+head_scd.pks = [];
+head_scd.sacd_length = nan;
+head_scd.min_pkdist = 0.2;
+head_scd.min_pkwidth = 0.02;
+head_scd.min_pkprom = 50;
+head_scd.min_pkthresh = 0;
+head_scd.boundThresh = [0.2 60];
 
 Fs = 100;
 Fc = 40;
@@ -61,9 +77,9 @@ startI = round(5000*0.5);
 tintrp = (0:(1/Fs):func_length)';
 debug = false;
 [b,a] = butter(3, Fc/(Fs/2),'low');
-DATA = [D , splitvars(table(num2cell(zeros(N.file,8))))];
-DATA.Properties.VariableNames(4:end) = {'reference','body','head','error',...
-    'dwba','lwing','rwing','body_saccade'};
+DATA = [D , splitvars(table(num2cell(zeros(N.file,10))))];
+DATA.Properties.VariableNames(4:end) = {'reference','body','body_detrend','head','error',...
+    'dwba','lwing','rwing','body_saccade','head_saccade'};
 for n = 1:N.file
     %disp(kk)
     disp(basename{n})
@@ -105,25 +121,27 @@ for n = 1:N.file
     Head    = interp1(trig_time, head,  tintrp, 'pchip');
     Head    = filtfilt(b, a, Head);
     LWing   = interp1(trig_time, lwing, tintrp, 'pchip');
-    RWing   = -interp1(trig_time, rwing, tintrp, 'pchip');
+    RWing   = interp1(trig_time, rwing, tintrp, 'pchip');
     dWBA    = interp1(trig_time, lwing-rwing, tintrp, 'pchip');
     
     % Detect & remove saccades
-    body_scd = saccade_v1(Body, tintrp, scd.thresh, scd.true_thresh, scd.Fc_detect, ...
-                            scd.Fc_ss, scd.amp_cut, scd.dur_cut , scd.direction, scd.pks, ...
-                            scd.sacd_length, scd.min_pkdist, scd.min_pkwidth, scd.min_pkprom, ...
-                            scd.min_pkthresh, scd.boundThresh, false);
+    body_saccade = saccade_v1(Body, tintrp, body_scd, false);
+    head_saccade = saccade_v1(Head, tintrp, head_scd, false);
+    
+    %figure (1) ; pause ; close all
 
     % Store signals
-    n_detrend = 1;
-    DATA.body_saccade{n}    = body_scd;
+    n_detrend = 5;
+    DATA.body_saccade{n}    = body_saccade;
+    DATA.head_saccade{n}    = head_saccade;
     DATA.reference{n}       = nan;
-    DATA.body{n}            = singal_attributes(body_scd.shift.IntrpPosition, tintrp, [], n_detrend);
+    DATA.body_detrend{n} 	= singal_attributes(body_saccade.shift.IntrpPosition, tintrp, n_detrend);
+    DATA.body{n}            = singal_attributes(Body, tintrp);
     DATA.head{n}            = singal_attributes(Head, tintrp, []);
     DATA.error{n}           = nan;
-    DATA.dwba{n}            = singal_attributes(dWBA, tintrp, []);
-    DATA.lwing{n}           = singal_attributes(LWing, tintrp, []);
-    DATA.rwing{n}           = singal_attributes(RWing, tintrp, []);
+    DATA.dwba{n}            = singal_attributes(dWBA, tintrp, [], n_detrend);
+    DATA.lwing{n}           = singal_attributes(LWing, tintrp, [], n_detrend);
+    DATA.rwing{n}           = singal_attributes(RWing, tintrp, [], n_detrend);
     
     % Debug plot
     if debug
@@ -131,15 +149,15 @@ for n = 1:N.file
         clear ax
         ax(1) = subplot(1,1,1) ; cla ; hold on
             plot(tintrp, DATA.body{n}.position, 'r', 'LineWidth', 1)
-            plot(tintrp, DATA.head{n}.position, 'b', 'LineWidth', 1)
-            plot(tintrp, DATA.dwba{n}.position_lpf, 'm', 'LineWidth', 1)
-            leg = legend('Body','Head','\DeltaWBA', 'Orientation', 'horizontal');
+            %plot(tintrp, DATA.head{n}.position, 'b', 'LineWidth', 1)
+            %plot(tintrp, DATA.dwba{n}.position, 'm', 'LineWidth', 1)
+            %leg = legend('Body','Head','\DeltaWBA', 'Orientation', 'horizontal');
             xlabel('Time (s)')
             ylabel('(°)')
           	
        	set(gcf, 'Color', 'w')
        	set(ax, 'Linewidth', 2)
-        linkaxes(ax,'x')
+        %linkaxes(ax,'x')
         pause
     end
 end

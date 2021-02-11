@@ -9,7 +9,7 @@ function [] = make_head_free_magno_chirp(rootdir)
 %
 warning('off', 'signal:findpeaks:largeMinPeakHeight')
 
-rootdir = 'E:\EXPERIMENTS\MAGNO\WAEL\Experiment_chirp_15';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_chirp_15';
 exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-1}; % type of stimuli (vel or pos)
 exp_ver = exp_name{1}{end}; % version of experiment (v1, v2, ...)
@@ -20,10 +20,12 @@ filename = ['SS_HeadFree_' exp_typ '_' exp_ver '_' num2str(clss)];
 
 %% Setup Directories %%
 root.base = rootdir;
+root.reg = fullfile(root.base,'registered');
 root.body = fullfile(root.base,'tracked_body');
+root.head = fullfile(root.reg,'tracked_head_tip');
 
 % Select files
-[D,I,N,U,T,~,~,basename] = GetFileData(root.body,'*.mat',false);
+[D,I,N,U,T,~,~,basename] = GetFileData(root.head,'*.mat',false);
 
 %% Get Data %%
 close all
@@ -62,7 +64,8 @@ for n = 1:N.file
     % Load DAQ, body, head, & wing data
 	data.daq = load(fullfile(root.base,  [basename{n} '.mat']),'data','t_p'); % load camera trigger & pattern x-position
     data.body = load(fullfile(root.body, [basename{n} '.mat']),'bAngles'); % load body angles
-    
+ 	data.head = load(fullfile(root.head, [basename{n} '.mat']),'head_data'); % load head angles
+
     % Get synced frame times and pattern data
     daq_time    = data.daq.t_p;
     daq_pattern = data.daq.data(:,2);
@@ -80,6 +83,7 @@ for n = 1:N.file
     % Get pattern, head, & body anlges
     pat = 3.75*PAT.pos;
     body = data.body.bAngles;
+    head = data.head.head_data.angle;
     
     % Interpolate so all signals have the same times
     %[b_pat, a_pat] = butter(3, 20 / (Fs/2), 'low');
@@ -90,7 +94,9 @@ for n = 1:N.file
     
     Body    = interp1(trig_time, body,  tintrp, 'pchip');
     Body    = Body - mean(Body);
-    Error   = Reference - Body;
+    Head    = interp1(trig_time, head,  tintrp, 'pchip');
+    Head    = filtfilt(b, a, Head);
+    Error   = Reference - Body - Head;
     
     % Detect & remove saccades
     body_scd = saccade_v1(Body, tintrp, scd.thresh, scd.true_thresh, scd.Fc_detect, ...
@@ -106,15 +112,8 @@ for n = 1:N.file
     DATA.body_saccade{n}    = body_scd;
     DATA.reference{n}       = singal_attributes(Reference, tintrp);
     DATA.body{n}            = singal_attributes(body_scd.shift.IntrpPosition, tintrp, [], n_detrend);
+    DATA.head{n}            = singal_attributes(Head, tintrp);
     DATA.error{n}           = singal_attributes(Error, tintrp);
-    
-%     hold on
-%     plot(tintrp, Body, 'k', 'LineWidth', 1)
-%     plot(tintrp, body_scd.shift.IntrpPosition, 'b', 'LineWidth', 1)
-%     plot(tintrp, DATA.body{n}.trend, 'g--', 'LineWidth', 1)
-%     plot(tintrp, DATA.body{n}.position, 'r', 'LineWidth', 1)
-%     pause
-%     cla
 
     % Debug plot
     if debug
@@ -136,13 +135,14 @@ for n = 1:N.file
     
     REF = DATA.reference{n}.(clss);
     BODY = DATA.body{n}.(clss);
+    HEAD = DATA.head{n}.(clss);
     
     bin_sz = 5;
-    SYS_ref2_body = frf_chirp(tintrp, REF, bin_sz, false, BODY);
+    SYS_ref2_body_head = frf_chirp(tintrp, REF, bin_sz, false, BODY, HEAD);
 
     %SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_head2_body, SYS_ref2_wing, SYS_wing2_body);
     
-    ALL{I.fly(n),1}(end+1,1) = SYS_ref2_body;
+    ALL{I.fly(n),1}(end+1,1) = SYS_ref2_body_head;
 end
 
 %% Group Data
@@ -181,29 +181,43 @@ for v = 1:N.A
 end
 
 %% Time
+pI = 1;
 fig = figure (1) ; clf
-set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 5 2])
+set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 5 3])
 movegui(fig, 'center')
 clear ax h
 ax = gobjects(1,1);
 Fv = GRAND.fly_stats.mean(v).Fv.mean;
-cc = [0 0.1 0.7];
+cc = [0 0.1 0.7; 1 0 0; 1 0 0];
 fly_lw = 0.25;
 time = GRAND.fly_stats.mean(v).Time.mean;
-
+ref = 15*chirp(time,0.1,20,6.5, 'logarithmic');
+ref_vel = central_diff(ref, 1/Fs);
 ax(1,1) = subplot(1,1,1); hold on
-    plot(time, squeeze(GRAND.fly_all.mean(1).State(:,1,:)), ...
-        'Color', [0.5 0.5 0.5 0.5], 'LineWidth', fly_lw)
-    [h.patch(1,v,1),h.line(1,v,1)] = PlotPatch(GRAND.fly_stats.mean(v).State.mean,...
-              GRAND.fly_stats.mean(v).State.std, time, 1, 1, cc(1,:), 0.7*cc(1,:), 0.2, 1);
-
+    plot(time, ref, 'Color', [0 0 0], 'LineWidth', 1)
+    %plot(time, squeeze(GRAND.fly_all.mean(1).State(:,pI,:)), ...
+        %'Color', [0.5 0.5 0.5 0.5], 'LineWidth', fly_lw)
+    [h.patch(1,v),h.line(1,v)] = PlotPatch(GRAND.fly_stats.mean(v).State.mean(:,pI),...
+              GRAND.fly_stats.mean(v).State.std(:,pI), time, 1, 1, cc(1,:), 0.7*cc(1,:), 0.2, 1);
+    [h.patch(2,v),h.line(2,v)] = PlotPatch(GRAND.fly_stats.mean(v).State.mean(:,3),...
+              GRAND.fly_stats.mean(v).State.std(:,pI), time, 1, 1, cc(3,:), 0.7*cc(3,:), 0.2, 1);
+ax(1,1).Position(4) = 0.8*ax(1,1).Position(4);
+ax(1,1).Position(2) = 1.5*ax(1,1).Position(2);
 xlabel('Time (s)')
 ylabel('Body (°)')
 set(ax, 'Color', 'none', 'LineWidth', 1, 'FontSize', 8, 'XLim', [0 20], 'YLim', 30*[-1 1], ...
-    'XGrid', 'off', 'YGrid', 'off', 'Box', 'off')
+    'XGrid', 'off', 'YGrid', 'off', 'Box', 'off')         
+          
+ax_freq = axes;
+set(ax_freq, 'Color', 'none', 'YColor', 'none', 'XColor', 'k', 'Position', ax(1).Position, ...
+    'XAxisLocation', 'top', 'XLim', [0.1 6.5], 'XScale', 'log', 'XTick', [0.1 1:6], 'FontSize', 8, ...
+    'LineWidth', ax(1).LineWidth)
+xlabel('Frequency (Hz)')
+  
 
 %% BODE
 n_cond = N.A;
+pI = 3;
 
 fig = figure (2) ; clf
 set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2*n_cond 5*1.5])
@@ -211,41 +225,41 @@ movegui(fig, 'center')
 clear ax h
 ax = gobjects(5,n_cond);
 Fv = GRAND.fly_stats.mean(v).Fv.mean;
-cc = [0 0.1 0.7];
+% cc = [0 0.1 0.7];
 fly_lw = 0.25;
 for v = 1
     subI = v + (0:4)*n_cond;
     ax(1,v) = subplot(5,n_cond,subI(1)); hold on
-        plot(Fv, squeeze(GRAND.fly_all.mean(1).Mag(:,1,:)), ...
+        plot(Fv, squeeze(GRAND.fly_all.mean(1).Mag(:,pI,:)), ...
             'Color', [0.5 0.5 0.5 0.5], 'LineWidth', fly_lw)
-        [h.patch(1,v,1),h.line(1,v,1)] = PlotPatch(GRAND.fly_stats.mean(v).Mag.mean,...
-                  GRAND.fly_stats.mean(v).Mag.std, Fv, 1, 1, cc(1,:), 0.7*cc(1,:), 0.2, 1);
+        [h.patch(1,v,1),h.line(1,v,1)] = PlotPatch(GRAND.fly_stats.mean(v).Mag.mean(:,pI),...
+                  GRAND.fly_stats.mean(v).Mag.std(:,pI), Fv, 1, 1, cc(pI,:), 0.7*cc(pI,:), 0.2, 1);
               
     ax(2,v) = subplot(5,n_cond,subI(2)); hold on
-        plot(Fv, squeeze(GRAND.fly_all.mean(1).Gain(:,1,:)), ...
+        plot(Fv, squeeze(GRAND.fly_all.mean(1).Gain(:,pI,:)), ...
             'Color', [0.5 0.5 0.5 0.5], 'LineWidth', fly_lw)
-        [h.patch(2,v,1),h.line(2,v,1)] = PlotPatch(GRAND.fly_stats.mean(v).Gain.mean,...
-                  GRAND.fly_stats.mean(v).Gain.std, Fv, 1, 1, cc(1,:), 0.7*cc(1,:), 0.2, 1);
+        [h.patch(2,v,1),h.line(2,v,1)] = PlotPatch(GRAND.fly_stats.mean(v).Gain.mean(:,pI),...
+                  GRAND.fly_stats.mean(v).Gain.std(:,pI), Fv, 1, 1, cc(pI,:), 0.7*cc(pI,:), 0.2, 1);
               
     ax(3,v) = subplot(5,n_cond,subI(3)); hold on
         yline(0, '--', 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
-        plot(Fv, rad2deg(squeeze(GRAND.fly_all.mean(1).PhaseDiff(:,1,:))), ...
+        plot(Fv, rad2deg(squeeze(GRAND.fly_all.mean(1).PhaseDiff(:,pI,:))), ...
             'Color', [0.5 0.5 0.5 0.5], 'LineWidth', fly_lw)
-        [h.patch(3,v,1),h.line(3,v,1)] = PlotPatch(rad2deg(GRAND.fly_stats.mean(v).PhaseDiff.mean),...
-                  rad2deg(GRAND.fly_stats.mean(v).PhaseDiff.std), Fv, 1, 1, cc(1,:), 0.7*cc(1,:), 0.2, 1);
+        [h.patch(3,v,1),h.line(3,v,1)] = PlotPatch(rad2deg(GRAND.fly_stats.mean(v).PhaseDiff.mean(:,pI)),...
+                  rad2deg(GRAND.fly_stats.mean(v).PhaseDiff.std(:,pI)), Fv, 1, 1, cc(pI,:), 0.7*cc(pI,:), 0.2, 1);
               
     ax(4,v) = subplot(5,n_cond,subI(4)); hold on
         yline(1, '--', 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
-        plot(Fv, squeeze(GRAND.fly_all.mean(1).FRF_error(:,1,:)), ...
+        plot(Fv, squeeze(GRAND.fly_all.mean(1).FRF_error(:,pI,:)), ...
             'Color', [0.5 0.5 0.5 0.5], 'LineWidth', fly_lw)
-        [h.patch(4,v,1),h.line(4,v,1)] = PlotPatch(GRAND.fly_stats.mean(v).FRF_error.mean,...
-                  GRAND.fly_stats.mean(v).FRF_error.std, Fv, 1, 1, cc(1,:), 0.7*cc(1,:), 0.2, 1);
+        [h.patch(4,v,1),h.line(4,v,1)] = PlotPatch(GRAND.fly_stats.mean(v).FRF_error.mean(:,pI),...
+                  GRAND.fly_stats.mean(v).FRF_error.std(:,pI), Fv, 1, 1, cc(pI,:), 0.7*cc(pI,:), 0.2, 1);
               
     ax(5,v) = subplot(5,n_cond,subI(5)); hold on
-        plot(Fv, squeeze(GRAND.fly_all.mean(1).Cohr(:,1,:)), ...
+        plot(Fv, squeeze(GRAND.fly_all.mean(1).Cohr(:,pI,:)), ...
             'Color', [0.5 0.5 0.5 0.5], 'LineWidth', fly_lw)
-        [h.patch(5,v,1),h.line(5,v,1)] = PlotPatch(GRAND.fly_stats.mean(v).Cohr.mean,...
-                  GRAND.fly_stats.mean(v).Cohr.std, Fv, 1, 1, cc(1,:), 0.7*cc(1,:), 0.2, 1);
+        [h.patch(5,v,1),h.line(5,v,1)] = PlotPatch(GRAND.fly_stats.mean(v).Cohr.mean(:,pI),...
+                  GRAND.fly_stats.mean(v).Cohr.std(:,pI), Fv, 1, 1, cc(pI,:), 0.7*cc(pI,:), 0.2, 1);
 
 end
 linkaxes(ax, 'x')
@@ -253,7 +267,7 @@ linkaxes(ax, 'x')
 % delete(h.patch)
 
 set(h.line, 'Marker', 'none','MarkerFaceColor', 'none', 'MarkerSize', 10, 'LineWidth', 1)
-set(ax, 'Color', 'none', 'LineWidth', 1, 'FontSize', 8, 'XLim', [0.1 6],...
+set(ax, 'Color', 'none', 'LineWidth', 1, 'FontSize', 8, 'XLim', [0.1 6.5],...
     'XGrid', 'off', 'YGrid', 'off', 'Box', 'off')
 set(ax, 'XTick', [0.1, 1:6])
 
@@ -273,7 +287,7 @@ set([YLabelHC], 'String', 'Coherence')
 
 set(ax(1,1:end),'YLim',[0 6])
 set(ax(2,1:end-1),'YLim',[0 1])
-set(ax(3,1:end),'YLim',[-150 70])
+set(ax(3,1:end),'YLim',[-150 150])
 set(ax(4,1:end),'YLim',[0 1.5])
 set(ax(5,1:end),'YLim',[0 1])
 set(ax(1:end-1,:), 'XTickLabel', [])

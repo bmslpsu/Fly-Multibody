@@ -10,10 +10,10 @@ load(fullfile(PATH,FILE),'DATA','FUNC','GRAND','FLY','D','I','U','N')
 clc
 clearvars -except FILE DATA ALL GRAND FLY FUNC D I U N root
 
-pI = [1 2 3 4 5 6];
-T = ["ref2body", "ref2head", "ref2gaze", "head2body", "ref2wing", "wing2body"];
-shift_I = {5:8, 7:8, 5:8, 5:8, 5:8, 5:8};
-phase_lim = {[0 0 -50 -220], [0 0 0 0], [0 0 0 0], [0 0 0 0], [0 0 0 0], [0 0 0 0]};
+pI = [1 2 3 4 5 6 7 8];
+T = ["ref2body", "ref2head", "ref2gaze", "head2body", "ref2wing", "wing2body", "error2body", "error2head"];
+shift_I = {5:8, 7:8, 5:8, 5:8, 5:8, 5:8, 5:8, 7:8};
+phase_lim = {[0 0 -50 -220], [0 0 0 0], [0 0 0 0], [0 0 0 0], [0 0 0 0], [0 0 0 0], [0 0 0 0], [nan nan]};
 
 % pI = [1 2 3];
 % T = ["ref2head", "ref2wing", "head2wing"];
@@ -165,7 +165,7 @@ for n = 1:n_plot
 end
 
 set(h.line(1:6,:), 'Marker', '.','MarkerFaceColor', 'none', 'MarkerSize', 15')
-set(ax, 'LineWidth', 1.2, 'FontSize', 10, 'XLim', [0.8 25],...
+set(ax, 'LineWidth', 1.2, 'FontSize', 10, 'XLim', [0.5 25],...
     'XGrid', 'on', 'YGrid', 'on', 'Box', 'on')
 set(ax, 'XTick', [0.1, 1 10])
 

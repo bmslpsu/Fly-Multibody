@@ -24,6 +24,7 @@ T           = 20;
 Fs          = 50;
 res         = 3.75;
 cent        = 45;
+phase       = 0;
 showplot    = true;
 
 F           = [1 9.6];
@@ -32,7 +33,7 @@ F           = linspace(F(1),F(2),N)'; % linearly spaced frequency vector [Hz]
 F           = 0.1*round(F/0.1); % round frequencies to prime harmonics [Hz]
 A           = [9;5;3;2;1];
 
-All = make_sos(T, Fs, res, F, A, [], cent, showplot, root);
+All = make_sos(T, Fs, res, F, A, [], cent, phase, showplot, []);
 
 disp('Freq')
 disp(All.Freq)

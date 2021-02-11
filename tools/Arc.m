@@ -33,10 +33,33 @@ classdef Arc
             %   Construct initial shape
             %
             
+             % Defaults
+            if nargin < 7
+                facealpha = 0.2;;
+                if nargin < 6
+                    color = [0 0 0];
+                    if nargin < 5
+                        flip = false;
+                        if nargin < 4
+                            offset = 20;
+                            if nargin < 3
+                                theta = 0;
+                                if nargin < 2
+                                    L = 1;          
+                                    if nargin < 1
+                                        center = [0 0];
+                                    end
+                                end                                
+                            end
+                        end
+                    end
+                end
+            end
+            
             obj.center      = center;       % center point
             obj.L           = L;            % center point
             obj.theta       = theta;      	% orientation angle (°)
-            obj.offset     	= offset;      	% rotation agle from orientation angle (°)
+            obj.offset     	= offset;      	% rotation angle from orientation angle (°)
             obj.color       = color;       	% patch color
             obj.facealpha   = facealpha;  	% patch face opacity
             obj.flip        = flip;         % flip 0 axis by 180 & change to CW+
@@ -72,11 +95,11 @@ classdef Arc
             %
             if nargin < 3
                 showpoints = false;
+                if nargin < 2
+                    theta = obj.theta;
+                end
             end
-            
-         	if nargin >= 2
-             	obj = update(obj,theta);
-          	end
+         	obj = update(obj,theta);
             
             if ~showpoints
                 pcolor = 'none';

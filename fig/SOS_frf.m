@@ -10,7 +10,7 @@ load(fullfile(PATH,FILE),'DATA','FUNC','GRAND','FLY','D','I','U','N')
 clc
 clearvars -except FILE DATA ALL GRAND FLY FUNC D I U N root
 
-pI = [1 2 3 4];
+pI = [1 2 3 4 5];
 T = ["ref2body", "ref2head", "ref2gaze", "head2body", "ref2wing"];
 
 % pI = [1 2];
@@ -111,7 +111,7 @@ for v = 1:N{1,3}
 end
 
 %% FRF: one condition
-cc = hsv(n_plot);
+cc = jet(n_plot);
 
 fig = figure (1) ; clf
 set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2.2*n_plot 5*2])
@@ -190,7 +190,7 @@ set(ax,'XScale','log')
 align_Ylabels(fig)
 
 %% FRF: all conditions
-cc = hsv(N{1,3});
+cc = 0.9*jet(N{1,3});
 
 fig = figure (2) ; clf
 set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2.2*n_plot 5*2])
@@ -237,9 +237,14 @@ leg = legend(squeeze(h.line(5,end,:)), string(U{1,3}{1}), ...
 leg.Title.String = 'Stimulus speed (°/s)';
 leg.Position = [0.39 0.96 0.18 0.04];
 
-set(h.line(1:4,:,:), 'Marker', '.','MarkerFaceColor', 'none', 'MarkerSize', 11')
-set(ax, 'LineWidth', 1.2, 'FontSize', 10, 'XLim', [0.2 20],...
-    'XGrid', 'on', 'YGrid', 'on', 'Box', 'on')
+% set(h.line(1:4,:,:), 'Marker', '.','MarkerFaceColor', 'none', 'MarkerSize', 11')
+% set(ax, 'LineWidth', 1.2, 'FontSize', 10, 'XLim', [0.2 20],...
+%     'XGrid', 'on', 'YGrid', 'on', 'Box', 'on')
+% set(ax, 'XTick', [0.1, 1 10])
+
+set(h.line(1:4,:,:), 'Marker', '.','MarkerFaceColor', 'none', 'MarkerSize', 10, 'LineWidth', 1)
+set(ax, 'Color', 'none', 'LineWidth', 1, 'FontSize', 10, 'XLim', [0.2 20],...
+    'XGrid', 'off', 'YGrid', 'off', 'Box', 'off')
 set(ax, 'XTick', [0.1, 1 10])
 
 linkaxes(ax, 'x')
@@ -255,7 +260,7 @@ if n_plot == 1
     set(ax(2,1:end),'YLim',[0 1.1])
 else
     set([XLabelHC{:}], 'String', 'Frequency (Hz)')
-    set(ax(2,1:end-1),'YLim',[0 1.1])
+    set(ax(2,1:end-2),'YLim',[0 1.1])
 end
 
 YLabelHC = get(ax(1,1), 'YLabel');
@@ -270,12 +275,17 @@ YLabelHC = get(ax(5,1), 'YLabel');
 set([YLabelHC], 'String', 'Coherence')
 
 set(ax(1,1:end),'YLim',[0 80])
+% set(ax(2,1:end-1),'YLim',[0 1])
 set(ax(3,1:end),'YLim',[-300 200])
 set(ax(4,1:end),'YLim',300*[-1 1])
 set(ax(5,1:end),'YLim',[0 1])
+% set(ax(1:end-1,:), 'XTickLabel', [])
+% set(ax(:,2:end-2), 'YTickLabels', [])
 set(ax(1:end-1,:), 'XTickLabel', [])
+set(ax(:,2:end), 'YTickLabels', [])
 
-set(ax(:,2:end-2), 'YTickLabels', [])
+set(ax(1:end-1,:), 'XColor', 'none')
+set(ax(:,2:end), 'YColor', 'none')
 
 set(ax,'XScale','log')
 align_Ylabels(fig)

@@ -15,7 +15,7 @@ exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-1}; % type of stimuli (vel or pos)
 exp_ver = exp_name{1}{end}; % version of experiment (v1, v2, ...)
 
-% clss = 'position';
+clss = 'position';
 clss = 'velocity';
 filename = ['SS_HeadFree_' exp_typ '_' exp_ver '_' num2str(clss)];
 
@@ -122,9 +122,9 @@ for n = 1:N.file
     Body    = Body - mean(Body);
     Head    = interp1(trig_time, head,  tintrp, 'pchip');
     Head    = filtfilt(b, a, Head);
-    Error   = Reference - Body - Head;
+    %Error   = Reference - Body - Head;
     LWing   = interp1(trig_time, lwing, tintrp, 'pchip');
-    RWing   = -interp1(trig_time, rwing, tintrp, 'pchip');
+    RWing   = interp1(trig_time, rwing, tintrp, 'pchip');
     dWBA    = interp1(trig_time, lwing-rwing, tintrp, 'pchip');
     
     % Detect & remove saccades
@@ -143,15 +143,17 @@ for n = 1:N.file
     DATA.reference{n}       = singal_attributes(Reference, tintrp);
     DATA.body{n}            = singal_attributes(body_scd.shift.IntrpPosition, tintrp, [], n_detrend);
     DATA.head{n}            = singal_attributes(Head, tintrp);
-    DATA.error{n}           = singal_attributes(Error, tintrp);
     DATA.dwba{n}            = singal_attributes(dWBA, tintrp, fc_wing, n_detrend);
-    DATA.lwing{n}           = singal_attributes(LWing, tintrp, fc_wing, []);
-    DATA.rwing{n}           = singal_attributes(RWing, tintrp, fc_wing, []);
+    DATA.lwing{n}           = singal_attributes(LWing, tintrp, fc_wing, n_detrend);
+    DATA.rwing{n}           = singal_attributes(RWing, tintrp, fc_wing, n_detrend);
+    
+    Error                   = DATA.reference{n}.position - DATA.body{n}.position - DATA.head{n}.position;
+    DATA.error{n}           = singal_attributes(Error, tintrp, [], n_detrend);
     
 %     hold on
 %     plot(tintrp, Body, 'k', 'LineWidth', 1)
-%  	plot(tintrp, body_scd.shift.IntrpPosition, 'b', 'LineWidth', 1)
-%   	plot(tintrp, DATA.body{n}.trend, 'g--', 'LineWidth', 1)
+%     plot(tintrp, body_scd.shift.IntrpPosition, 'b', 'LineWidth', 1)
+%     plot(tintrp, DATA.body{n}.trend, 'g--', 'LineWidth', 1)
 %     plot(tintrp, DATA.body{n}.position, 'r', 'LineWidth', 1)
 %     pause
 %     cla
@@ -180,16 +182,20 @@ for n = 1:N.file
     REF = DATA.reference{n}.(clss);
     BODY = DATA.body{n}.(clss);
     HEAD = DATA.head{n}.(clss);
+    ERROR = DATA.error{n}.(clss);
     dWBA = DATA.dwba{n}.position;
-    %LWING = DATA.lwing{n}.(clss);
-    %RWING = DATA.rwing{n}.(clss);
+    LWING = DATA.lwing{n}.position;
+    RWING = DATA.rwing{n}.position;
     
     SYS_ref2_head_body = frf(tintrp, REF , IOFreq, false, BODY, HEAD);
 	SYS_head2_body = frf(tintrp, HEAD, IOFreq, false, BODY);
     SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, dWBA);
     SYS_wing2_body = frf(tintrp, dWBA, IOFreq, false, BODY);
+    SYS_error2_head_body = frf(tintrp, ERROR , IOFreq, false, BODY, HEAD);
+    SYS_ref2_lwingrwing = frf(tintrp, REF , IOFreq, false, LWING, RWING);
 
-    SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_head2_body, SYS_ref2_wing, SYS_wing2_body);
+    SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_head2_body, SYS_ref2_wing, ...
+        SYS_wing2_body, SYS_error2_head_body, SYS_ref2_lwingrwing);
     
     ALL{I.fly(n),I.freq(n)}(end+1,1) = SYS_all;
 end

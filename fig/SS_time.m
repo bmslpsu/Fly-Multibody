@@ -189,7 +189,7 @@ for v = 1:N.freq
                   0, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
     end
     ax(v,1).XLim(1) = -0.05*ax(v,1).XLim(2);
-    plot(func_time_span, FUNC{v}.All.X(func_span), 'k', 'LineWidth', 1)
+    %plot(func_time_span, FUNC{v}.All.X(func_span), 'k', 'LineWidth', 1)
 end
 leg = legend(h.line(end,:), T, 'Box', 'off', 'Location', 'east');
 leg.Position = [0.92 0.84 0.07 0.13];
