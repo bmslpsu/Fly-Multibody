@@ -53,13 +53,13 @@ Fs = 100;
 Fc = 40;
 func_length = 10;
 tintrp = (0:(1/Fs):func_length)';
-debug = true;
+debug = false;
 [b,a] = butter(3, Fc/(Fs/2),'low');
 ALL = cell(N.fly,N{1,4});
 DATA = [D , splitvars(table(num2cell(zeros(N.file,8))))];
 DATA.Properties.VariableNames(5:end) = {'reference','body','head','error',...
     'dwba','lwing','rwing','body_saccade'};
-for n = 2:N.file
+for n = 1:N.file
     %disp(kk)
     disp(basename{n})
     % Load DAQ, body, head, & wing data
@@ -85,7 +85,8 @@ for n = 2:N.file
     rwing = filtfilt(b,a,rwing);
     
     % Get pattern, head, & body anlges
-    pat = 3.75*PAT.pos;
+    pat = 3.75*unwrap_custom(PAT.pos, 50, 1, 96);
+    %pat = 3.75*PAT.pos;
 	head = -data.head.head_data.angle;
     
     % Interpolate so all signals have the same times
@@ -101,7 +102,7 @@ for n = 2:N.file
     Head    = filtfilt(b, a, Head);
     Error   = Reference - Head;
     LWing   = interp1(trig_time, lwing, tintrp, 'pchip');
-    RWing   = -interp1(trig_time, rwing, tintrp, 'pchip');
+    RWing   = interp1(trig_time, rwing, tintrp, 'pchip');
     dWBA    = interp1(trig_time, lwing-rwing, tintrp, 'pchip');
     
     % Store signals
@@ -119,7 +120,7 @@ for n = 2:N.file
         figure (100)
         clear ax
         ax(1) = subplot(1,1,1) ; cla ; hold on
-            plot(tintrp, DATA.reference{n}.position, 'k', 'LineWidth', 1)
+            plot(tintrp, DATA.reference{n}.position, 'k', 'LineWidth', 0.5)
             plot(tintrp, DATA.head{n}.position, 'b', 'LineWidth', 1)
             plot(tintrp, DATA.dwba{n}.position, 'm', 'LineWidth', 1)
             leg = legend('Reference','Head','\DeltaWBA', 'Orientation', 'horizontal');
@@ -189,22 +190,22 @@ end
 %%
 fig = figure (1);
 set(fig, 'Color', 'w', 'Units', 'inches')
-ax = gobjects(N.amp,1);
-cc = hsv(N.amp);
+ax = gobjects(N{1,3},1);
+cc = hsv(N{1,3});
 pp = 1;
 for a = 1:N.freq
     ax(a) = subplot(N.freq,1,pp); cla ; hold on
-    %plot(FUNC{a}.All.time, FUNC{a}.All.X, 'LineWidth', 1, 'Color', 'k')
+    plot(FUNC{a}.All.time, FUNC{a}.All.X, 'LineWidth', 1, 'Color', 'k')
         %plot(squeeze(GRAND.all(a).Time), squeeze(GRAND.all(a).State(:,1,:)), ...
             %'LineWidth', 0.25, 'Color', [0.5 0.5 0.5 0.3])
 %     plot(median(squeeze(GRAND.all(a).Time),2), median(squeeze(GRAND.all(a).State(:,1,:)),2), ...
 %         'LineWidth', 1, 'Color', [cc(a,:) 1])
     scl = median(abs(median(squeeze(GRAND.all(a).State(:,1,:)),2))) / median(abs(median(squeeze(GRAND.all(a).State(:,2,:)),2)));
-    [h1,h2] = PlotPatch(scl*median(squeeze(GRAND.all(a).State(:,5,:)),2), ...
+    [h1,h2] = PlotPatch(median(squeeze(GRAND.all(a).State(:,1,:)),2), ...
         std(squeeze(GRAND.all(a).State(:,5,:)),[],2), ...
         median(squeeze(GRAND.all(a).Time),2),...
         0, 1, [0 0 1], 0.7*[0 0 1], 0.2, 1);
-    [h1,h2] = PlotPatch(median(squeeze(GRAND.all(a).State(:,1,:)),2), ...
+    [h1,h2] = PlotPatch(median(squeeze(GRAND.all(a).State(:,2,:)),2), ...
         std(squeeze(GRAND.all(a).State(:,1,:)),[],2), ...
         median(squeeze(GRAND.all(a).Time),2),...
         0, 1, [1 0 0], 0.7*[1 0 0], 0.2, 1);

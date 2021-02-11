@@ -144,8 +144,8 @@ set(ax, 'XColor', 'none')
 clearvars -except FUNC DATA ALL GRAND FLY D I U N root
 clc
 
-pI = [1];
-T = ["body"];
+pI = [1 2];
+T = ["head", "wing"];
 n_plot = length(pI);
 cc = [0.9 0 0 ; 0 0.4 1 ; 0.5 0.3 1];
 
@@ -181,12 +181,13 @@ for v = 1:N.freq
     %axis tight
   	set(ax(v,1), 'YTick', FUNC{v}.All.Amp*[-1 0 1])
     %set(ax(v,1), 'YLim', FUNC{v}.All.Amp*[-2.5 1.8])
+    plot(func_time_span, FUNC{v}.All.X(func_span), 'k', 'LineWidth', 0.5)
     for n = 1:n_plot
         %plot(time_span, squeeze(GRAND.all(v).refState(span,1,:)), 'k', 'LineWidth', 1)
-        plot(time_span, squeeze(GRAND.all(v).State(data_span,pI(n),:)), 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.25)
-        [h.patch(v,n),h.line(v,n)] = PlotPatch(GRAND.all_trial(v).State.median(data_span,pI(n)),...
-                  GRAND.all_trial(v).State.std(data_span,pI(n)), time_span, ...
-                  0, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
+        plot(time_span, squeeze(GRAND.all(v).State(data_span,pI(n),:)), 'Color', [cc(n,:) 0.5], 'LineWidth', 0.25)
+        %[h.patch(v,n),h.line(v,n)] = PlotPatch(GRAND.all_trial(v).State.median(data_span,pI(n)),...
+                  %GRAND.all_trial(v).State.std(data_span,pI(n)), time_span, ...
+                  %0, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
     end
     ax(v,1).XLim(1) = -0.05*ax(v,1).XLim(2);
     %plot(func_time_span, FUNC{v}.All.X(func_span), 'k', 'LineWidth', 1)

@@ -33,7 +33,7 @@ function [All] = make_sos(T, Fs, res, F, A, norm_vel, cent, Phase, showplot, roo
 % Check inputs
 assert( (length(T) == 1) && (T > 0), '"T" must be a positive scalar')
 assert(all(F > 0), 'Frequencies must be positive')
-assert( (cent/round(cent) == 1) && (cent >=1) && (cent <= 360/res), ...
+assert( ((cent == 0) || (cent/round(cent) == 1)) && (cent >=0) && (cent <= 360/res), ...
     '"cent" must be a positive integer between 0 & 360/res')
 
 freq_res = 1 / T; % frequency resolution
