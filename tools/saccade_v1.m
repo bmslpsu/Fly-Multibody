@@ -29,6 +29,7 @@ classdef saccade_v1
      	nstd_thresh             % # of std's used for detection threshold (nan if manual)
         threshold               % saccade detection threshold (nan if manual)   
        	true_thresh             % cut-off for peak velocity in unfiltered raw signal
+        pks                     % saccade peak locations [indicies] (optional)
         min_pkdist              % minimum peak distance [s]
         min_pkwidth             % minimum peak width [s]
         min_pkprom              % minimum peak promiance
@@ -126,6 +127,8 @@ classdef saccade_v1
                 return
             end
             
+            struct_flag = false;
+            
             if nargin < 12
                 showplot = false; % default: show plots
                 if nargin < 11
@@ -141,13 +144,19 @@ classdef saccade_v1
                                     if nargin < 6
                                         Fc_ss = nan(1,2); % defualt: no filter
                                         if nargin < 5
-                                            Fc_detect = nan(1,2); % defualt: no filter
-                                            if nargin < 4
-                                                true_thresh = [];
-                                                if nargin < 3
-                                                    threshold = [0 1 2 0]; % default: 2 STD's from from absolute velocity median
+                                             if isstruct(threshold) % properties set by structure
+                                               struct_flag = true;
+                                               struct_inputs = threshold;
+                                               showplot = true_thresh;
+                                             else
+                                                Fc_detect = nan(1,2); % defualt: no filter
+                                                if nargin < 4
+                                                    true_thresh = [];
+                                                    if nargin < 3
+                                                        threshold = [0 1 2 0]; % default: 2 STD's from from absolute velocity median
+                                                    end
                                                 end
-                                            end
+                                             end
                                         end
                                     end
                                 end
@@ -157,18 +166,33 @@ classdef saccade_v1
                 end
             end
             
-            obj.sacd_length     = sacd_length;                      % saccade length in time units
-            obj.amp_cut         = amp_cut;                          % saccade amplitude cutoff
-            obj.dur_cut         = dur_cut;                          % saccade duration cutoff
-          	obj.Fc_detect       = Fc_detect;                        % detection filter frequencies
-            obj.Fc_ss           = Fc_ss;                          	% start-stop filter frequencies
-            obj.true_thresh     = true_thresh;                  	% cut-off for peak velocity in raw signal
-            obj.time          	= time(:);                          % time vector
-            obj.direction     	= sign(direction);                	% saccade direction to detect (-1,0,1)
-         	obj.n             	= length(obj.time);                 % # of data points
-            obj.index       	= (1:obj.n)';                     	% index vector
-            obj.Ts           	= mean(diff(obj.time));             % sampling time
-            obj.Fs           	= 1/obj.Ts;                         % sampling frequency
+            if struct_flag
+                fnames = fieldnames(struct_inputs);
+                for n = 1:length(fnames)
+                    obj.(fnames{n}) = struct_inputs.(fnames{n});
+                end
+            else
+                obj.sacd_length     = sacd_length;              % saccade length in time units
+                obj.amp_cut         = amp_cut;                	% saccade amplitude cutoff
+                obj.dur_cut         = dur_cut;               	% saccade duration cutoff
+                obj.Fc_detect       = Fc_detect;               	% detection filter frequencies
+                obj.Fc_ss           = Fc_ss;                 	% start-stop filter frequencies
+                obj.threshold       = threshold;                % detetction threshold
+                obj.true_thresh     = true_thresh;           	% cut-off for peak velocity in raw signal
+                obj.direction     	= sign(direction);       	% saccade direction to detect (-1,0,1)
+                obj.pks           	= pks;                      % saccade peak locations
+                obj.min_pkdist     	= min_pkdist;           	% minimum peak distance
+                obj.min_pkwidth   	= min_pkwidth;            	% minimum peak width
+                obj.min_pkprom     	= min_pkprom;            	% minimum peak promiance
+                obj.min_pkthresh  	= min_pkthresh;           	% minimum height difference between peak and its neighbors
+                obj.boundThresh    	= boundThresh;           	% ratio of peaks to determine start and stop
+            end
+            
+            obj.time          	= time(:);                	% time vector
+            obj.n             	= length(obj.time);       	% # of data points
+            obj.index       	= (1:obj.n)';             	% index vector
+            obj.Ts           	= mean(diff(obj.time));    	% sampling time
+            obj.Fs           	= 1/obj.Ts;               	% sampling frequency
             
             if all(size(position) > 1) % position is multidimensional
              	[obj.position, position_new_filt] = two2one_position(obj, position, [8 nan]); % convert
@@ -189,10 +213,11 @@ classdef saccade_v1
                 filter_lo_hi(obj, position_new_filt, obj.Fc_ss);
             
             % Calculate saccade detcetion threshold
-            obj = calculateThreshold(obj, threshold);
+            obj = calculateThreshold(obj, obj.threshold);
 
             % Detect, isolate, & normalize sacades & inter-saccade intervals
-            obj = detectSaccades(obj, pks, min_pkdist, min_pkwidth, min_pkprom, min_pkthresh, boundThresh);
+            obj = detectSaccades(obj, obj.pks, obj.min_pkdist, obj.min_pkwidth, ...
+                                    obj.min_pkprom, obj.min_pkthresh, obj.boundThresh);
             obj = removeSaccades(obj);
             obj = normSaccade(obj);
             
@@ -412,8 +437,8 @@ classdef saccade_v1
                 locs(locs_rmv) = [];
 
                 % Exclude saccades in very beginning and end of signal
-                %window = round(obj.n*0.005); % window length at start & end to ignore saccades [samples]
-                window = 0;
+                window = round(obj.Fs*0.05); % window length at start & end to ignore saccades [samples]
+                %window = 0;
                 I = (locs > window) & (locs < (obj.n - (window+1))); % saccades inside middle window
                 obj.peaks.index = locs(I);             
                 
@@ -722,7 +747,7 @@ classdef saccade_v1
                 obj.shift = obj.removed_all;
                 obj.shift.Index = obj.index;
                 obj.shift.Time = obj.time;
-                
+                                
                 % Shift position between saccades so data after a saccade
                 % starts where the last saccades ends
                 for ww = 1:obj.count % every saccade
@@ -730,10 +755,23 @@ classdef saccade_v1
                         - ( obj.SACD.EndPos(ww) - obj.SACD.StartPos(ww) );
                 end
                 
+                % If saccades are detected at the start or end of the signal, set extrapolation value
+                first_sacd = find(saccade_idx, 1, 'first');
+                if first_sacd == 1
+                    first_int = obj.shift.Position(find(~saccade_idx, 1, 'first'));
+                    obj.shift.Position(1) = first_int;
+                end
+                
+                last_sacd = find(saccade_idx, 1, 'last');
+                if last_sacd == obj.n
+                    last_int = obj.shift.Position(find(~saccade_idx, 1, 'last'));
+                    obj.shift.Position(obj.n) = last_int;
+                end
+                
                 % Remove nan's for interpolation
-                time_shift = obj.removed_all.Time(~isnan(obj.removed_all.Time));
-                pos_shift  = obj.shift.Position(~isnan(obj.removed_all.Time));
-                %vel_shift  = obj.shift.Velocity(~isnan(obj.removed_all.Time));
+                time_shift = obj.shift.Time(~isnan(obj.shift.Position));
+                pos_shift  = obj.shift.Position(~isnan(obj.shift.Position));
+                %vel_shift  = obj.shift.Velocity(~isnan(obj.shift.Position));
                 
                 % Interpolate between saccades
                 intrp_pos = table( interp1(time_shift, pos_shift, obj.shift.Time, 'spline'),... % interpolate

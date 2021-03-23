@@ -1,7 +1,7 @@
 classdef system_stats
     % system_stats: calculates basic statistics for a matrix along a given
     % dimension ignoring nan's
-    %   Calculates nanmean, nanmedian, nanstd
+    %
     
     properties (SetAccess = private, Hidden = false)
         mean
@@ -15,7 +15,7 @@ classdef system_stats
     methods
         function obj = system_stats(A,dim)
             % system_stats: Construct an instance of this class
-            %   calculate mean, median, std
+            %   
             
             if isnumeric(A)
                 obj.mean        = nanmean(A,dim);

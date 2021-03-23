@@ -5,7 +5,7 @@ function [MOV] = montage_SS(rootdir,rootpat,vidFs,export)
 %   wing tracking,& pattern position
 %
 %   INPUT:
-%       rootdir     : directory containing BENIFLY file
+%       rootdir     : directory containing all files
 %       rootpat     : directory containing PATTERN file
 %       vidFs       : video display FPS
 %       export      : boolean (1=export video to images)
@@ -18,7 +18,8 @@ function [MOV] = montage_SS(rootdir,rootpat,vidFs,export)
 clear ; clc ; close all
 export = true;
 vidFs = 50;
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250';
+% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_amp_3.75';
 rootpat = 'C:\Users\BC\Box\Git\Arena\Patterns';
 
 if ~isfolder(rootdir)
@@ -40,6 +41,7 @@ end
 % Create data paths
 PATH.raw            = rootdir;
 PATH.reg            = fullfile(PATH.raw,'registered');
+PATH.func        	= fullfile(PATH.raw,'function');
 PATH.body_track  	= fullfile(PATH.raw,'tracked_body');
 PATH.head_track     = fullfile(PATH.reg,'tracked_head_tip');
 PATH.beninfly_track	= fullfile(PATH.reg,'tracked_head_wing');
@@ -49,6 +51,8 @@ if dirflag
     % Select tracked angle file (use head tracked files to select)
     [FILE.raw, PATH.head_track] = uigetfile({'*.mat'}, ...
         'Select fly file', PATH.head_track, 'MultiSelect','off');
+    [FILE.func, PATH.func] = uigetfile({'*.mat'}, ...
+        'Select function file', PATH.func, 'MultiSelect','off');
 else
     FILE.raw = [mainfile , mainext];
 end
@@ -60,7 +64,7 @@ mkdir(PATH.mov) % create directory for export images
 % Set file names
 [~,FILE.basename,~] = fileparts(FILE.raw);
 FILE.benifly   	= [FILE.basename '.csv'];
-FILE.montage    = [FILE.basename '_montage.mp4'];
+FILE.montage    = [FILE.basename '_montage_gaze.mp4'];
 FILE.mask       = [FILE.basename '.json'];
 
 % Get experiment attributes
@@ -70,6 +74,7 @@ amp = str2double(temp{1}{8});
 
 % Load data
 disp('Loading Data ...')
+func_data       = load(fullfile(PATH.func,FILE.func),'All'); % load function
 pattern_data    = load(fullfile(PATH.pat,FILE.pat),'pattern'); % load pattern
 benifly_data    = ImportBenifly(fullfile(PATH.beninfly_track,FILE.benifly)); % load Benifly tracked kinematics
 raw_data        = load(fullfile(PATH.raw,FILE.raw),'data','t_p','vidData','t_v'); % load raw video & DAQ pattern positions
@@ -108,14 +113,17 @@ FLY.int_head    = FLY.head(TRIG.range);
 FLY.int_lwing 	= FLY.lwing(TRIG.range);
 FLY.int_rwing  	= FLY.rwing(TRIG.range);
 FLY.int_wba     = FLY.wba(TRIG.range);
+FLY.int_gaze  	= FLY.int_body + FLY.int_head;
 
-Fc_pat = 20;
-[b,a] = butter(3, Fc_pat/(FLY.Fs/2), 'low'); % make lpf
-pat_filt = filtfilt(b, a, 3.75*PAT.pos_intrp_exp);
-PAT.norm = pat_filt - mean(pat_filt);
+% Fc_pat = 12;
+% [b,a] = butter(3, Fc_pat/(FLY.Fs/2), 'low'); % make lpf
+% pat_filt = filtfilt(b, a, 3.75*PAT.pos_intrp_exp);
+% PAT.norm = pat_filt - mean(pat_filt);
 % scale_up = 2*15 / range(pat_filt);
 % PAT.norm = scale_up * (pat_filt - mean(pat_filt));
 % PAT.norm = PAT.norm - PAT.norm(1);
+
+PAT.norm = interp1(func_data.All.time, func_data.All.X, FLY.int_time , 'pchip');
 pat_ylim = 10*[floor(min(PAT.norm)./10) ceil(max(PAT.norm)./10)];
 pat_ypos = round(12*( median(raw_data.data(:,3)) / 10));
 
@@ -187,7 +195,7 @@ set(FIG, 'Color', 'k', 'Renderer', 'OpenGL','Position', 0.8*[100, 100, 1.75*16*4
 linewidth = 1.25; % displayed line width
 fontsize = 12;
     
-clear ax ax_pat
+clear h ax ax_pat h_gaze
 ax(1) = subplot(16,2,1:2:15) ; cla; hold on; axis square % for raw fly & pattern vid
         title('Arena Frame','Color','w','FontSize', 1.2*fontsize)
         ax(1).XLim = [-pat_win(1) pat_win(1)+FLY.raw_xP];
@@ -208,9 +216,11 @@ ax(3) = subplot(16,2,(16+1):(16+4))  ; cla ; hold on
         ylabel('Stimulus (°)','Color','w','FontSize',fontsize)
      	h.pat = animatedline('Color','g','LineWidth',linewidth); % for pattern angle
 ax(4) = subplot(16,2,(16+4+1):(16+2*4)) ; cla; hold on
+        %ylabel({'Body (°)','Gaze (°)'},'Color','w','FontSize',fontsize)
         ylabel('Body (°)','Color','w','FontSize',fontsize)
     	xlabel('Time (s)','Color','w','FontSize',fontsize)
         h.body = animatedline('Color','r','LineWidth',linewidth); % for body angle
+        h.gaze = animatedline('Color',[0.3 0.1 0.8],'LineWidth',linewidth); % for gaze angle
 ax(5) = subplot(16,2,(16+2*4+1):(16+3*4)) ; cla; hold on
         ylabel('Head (°)','Color','w','FontSize',fontsize)
         h.head = animatedline('Color','c','LineWidth',linewidth); % for head angle
@@ -226,8 +236,8 @@ set(ax(end),'XTick', 0:2:round(FLY.int_time(end)))
 set(ax(3:end-1), 'XTickLabel', [], 'XColor', 'none')
 % set(ax(5), 'YLim', 7*[-1 1], 'YTick', 5 *[-1 0 1])
 % set(ax(6), 'YLim', 7*[-1 1], 'YTick', 5 *[-1 0 1])
-dwba_ylim = 5*ceil(max(abs(FLY.int_wba))./5);
-head_ylim = 5*ceil(max(abs(FLY.int_head))./5);
+dwba_ylim = 5*ceil(max(abs(FLY.int_wba - median(FLY.int_wba)))./5);
+head_ylim = 5*ceil(max(abs(FLY.int_head - median(FLY.int_wba)))./5);
 set(ax(6), 'YLim', dwba_ylim*[-1 1], 'YTick', (dwba_ylim)*[-1 0 1])
 set(ax(5), 'YLim', (head_ylim)*[-1 1], 'YTick', head_ylim*[-1 0 1])
 set(ax(3), 'YLim', pat_ylim)
@@ -244,6 +254,8 @@ iter = round(FLY.Fs/vidFs); % # of frames to skip per iteration to acheive desir
 expframe = circshift(mod(1:FLY.nframe,iter)==1,0); % which frames to export
 pat_image = 255*pattern_data.pattern.Pats(1,:,1,pat_ypos);
 bright_scale = 1.3;
+h_gaze(1) = Arc(FLY.head_hinge, 165, 0, 25, false, [0.3 0.1 0.8], 0.4);
+h_gaze(2) = Arc(FLY.head_hinge, 165, 0, 25, true, [0.3 0.1 0.8], 0.4);
 disp('Exporting Video...')
 tic
 for jj = 1:FLY.nframe
@@ -255,8 +267,10 @@ for jj = 1:FLY.nframe
         else
             win = jj;
         end
-        Frame.raw = uint8(round(bright_scale*mean(FLY.raw(:,:,win), 3))); % raw frame
-        Frame.reg = uint8(round(1*mean(FLY.reg(:,:,win), 3))); % registered frame
+        %Frame.raw = uint8(round(bright_scale*mean(FLY.raw(:,:,win), 3))); % raw frame
+        %Frame.reg = uint8(round(1*mean(FLY.reg(:,:,win), 3))); % registered frame
+        Frame.raw = imadjust(median(FLY.raw(:,:,win), 3)); % raw frame
+        Frame.reg = imadjust(median(FLY.reg(:,:,win), 3)); % registered frame
         pat_pos = 3.75*(mean(PAT.pos_intrp_exp(win)));
         
         % Display raw video
@@ -287,6 +301,12 @@ for jj = 1:FLY.nframe
         % Display registered video
         set(FIG, 'CurrentAxes', ax(2)); cla; hold on; axis image
             imshow(Frame.reg)
+            
+            %[h_gaze,~] = show_gaze(FLY.head_hinge, 150, 60, 180 - mean(FLY.int_head(win)), [0.5 0.1 1]);
+            %h_gaze{1}.FaceAlpha = 0.5;
+            %h_gaze{1}.EdgeColor = 'none';
+            %draw(h_gaze(1), mean(FLY.int_head(win)) - 90);
+            %draw(h_gaze(2),  -90 - mean(FLY.int_head(win)));
             
           	plot([FLY.head_hinge(1), mean(FLY.head_tip(win,1))], ... % update line drawn to head
                  [FLY.head_hinge(2), mean(FLY.head_tip(win,2))], 'Color', 'c', 'LineWidth', 1.5)
@@ -320,14 +340,14 @@ for jj = 1:FLY.nframe
     % Body plot
     set(FIG, 'CurrentAxes', ax(4))
         addpoints(h.body, FLY.int_time(jj), FLY.int_body(jj))
-        
+        %addpoints(h.gaze, FLY.int_time(jj), FLY.int_gaze(jj))
     % Head plot
     set(FIG, 'CurrentAxes', ax(5))
         addpoints(h.head, FLY.int_time(jj), FLY.int_head(jj))
         
    	% WBA plot
 	set(FIG, 'CurrentAxes', ax(6))
-        addpoints(h.wba, FLY.int_time(jj), FLY.int_wba(jj))
+        addpoints(h.wba, FLY.int_time(jj), FLY.int_wba(jj) - median(FLY.int_wba))
         
     drawnow
     

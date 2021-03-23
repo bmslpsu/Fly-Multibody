@@ -19,7 +19,7 @@ All.head = splitapply(@(x) {cat(2,x{:})}, cellfun(@(x) x.mag.(clss), DATA.head, 
 All.dwba = splitapply(@(x) {cat(2,x{:})}, cellfun(@(x) x.mag.(clss), DATA.dwba, ...
     'UniformOutput', false), wave_fly_group);
 
-All = structfun(@(x) splitapply(@(y) {y}, x, wave_group), All, 'UniformOutput', false);
+All = structfun(@(x) splitapply(@(y) {y}, x, findgroups(wave_group)), All, 'UniformOutput', false);
 All = structfun(@(x) cat(2,x{:}), All, 'UniformOutput', false);
 
 All.fly_stats = structfun(@(x) cellfun(@(y) basic_stats(y,2), x, 'UniformOutput', true), ...

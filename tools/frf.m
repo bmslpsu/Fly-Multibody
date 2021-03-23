@@ -1,27 +1,64 @@
 function [SYSTEM] = frf(time,ref,IOFv,debug,varargin)
-%% frf: calculates weights of redundant actuation in frequency domain
+%% frf: calculates frequency response
 %
 %   INPUT:
-%       time   	:   time vector
-%       ref     :	reference input
-%       IOFv   	:	input-output frequncies present in data (leave empty to automatically detect)
+%       time        :   time vector or sampling frequency
+%       ref         :	reference input
+%       IOFv        :	input-output frequncies present in data (leave empty to automatically detect)
+%       varargin    :   outputs
 %
 %   OUTPUT:
 %       SYSTEM 	:   structure with system ID attributes
+%           Names           - names of inputs states
+%           Time            - time vector
+%           State           - state matrix (one state per column)
+%           Fv              - full frequency vector from chirp-z trasnform [Hz]
+%           IOFv            - frequency vector at frequencies where FRF is defined [Hz]
+%           refName         - reference (input) name
+%           refState        - reference state
+%           refFreq         - reference complex chirp-z trasnform output
+%           refMag          - reference chirp-z trasnform magnitude
+%           refPhase        - reference chirp-z transform phase [rad]
+%           refIOFreq       - reference complex chirp-z trasnform output at IO frequencies
+%           refIOMag        - reference chirp-z trasnform magnitude at IO frequencies
+%           refIOPhase      - reference chirp-z transform phase at IO frequencies [rad]
+%           Freq            - state complex chirp-z trasnform output
+%           Mag             - state chirp-z trasnform magnitude
+%         	Phase           - state chirp-z transform phase [rad]
+%           IOFreq          - state complex chirp-z trasnform output at IO frequencies
+%           IOMag           - state chirp-z trasnform magnitude at IO frequencies
+%         	IOPhase         - state chirp-z transform phase at IO frequencies [rad]
+%         	FRF             - reference to state (input-output) complex response
+%         	Gain            - state chirp-z transform phase at IO frequencies
+%         	PhaseDiff       - state chirp-z transform phase at IO frequencies [rad]
+%         	IOFRF           - reference to state (input-output) complex response at IO frequencies
+%         	IOGain          - state chirp-z transform phase at IO frequencies
+%         	IOPhaseDiff  	- state chirp-z transform phase at IO frequencies [rad]
+%         	IOFRF_TimeDiff	- state chirp-z transform time difference (calculated from phase) at IO frequencies [rad]
+%         	IOFRF_error     - state chirp-z error (from 1 + 0i) at IO frequencies
+%         	Cohr            - state coherence
+%         	IOCohr         	- state coherence at IO frequencies
+%         	IOWeight      	- ratio of gains of input states over the total sum of the gains at IO frequencies
+%         	IORatio        	- state coherence at IO frequencies
 %
-%   Usage: frf(time ,ref, IOFv, input_1, input_2, ... , input_n)
+%   Usage: SYSTEM = frf(time ,ref, IOFv, input_1, input_2, ... , input_n)
 %
 
-ftol = 0.01;
+ftol = 0.01; % tolerance for finding peaks in frequency domain
+IOFv = IOFv(:); % input-output frequncies
 
-IOFv    = IOFv(:);
-nState  = length(varargin);     % # of output states
-nPoint  = length(time);         % # of data points in time domain
-nFpoint = ceil(nPoint/2);       % # of data points in frequency domain
-Fs      = 1/mean(diff(time));   % sampling rate [Hz]
+% Store inputs in cells as column vectors
+State = cellfun(@(x) x(:),varargin,'UniformOutput',false);
+State = cat(2,State{:});
+[nPoint,nState] = size(State); % # of data points in time domain & number of input states
+nFpoint = ceil(nPoint/2); % # of data points in frequency domain
 
-State = cellfun(@(x) x(:),varargin,'UniformOutput',false); % store inputs in cells as column vectors
-State = cat(2,State{:}); % store inputs in cells as column vectors
+% Sampling rate [Hz]
+if length(time)==1 % directly given
+    Fs = time;   
+else % from time vector
+    Fs = 1 / mean(diff(time));
+end
 
 % Last state is the sum of all states if more than 1 state
 if size(State,2) > 1
@@ -44,12 +81,10 @@ end
 
 % Convert reference to frequency domain
 refName = string(inputname(2));
-% [refFv, refMag, refPhase, refFv] = FFT(time,ref);
 [refFreq, refFv, refMag, refPhase] = chirpz(ref,Fs,0,Fs/2);
 [~, refIOMag, refIOPhase, IOidx] = getfreqpeaks(refFv, refMag, refPhase, IOFv, ftol, false);
 refIOFreq = refFreq(IOidx);
-nIO = length(IOFv);  % # of frequencies present
-freqCmap = hsv(nIO); % colormap across frequenncies
+nIO = length(IOFv);  % # of IO frequencies present
 
 % Convert state outputs to frequency domain & calculate coherence
 Mag     = nan(nFpoint,nState);
@@ -81,7 +116,7 @@ IOGain              = IOMag ./ refIOMag;
 IOPhaseDiff         = IOPhase - refIOPhase;
 IOFRF_Gain          = abs(IOFRF);
 IOFRF_PhaseDiff     = angle(IOFRF);
-
+IOFRF_error        	= abs((1 + 0i) - IOFRF);
 lim1 = deg2rad(120);
 lim2 = deg2rad(300);
 
@@ -113,21 +148,21 @@ SYSTEM.IOFv             = IOFv;
 SYSTEM.refName          = refName;
 SYSTEM.refState         = ref;
 SYSTEM.refFreq          = refFreq;
-SYSTEM.refMag           = refMag;
-SYSTEM.refPhase     	= refPhase;
+SYSTEM.refMag        	= refMag;
+% SYSTEM.refPhase     	= refPhase;
 SYSTEM.refIOFreq     	= refIOFreq;
 SYSTEM.refIOMag       	= refIOMag;
-SYSTEM.refIOPhase       = refIOPhase;
+% SYSTEM.refIOPhase    	= refIOPhase;
 
 SYSTEM.Freq             = Freq;
 SYSTEM.Mag              = Mag;
-SYSTEM.Phase            = Phase;
+% SYSTEM.Phase            = Phase;
 SYSTEM.IOFreq         	= IOFreq;
 SYSTEM.IOMag            = IOMag;
-SYSTEM.IOPhase      	= IOPhase;
+% SYSTEM.IOPhase      	= IOPhase;
 
 % SYSTEM.Gain             = Gain;
-% SYSTEM.PhaseDiff       	= PhaseDiff;
+% SYSTEM.PhaseDiff        = PhaseDiff;
 % SYSTEM.FRF              = FRF;
 % SYSTEM.FRF_Gain         = FRF_Gain;
 % SYSTEM.FRF_PhaseDiff    = FRF_PhaseDiff;
@@ -137,6 +172,7 @@ SYSTEM.IOFRF            = IOFRF;
 SYSTEM.IOFRF_TimeDiff   = IOFRF_TimeDiff;
 % SYSTEM.IOFRF_Gain       = IOFRF_Gain;
 % SYSTEM.IOFRF_PhaseDiff  = IOFRF_PhaseDiff;
+SYSTEM.IOFRF_error      = IOFRF_error;
 
 SYSTEM.Cohr             = Cohr;
 SYSTEM.IOCohr           = IOCohr;
@@ -152,6 +188,7 @@ if debug
     plotOrder = fliplr(plotOrder);
     
     % Define colors
+    freqCmap    = hsv(nIO); % colormap across frequenncies
     fullColor   = [0.3 0.1 0.7];            % full state color
     cmap        = [1 0 0;0 0 1;fullColor]; 	% color map
     stimColor   = [0 1 0];                 	% stimulus color

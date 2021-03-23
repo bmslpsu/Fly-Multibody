@@ -98,6 +98,7 @@ TRIG.start_time        	= TRIG.time_sync(TRIG.start_idx); % start time
 TRIG.end_time          	= TRIG.time_sync(TRIG.end_idx); % end time
 TRIG.time_sync_exp     	= TRIG.time_sync(TRIG.start_idx:TRIG.end_idx); % frames during experiment.
 
+
 PAT.pos_interp          = interp1(PAT.time_sync, PAT.pos, ... % interpolate pattern to match trigger
                                     TRIG.time_sync, 'nearest');
 PAT.pos_exp             = PAT.pos_interp(TRIG.start_idx:TRIG.end_idx); % frames during experiment
