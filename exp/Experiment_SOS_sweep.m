@@ -5,10 +5,11 @@ daqreset
 imaqreset
 % Fn = 0;
 %% Set directories & experimental parameters
-root = 'C:\BC\Experiment_SOS_amp_v3_head_fixed';
-val = [1 2 3]'; % amplitude of each SOS function in order in PControl
-% val = [42 70 95]'; % amplitude of each SOS function in order in PControl
-name = 'amp'; % name of identifier at end of file name
+% root = 'C:\BC\Experiment_SOS_amp_v3_head_fixed';
+root = 'C:\BC\Experiment_SOS_vel_v2_body_fixed';
+% val = [1 2 3]'; % amplitude of each SOS function in order in PControl
+val = [42 70 95]'; % amplitude of each SOS function in order in PControl
+name = 'vel'; % name of identifier at end of file name
 
 %% EXPERIMENTAL PARAMETERS
 n_tracktime = 20 + 1;     	% length(func)/fps; seconds for each EXPERIMENT
@@ -72,8 +73,8 @@ for ii = 1:n_trial
     Panel_com('stop')
     
     % Set AO trigger to 0
- 	queueOutputData(s,zeros(5000,1)) % set trigger AO signal to 0
-    [~,~] = s.startForeground; % data collection
+ 	queueOutputData(s,zeros(5000,1))
+    [~,~] = s.startForeground;
     
     pause(1) % pause between buffer & experiment
     

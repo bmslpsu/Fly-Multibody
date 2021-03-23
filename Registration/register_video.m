@@ -59,7 +59,8 @@ sz      = imref2d(size(fixed));
 tic
 for n = 1:dim(3)
     fprintf([int2str(n) '\n'])
-    frame = double(medfilt2(imadjust(regvid(:,:,n)), [3 3]));
+    %frame = double(medfilt2(imadjust(regvid(:,:,n)), [3 3]));
+    frame = double(regvid(:,:,n));
     if n == 1
         trf{n} = imregtform(frame, fixed, 'rigid', optimizer, metric);
     else

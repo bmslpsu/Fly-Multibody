@@ -5,15 +5,21 @@ daqreset
 imaqreset
 % Fn = 0;
 %% Set directories & experimental parameters
-root = 'C:\BC\Experiment_SS_vel_250';
-val = [3.75 7.5 11.25 18.75 26.25 41.25 60]'; % amplitude of each SS function in order in PControl
-freq = [10.6 5.3 3.5 2.1 1.5 1 0.7]'; % amplitude of each SS function in order in PControl
-name = 'amp'; % name of identifier at end of file name
+% root = 'C:\BC\Experiment_SS_vel_250';
+root = 'C:\BC\Experiment_SS_vel_250_body_fixed';
+% root = 'C:\BC\Experiment_SS_amp_3.75';
+% root = 'C:\BC\Experiment_SS_amp_3.75_body_fixed';
+val = [11.25 18.75 26.25 3.75 41.25 60 7.5]'; % amplitude of each SS function in order in PControl
+freq = [3.5 2.1 1.5 10.6 1 0.7 5.3]'; % frequency of each SS function in order in PControl
+% val = 3.75*ones(8,1); % amplitude of each SS function in order in PControl
+% freq = [1 12 15 18 21 3 6 9]'; % frequency of each SS function in order in PControl
+
+name = 'vel'; % name of identifier at end of file name
 
 %% EXPERIMENTAL PARAMETERS
 n_tracktime = 10 + 1;     	% length(func)/fps; seconds for each EXPERIMENT
 n_pause = 0.2;              % seconds for each pause between panel commands
-n_rep = 20;                 % # of repetitions
+n_rep = 10;                 % # of repetitions
 patID = 1;                  % pattern ID
 yPos = 5;                   % 30 deg spatial frequency
 xUpdate = 400;           	% function update rate
@@ -67,7 +73,9 @@ n_trial = n_rep * n_func;
 %% EXPERIMENT LOOP
 disp('Start Experiment:')
 for ii = 1:n_trial
-    fprintf('Trial: %i   Amp = %i \n', ii, val_all(ii))
+    %fprintf('Trial: %i   Amp = %i \n', ii, val_all(ii))
+    disp(['Trial: ' num2str(ii) '    Amp = ' num2str(val_all(ii)) ...
+        '    Freq = ' num2str(freq_all(ii))])
     preview(vid) % open video preview window
     
     Panel_com('stop')
@@ -82,7 +90,7 @@ for ii = 1:n_trial
     disp('Play Stimulus:')
     Panel_com('set_pattern_id', patID);	% set pattern
     pause(n_pause)
-    Panel_com('set_position', [1, yPos]); % set starting position (xpos,ypos)
+    Panel_com('set_position', [4, yPos]); % set starting position (xpos,ypos)
     pause(n_pause)
     Panel_com('set_posfunc_id',[1,func_all(ii)]); % arg1 = channel (x=1,y=2); arg2 = funcID
     pause(n_pause)
@@ -110,7 +118,7 @@ for ii = 1:n_trial
   	disp(['Fs = ' num2str(Fs)])
     
     % SPIN BUFFER
-    Arena_Ramp(1,10)
+    Arena_Ramp(1,4)
     
     % SAVE DATA
     disp('Saving...')
