@@ -77,9 +77,9 @@ startI = round(5000*0.5);
 tintrp = (0:(1/Fs):func_length)';
 debug = false;
 [b,a] = butter(3, Fc/(Fs/2),'low');
-DATA = [D , splitvars(table(num2cell(zeros(N.file,10))))];
-DATA.Properties.VariableNames(4:end) = {'reference','body','body_detrend','head','error',...
-    'dwba','lwing','rwing','body_saccade','head_saccade'};
+DATA = [D , splitvars(table(num2cell(zeros(N.file,11))))];
+DATA.Properties.VariableNames(4:end) = {'reference','body','body_raw','head','error',...
+    'dwba','lwing','rwing','body2head','body_saccade','head_saccade'};
 for n = 1:N.file
     %disp(kk)
     disp(basename{n})
@@ -135,13 +135,18 @@ for n = 1:N.file
     DATA.body_saccade{n}    = body_saccade;
     DATA.head_saccade{n}    = head_saccade;
     DATA.reference{n}       = nan;
-    DATA.body_detrend{n} 	= singal_attributes(body_saccade.shift.IntrpPosition, tintrp, n_detrend);
-    DATA.body{n}            = singal_attributes(Body, tintrp);
+    DATA.body{n}            = singal_attributes(body_saccade.shift.IntrpPosition, tintrp, [], n_detrend);
+    DATA.body_raw{n}      	= singal_attributes(Body, tintrp);
     DATA.head{n}            = singal_attributes(Head, tintrp, []);
     DATA.error{n}           = nan;
     DATA.dwba{n}            = singal_attributes(dWBA, tintrp, [], n_detrend);
     DATA.lwing{n}           = singal_attributes(LWing, tintrp, [], n_detrend);
     DATA.rwing{n}           = singal_attributes(RWing, tintrp, [], n_detrend);
+    
+    body2head.coherence = mscohere(DATA.body{n}.position, DATA.head{n}.position, ...
+                                            [], [], DATA.body{n}.Fv, Fs);
+    DATA.body2head{n} = body2head;
+    
     
     % Debug plot
     if debug

@@ -1,5 +1,5 @@
-function [] = make_head_free_magno_SOS(rootdir)
-%% make_head_free_magno_SOS:
+function [] = make_head_free_magno_SOS_noWing(rootdir)
+%% make_head_free_magno_SOS_noWing:
 %
 %   INPUTS:
 %       rootdir    	:   root directory
@@ -9,22 +9,14 @@ function [] = make_head_free_magno_SOS(rootdir)
 %
 warning('off', 'signal:findpeaks:largeMinPeakHeight')
 
-clss = 'position';
-% clss = 'velocity';
-
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2';
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_amp_v3';
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_52';
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_52_wing_damage';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_52';
 exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-1}; % type of stimuli (vel or pos)
 exp_ver = exp_name{1}{end}; % version of experiment (v1, v2, ...)
-filename = ['SOS_HeadFree_' exp_typ '_' exp_ver '_' num2str(clss)];
 
-% For wing damage
-exp_typ = exp_name{1}{end-3}; % type of stimuli (vel or pos)
-exp_ver = exp_name{1}{end-2}; % version of experiment (v1, v2, ...)
-filename = ['SOS_HeadFree_' exp_typ '_' exp_ver '_' '_wing_damage_' num2str(clss)];
+% clss = 'position';
+clss = 'velocity';
+filename = ['SOS_HeadFree_' exp_typ '_' exp_ver '_' num2str(clss) '_WAEL'];
 
 %% Setup Directories %%
 root.base = rootdir;
@@ -45,7 +37,7 @@ for f = 1:n_cond
 end
 
 % Select files
-[D,I,N,U,T,~,~,basename] = GetFileData(root.body,'*.mat',false);
+[D,I,N,U,T,~,~,basename] = GetFileData(root.head,'*.mat',false);
 % [D,I,N,U,T,~,~,basename] = GetFileData(root.benifly,'*.csv',false);
 
 %% Get Data %%
@@ -53,7 +45,7 @@ close all
 clc
 
 % Body saccade detection parameters
-scd.threshold = [20, 1, 3, 0];
+scd.thresh = [20, 1, 3, 0];
 scd.true_thresh = 220;
 scd.Fc_detect = [40 nan];
 scd.Fc_ss = [20 nan];
@@ -86,8 +78,6 @@ for n = 1:N.file
 	data.daq = load(fullfile(root.base,  [basename{n} '.mat']),'data','t_p'); % load camera trigger & pattern x-position
     data.body = load(fullfile(root.body, [basename{n} '.mat']),'bAngles'); % load body angles
 	data.head = load(fullfile(root.head, [basename{n} '.mat']),'head_data'); % load head angles
- 	data.benifly = ImportBenifly(fullfile(root.benifly, ...  % load head & wing angles from Benifly
-                            [basename{n} '.csv']));
     
     % Get synced frame times and pattern data
     daq_time    = data.daq.t_p;
@@ -96,15 +86,7 @@ for n = 1:N.file
     [TRIG,PAT]  = sync_pattern_trigger(daq_time, daq_pattern, func_length, ...
                         trigger, true, [], false, false);
     trig_time   = TRIG.time_sync;
-    
-  	% Filter wing angles
-    lwing = rad2deg(data.benifly.LWing);
-    rwing = rad2deg(data.benifly.RWing);
-    lwing = hampel(data.benifly.Time, lwing);
-    rwing = hampel(data.benifly.Time, rwing);
-	lwing = filtfilt(b,a,lwing);
-    rwing = filtfilt(b,a,rwing);
-    
+        
     % Get pattern, head, & body anlges
     pat = 3.75*PAT.pos;
     body = data.body.bAngles;
@@ -121,12 +103,12 @@ for n = 1:N.file
     Body    = Body - mean(Body);
     Head    = interp1(trig_time, head,  tintrp, 'pchip');
     Head    = filtfilt(b, a, Head);
-    LWing   = interp1(trig_time, lwing, tintrp, 'pchip');
-    RWing   = interp1(trig_time, rwing, tintrp, 'pchip');
-    dWBA    = interp1(trig_time, lwing-rwing, tintrp, 'pchip');
     
     % Detect & remove saccades
-    body_scd = saccade_v1(Body, tintrp, scd, false);
+    body_scd = saccade_v1(Body, tintrp, scd.thresh, scd.true_thresh, scd.Fc_detect, ...
+                            scd.Fc_ss, scd.amp_cut, scd.dur_cut , scd.direction, scd.pks, ...
+                            scd.sacd_length, scd.min_pkdist, scd.min_pkwidth, scd.min_pkprom, ...
+                            scd.min_pkthresh, scd.boundThresh, false);
     
     % Store signals
     n_detrend = 5;
@@ -134,9 +116,6 @@ for n = 1:N.file
     DATA.reference{n}       = singal_attributes(Reference, tintrp);
     DATA.body{n}            = singal_attributes(body_scd.shift.IntrpPosition, tintrp, [], n_detrend);
     DATA.head{n}            = singal_attributes(Head, tintrp, [], n_detrend);
-    DATA.dwba{n}            = singal_attributes(dWBA, tintrp, 20, n_detrend);
-    DATA.lwing{n}           = singal_attributes(LWing, tintrp, 20);
-    DATA.rwing{n}           = singal_attributes(RWing, tintrp, 20);
     
     Error                   = DATA.reference{n}.position - DATA.body{n}.position - 0*DATA.head{n}.position;
 	DATA.error{n}           = singal_attributes(Error, tintrp);
@@ -176,18 +155,12 @@ for n = 1:N.file
     BODY = DATA.body{n}.(clss);
     HEAD = DATA.head{n}.(clss);
     ERROR = DATA.error{n}.(clss);
-    dWBA = DATA.dwba{n}.(clss);
-    %LWING = DATA.lwing{n}.(clss);
-    %RWING = DATA.rwing{n}.(clss);
 
     SYS_ref2_head_body = frf(tintrp, REF , IOFreq, false, BODY, HEAD);
 	SYS_body2_head = frf(tintrp, BODY, IOFreq, false, HEAD);
-    SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, dWBA);
-    SYS_wing2_body = frf(tintrp, dWBA, IOFreq, false, BODY);
- 	SYS_err2_head_body = frf(tintrp, ERROR, IOFreq, false, BODY, HEAD);
+ 	SYS_err2_body = frf(tintrp, ERROR, IOFreq, false, BODY);
     
-	SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_body2_head, SYS_ref2_wing, ...
-                                    SYS_wing2_body, SYS_err2_head_body);
+	SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_body2_head, SYS_err2_body);
     
     ALL{I.fly(n),I{n,3}}(end+1,1) = SYS_all;
 end

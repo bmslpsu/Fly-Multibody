@@ -27,8 +27,8 @@ end
 n_val = size(stats{1}.lwing,2);
 
 %% Combine experiments
-names = ["swba", "lwing", "rwing", "dwba", "head"];
-names = ["head"];
+% names = ["swba", "lwing", "rwing", "dwba", "head"];
+names = ["head","dwba"];
 n_name = length(names);
 for f = 1:n_name
     fly_stats.(names(f)) = cell(1,n_val);
@@ -138,18 +138,18 @@ set(ax(:,2:end), 'YColor', 'none')
 
 %% All data points comparison
 fig = figure (3) ; clf
-set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 3*n_val 2*n_name])
+set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2*n_val 2*n_name])
 movegui(fig, 'center')
 ax = gobjects(n_name,n_val);
 h = gobjects(n_name, n_val, n_file);
 pp = 1;
 % h_bins = {30:0.5:150, 15:0.5:75, 15:0.5:75, -10:0.1:10, -25:0.1:25};
-h_bins = {-25:0.1:25};
+h_bins = {-25:0.1:25, -20:0.1:20};
 cmap = jet(n_file+2);
 for f = 1:n_name
     for v = 1:n_val
         ax(f,v) = subplot(n_name,n_val,pp); cla ; hold on
-        title(['p = ' num2str(P.all(f,v))])
+        title(['p = ' num2str(F.all(f,v))])
         if v == 1
            xlabel([char(names(f)) ' (°)']) 
         end
@@ -177,7 +177,58 @@ end
 leg = legend(labels, 'Box', 'off', 'Interpreter', 'none');
 leg.Position = [0.25 0.95 0.45 0.05];
 
-set(ax, 'Color', 'none', 'LineWidth', 1.5, 'XColor', 'k')
+set(ax, 'Color', 'none', 'LineWidth', 0.75, 'XColor', 'k')
+for f = 1:n_name
+    linkaxes(ax(f,:), 'xy')
+end
+% linkaxes(ax(2:3,:), 'xy')
+set(ax(:,2:end), 'YColor', 'none')
+
+% YLabelHC = get(ax(:,1), 'YLabel');
+% set([YLabelHC{:}], 'String', 'Probability')
+
+%% All data points comparison new
+fig = figure (4) ; clf
+set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2*n_name 2*n_val])
+movegui(fig, 'center')
+ax = gobjects(n_val, n_name);
+h = gobjects(n_val, n_name, n_file);
+pp = 1;
+% h_bins = {30:0.5:150, 15:0.5:75, 15:0.5:75, -10:0.1:10, -25:0.1:25};
+h_bins = {-25:0.1:25, -20:0.1:20};
+cmap = jet(n_file+2);
+for f = 1:n_val
+    for v = 1:n_name
+        ax(v,f) = subplot(n_val,n_name,pp); cla ; hold on
+        %title(['p = ' num2str(F.all(f,v))])
+        if v == 1
+           xlabel([char(names(f)) ' (°)']) 
+        end
+        for n = 1:n_file
+          	h(f,v,n) = histogram(all_stats.(names(f)){n,v}, h_bins{f}, 'Normalization', 'probability', ...
+                'EdgeColor', 'none', 'FaceColor', cmap(n + (n-1)*2,:));
+%           	histogram(stats{n}.comb.val_all.(names(f)){v}, h_bins{f}, 'Normalization', 'probability', ...
+%                 'EdgeColor', 'none')
+        end
+        
+        for n = 1:n_file
+            mm = median(all_stats.(names(f)){n,v});
+            %sigma = std(all_stats.(names(f)){n,v});
+            sigma = median(abs(all_stats.(names(f)){n,v}));
+            
+            xline(mm, 'Color', cmap(n + (n-1)*2,:))
+            xline(sigma, '--', 'Color', cmap(n + (n-1)*2,:))
+            xline(-sigma, '--', 'Color', cmap(n + (n-1)*2,:))
+        end
+        ax(v,f).YLim(1) = -0.001;
+        
+        pp = pp + 1;
+    end
+end
+leg = legend(labels, 'Box', 'off', 'Interpreter', 'none');
+leg.Position = [0.25 0.95 0.45 0.05];
+
+set(ax, 'Color', 'none', 'LineWidth', 0.75, 'XColor', 'k')
 for f = 1:n_name
     linkaxes(ax(f,:), 'xy')
 end

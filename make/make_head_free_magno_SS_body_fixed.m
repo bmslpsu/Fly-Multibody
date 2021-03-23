@@ -9,8 +9,8 @@ function [] = make_head_free_magno_SS_body_fixed(rootdir)
 %
 warning('off', 'signal:findpeaks:largeMinPeakHeight')
 
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_amp_3.75_body_fixed';
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250_body_fixed';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_amp_3.75_body_fixed';
+% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250_body_fixed';
 exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-3}; % type of stimuli (vel or pos)
 exp_ver = exp_name{1}{end-2}; % version of experiment (v1, v2, ...)

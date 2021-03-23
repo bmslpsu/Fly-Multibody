@@ -78,7 +78,7 @@ head_data    	= load(fullfile(PATH.head_track,FILE.main),'head_data','head_mask'
 disp('DONE')
 
 %% Get pattern data & sync with start of visual stimulus
-func_time = 10;
+func_time = 20;
 startI = round(5000*0.5);
 [TRIG,PAT] = sync_pattern_trigger(raw_data.t_p, raw_data.data(:,2), func_time, ...
                         raw_data.data(:,1), true, startI, false, false);
@@ -228,7 +228,7 @@ colormap(cmap)
 iter = round(FLY.Fs/vidFs); % # of frames to skip per iteration to acheive desired frame rate
 expframe = circshift(mod(1:FLY.nframe,iter)==1,0); % which frames to export
 pat_image = 255*pattern_data.pattern.Pats(1,:,1,pat_ypos);
-bright_scale = 1.5;
+bright_scale = 1.25;
 disp('Exporting Video...')
 tic
 for jj = 1:FLY.nframe
@@ -242,7 +242,7 @@ for jj = 1:FLY.nframe
         end
         %Frame.raw = uint8(round(bright_scale*mean(FLY.raw(:,:,win), 3))); % raw frame
         %Frame.reg = uint8(round(1*mean(FLY.reg(:,:,win), 3))); % registered frame
-        Frame.raw = imadjust(bright_scale*median(FLY.raw(:,:,win), 3)); % raw frame
+        Frame.raw = bright_scale*imadjust(median(FLY.raw(:,:,win), 3)); % raw frame
         pat_pos = 3.75*(mean(PAT.pos_intrp_exp(win)));
         
         % Display raw video
@@ -302,7 +302,7 @@ for jj = 1:FLY.nframe
     drawnow
     
     if jj == 1
-        for y = 3:length(ax)
+        for y = 2:length(ax)
             ax(y).YLabel.Position(1) = -50;
         end
     end

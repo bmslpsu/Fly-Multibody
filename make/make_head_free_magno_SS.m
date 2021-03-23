@@ -9,14 +9,14 @@ function [] = make_head_free_magno_SS(rootdir)
 %
 warning('off', 'signal:findpeaks:largeMinPeakHeight')
 
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250';
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_amp_3.75';
+% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_amp_3.75';
 exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-1}; % type of stimuli (vel or pos)
 exp_ver = exp_name{1}{end}; % version of experiment (v1, v2, ...)
 
 clss = 'position';
-clss = 'velocity';
+% clss = 'velocity';
 filename = ['SS_HeadFree_' exp_typ '_' exp_ver '_' num2str(clss)];
 
 %% Setup Directories %%
@@ -150,13 +150,13 @@ for n = 1:N.file
     Error                   = DATA.reference{n}.position - DATA.body{n}.position - DATA.head{n}.position;
     DATA.error{n}           = singal_attributes(Error, tintrp, [], n_detrend);
     
-%     hold on
-%     plot(tintrp, Body, 'k', 'LineWidth', 1)
+    hold on
+    plot(tintrp, Body, 'k', 'LineWidth', 1)
 %     plot(tintrp, body_scd.shift.IntrpPosition, 'b', 'LineWidth', 1)
 %     plot(tintrp, DATA.body{n}.trend, 'g--', 'LineWidth', 1)
 %     plot(tintrp, DATA.body{n}.position, 'r', 'LineWidth', 1)
-%     pause
-%     cla
+    pause
+    cla
 
     % Debug plot
     if debug
@@ -188,14 +188,14 @@ for n = 1:N.file
     RWING = DATA.rwing{n}.position;
     
     SYS_ref2_head_body = frf(tintrp, REF , IOFreq, false, BODY, HEAD);
-	SYS_head2_body = frf(tintrp, HEAD, IOFreq, false, BODY);
+	SYS_body2_head = frf(tintrp, BODY, IOFreq, false, HEAD);
     SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, dWBA);
     SYS_wing2_body = frf(tintrp, dWBA, IOFreq, false, BODY);
     SYS_error2_head_body = frf(tintrp, ERROR , IOFreq, false, BODY, HEAD);
-    SYS_ref2_lwingrwing = frf(tintrp, REF , IOFreq, false, LWING, RWING);
+    SYS_ref2_left_right = frf(tintrp, REF , IOFreq, false, LWING, RWING);
 
-    SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_head2_body, SYS_ref2_wing, ...
-        SYS_wing2_body, SYS_error2_head_body, SYS_ref2_lwingrwing);
+    SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_body2_head, SYS_ref2_wing, ...
+        SYS_wing2_body, SYS_error2_head_body, SYS_ref2_left_right);
     
     ALL{I.fly(n),I.freq(n)}(end+1,1) = SYS_all;
 end

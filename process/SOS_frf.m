@@ -1,29 +1,32 @@
 function [] = SOS_frf()
 %% SOS_frf:
 root = 'E:\DATA\Magno_Data\Multibody';
-[FILE,PATH] = uigetfile({'*.mat', 'DAQ-files'}, ...
-    'Select head angle trials', root, 'MultiSelect','off');
+[FILE,PATH] = uigetfile({'*.mat'}, 'Select file', root, 'MultiSelect','off');
 
-load(fullfile(PATH,FILE),'DATA','FUNC','GRAND','FLY','D','I','U','N')
+load(fullfile(PATH,FILE),'DATA','FUNC','GRAND','U','N')
 
 %%
 clc
 clearvars -except FILE DATA ALL GRAND FLY FUNC D I U N root
 
-pI = [1 2 3 4 5];
-T = ["ref2body", "ref2head", "ref2gaze", "head2body", "ref2wing"];
+pI = [1 2 3 4 5 6 7 8];
+T = ["ref2body", "ref2head", "ref2gaze", "body2head", "ref2wing", "wing2body", ...
+    "err2body","err2head"];
 
 % pI = [1 2];
 % T = ["ref2body", "ref2wing"];
-
+% 
 % pI = [1];
 % T = ["ref2head"];
+
+% pI = [1 2 3];
+% T = ["ref2body", "ref2head", "ref2gaze"];
 
 FRF_data = [];
 FRF_data.Fv = DATA.reference{1}.Fv;
 
-shift_I = {7:9, 9, 9, 9, 9};
-phase_lim = [0 nan nan 0 0];
+shift_I = {7:10, 9, 9, 9, 7:9, 9, 9  9};
+phase_lim = [0 nan nan nan 0 nan 20 nan];
 fI = (1:9)';
 
 % shift_I = {3:7, 5, 6, 3:7, 9};
@@ -33,38 +36,41 @@ n_plot = length(pI);
 for v = 1:N{1,3}
     for n = 1:n_plot
         % Frequency components
-        FRF_data.IOFv{v} = GRAND.fly_stats(v).mean.IOFv.mean;
-        n_freq = length(FRF_data.IOFv{v});
+        FRF_data.IOFv{v} = GRAND.fly_stats(v).mean.IOFv.mean(fI);
+        n_freq = length(GRAND.fly_stats(v).mean.IOFv.mean);
         
         % FRF properties
-        mag_all = squeeze(GRAND.fly_all(v).mean.IOMag(:,pI(n),:));
+        mag_all = squeeze(GRAND.fly_all(v).mean.IOMag(fI,pI(n),:));
         mag_med = GRAND.fly_stats(v).mean.IOMag.mean(fI,pI(n));
         mag_std = GRAND.fly_stats(v).mean.IOMag.std(fI,pI(n));
 
-        gain_all = squeeze(GRAND.fly_all(v).mean.IOGain(:,pI(n),:));
+        gain_all = squeeze(GRAND.fly_all(v).mean.IOGain(fI,pI(n),:));
         gain_med = GRAND.fly_stats(v).mean.IOGain.mean(fI,pI(n));
         gain_std = GRAND.fly_stats(v).mean.IOGain.std(fI,pI(n));
 
         phase_all = rad2deg(squeeze(GRAND.fly_all(v).circ_mean.IOPhaseDiff(:,pI(n),:)));
         shift_all = any((1:n_freq)' == shift_I{n},2) & (phase_all > phase_lim(n));
-        phase_all(shift_all) = phase_all(shift_all) - 360;  
+        phase_all(shift_all) = phase_all(shift_all) - 360;
+        phase_all = phase_all(fI,:);
 
         phase_med = rad2deg(GRAND.fly_stats(v).circ_mean.IOPhaseDiff.circ_mean(:,pI(n)));
         phase_std = rad2deg(GRAND.fly_stats(v).circ_mean.IOPhaseDiff.circ_std(:,pI(n)));
         shift_all = any((1:n_freq)'==shift_I{n},2) & (phase_med > phase_lim(n));
-        phase_med(shift_all) = phase_med(shift_all) - 360;  
+        phase_med(shift_all) = phase_med(shift_all) - 360;
+        phase_med = phase_med(fI,:);
+        phase_std = phase_std(fI,:);
 
-        time_diff_all = 1000 * (phase_all ./360) .* (1 ./FRF_data.IOFv{v});
-        time_diff_med = 1000 * (phase_med ./360) .* (1 ./FRF_data.IOFv{v});
-        time_diff_std = 1000 * (phase_std ./360) .* (1 ./FRF_data.IOFv{v});
+        time_diff_all = 1000 * (phase_all ./360) .* (1 ./FRF_data.IOFv{v}(fI));
+        time_diff_med = 1000 * (phase_med ./360) .* (1 ./FRF_data.IOFv{v}(fI));
+        time_diff_std = 1000 * (phase_std ./360) .* (1 ./FRF_data.IOFv{v}(fI));
 
         cohr_all = squeeze(GRAND.fly_all(v).mean.Cohr(:,pI(n),:));
         cohr_med = GRAND.fly_stats(v).mean.Cohr.mean(:,pI(n));
         cohr_std = GRAND.fly_stats(v).mean.Cohr.std(:,pI(n));
         
-      	IOcohr_all = squeeze(GRAND.fly_all(v).mean.IOCohr(:,pI(n),:));
-        IOcohr_med = GRAND.fly_stats(v).mean.IOCohr.mean(:,pI(n));
-        IOcohr_std = GRAND.fly_stats(v).mean.IOCohr.std(:,pI(n));
+      	IOcohr_all = squeeze(GRAND.fly_all(v).mean.IOCohr(fI,pI(n),:));
+        IOcohr_med = GRAND.fly_stats(v).mean.IOCohr.mean(fI,pI(n));
+        IOcohr_std = GRAND.fly_stats(v).mean.IOCohr.std(fI,pI(n));
         
         % Fly means
         FRF_data.(T(n)).fly(v).mag = mag_all;
@@ -78,7 +84,7 @@ for v = 1:N{1,3}
                 (cosd(phase_all(:,f)) + 1i*sind(phase_all(:,f)));
             FRF_data.(T(n)).fly(v).error(:,f) = abs((1 + 0*1i) - FRF_data.(T(n)).fly(v).complex(:,f));
             
-            X = FRF_data.IOFv{v};
+            X = FRF_data.IOFv{v}(fI);
             Y = phase_all(:,f);
             [fitresult, gof] = time_constant_fit(X, Y, false);
             FRF_data.(T(n)).fly(v).time_constant(1,f) = fitresult.b;
@@ -105,24 +111,25 @@ for v = 1:N{1,3}
         FRF_data.(T(n)).grand_std(v).coherence = cohr_std;
     	FRF_data.(T(n)).grand_std(v).IO_coherence = IOcohr_std;
         FRF_data.(T(n)).grand_std(v).error = std(FRF_data.(T(n)).fly(v).error, [], 2);
+        FRF_data.(T(n)).grand_std(v).complex = std(FRF_data.(T(n)).fly(v).complex, [], 2);
         FRF_data.(T(n)).grand_std(v).time_constant = std(FRF_data.(T(n)).fly(v).time_constant, [], 2);
         FRF_data.(T(n)).grand_std(v).time_constant_r2 = std(FRF_data.(T(n)).fly(v).time_constant_r2, [], 2);
     end
 end
 
 %% FRF: one condition
-cc = jet(n_plot);
+cc = hsv(n_plot);
 
 fig = figure (1) ; clf
 set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2.2*n_plot 5*2])
 movegui(fig, 'center')
 clear ax h
 ax = gobjects(4,n_plot);
-v = 3;
+v = 1;
 for n = 1:n_plot
     subI = n + (0:4)*n_plot;
     ax(1,n) = subplot(5,n_plot,subI(1)); hold on ; title(T(n), 'interpreter', 'none')
-        plot(FRF_data.IOFv{v}, GRAND.fly_stats(v).mean.refIOMag.mean(:,1), '*-', 'Color', 'k', 'LineWidth', 0.5)
+        %plot(FRF_data.IOFv{v}, GRAND.fly_stats(v).mean.refIOMag.mean(:,1), '*-', 'Color', 'k', 'LineWidth', 0.5)
         plot(FRF_data.IOFv{v}, FRF_data.(T(n)).fly(v).mag, 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
         [h.patch(1,n),h.line(1,n)] = PlotPatch(FRF_data.(T(n)).grand_mean(v).mag,...
                   FRF_data.(T(n)).grand_std(v).mag, FRF_data.IOFv{v}, 1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
@@ -133,24 +140,31 @@ for n = 1:n_plot
                   FRF_data.(T(n)).grand_std(v).gain, FRF_data.IOFv{v}, 1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
 
     ax(3,n) = subplot(5,n_plot,subI(3)); hold on
-        plot([0 20], [0 0], '--k')
+        yline(0, '--k')
         plot(FRF_data.IOFv{v}, FRF_data.(T(n)).fly(v).phase, 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
         [h.patch(3,n),h.line(3,n)] = PlotPatch(FRF_data.(T(n)).grand_mean(v).phase,...
                   FRF_data.(T(n)).grand_std(v).phase, FRF_data.IOFv{v}, 1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
 
     ax(4,n) = subplot(5,n_plot,subI(4)); hold on
-        plot(FRF_data.IOFv{v}, FRF_data.(T(n)).fly(v).time_diff, 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
-        [h.patch(4,n),h.line(4,n)] = PlotPatch(FRF_data.(T(n)).grand_mean(v).time_diff,...
-                  FRF_data.(T(n)).grand_std(v).time_diff, FRF_data.IOFv{v}, 1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
+        yline(1, '--k')
+        plot(FRF_data.IOFv{v}, FRF_data.(T(n)).fly(v).error, 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
+        %[h.patch(4,n),h.line(4,n)] = PlotPatch(FRF_data.(T(n)).grand_mean(v).time_diff,...
+                  %FRF_data.(T(n)).grand_std(v).time_diff, FRF_data.IOFv{v}, 1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
+        [h.patch(4,n),h.line(4,n)] = PlotPatch(FRF_data.(T(n)).grand_mean(v).error,...
+                  FRF_data.(T(n)).grand_std(v).error, FRF_data.IOFv{v}, 1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
 
     ax(5,n) = subplot(5,n_plot,subI(5)); hold on
+        plot(FRF_data.IOFv{v}, FRF_data.(T(n)).fly(v).IO_coherence, 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
+        [h.patch(5,n),h.line(5,n)] = PlotPatch(FRF_data.(T(n)).grand_mean(v).IO_coherence,...
+                  FRF_data.(T(n)).grand_std(v).IO_coherence, FRF_data.IOFv{v}, 1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
+    
         plot(FRF_data.Fv, FRF_data.(T(n)).fly(v).coherence, 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
-        [h.patch(5,n),h.line(5,n)] = PlotPatch(FRF_data.(T(n)).grand_mean(v).coherence(2:end),...
-                  FRF_data.(T(n)).grand_std(v).coherence(2:end), FRF_data.Fv(2:end), 1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
+%         [h.patch(5,n),h.line(5,n)] = PlotPatch(FRF_data.(T(n)).grand_mean(v).coherence(2:end),...
+%                   FRF_data.(T(n)).grand_std(v).coherence(2:end), FRF_data.Fv(2:end), 1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
 end
 
 set(h.line(1:4,:), 'Marker', '.','MarkerFaceColor', 'none', 'MarkerSize', 15')
-set(ax, 'LineWidth', 1.2, 'FontSize', 10, 'XLim', [0.2 20],...
+set(ax, 'LineWidth', 1.2, 'FontSize', 10, 'XLim', [0.2 30],...
     'XGrid', 'on', 'YGrid', 'on', 'Box', 'on')
 set(ax, 'XTick', [0.1, 1 10])
 
@@ -175,14 +189,15 @@ set([YLabelHC], 'String', 'Gain (°/°)')
 YLabelHC = get(ax(3,1), 'YLabel');
 set([YLabelHC], 'String', 'Phase difference (°)')
 YLabelHC = get(ax(4,1), 'YLabel');
-set([YLabelHC], 'String', 'Time difference (ms)')
+set([YLabelHC], 'String', 'Tracking error')
 YLabelHC = get(ax(5,1), 'YLabel');
 set([YLabelHC], 'String', 'Coherence')
 
 % set(ax(1,1:end),'YLim',[0 3.2])
-set(ax(2,1:end),'YLim',[0 1])
+% set(ax(2,1:end),'YLim',[0 1])
 set(ax(3,1:end),'YLim',[-300 200])
-set(ax(4,1:end),'YLim',300*[-1 1])
+% set(ax(4,1:end),'YLim',300*[-1 1])
+set(ax(4,1:end),'YLim',[0 1.5])
 set(ax(5,1:end),'YLim',[0 1])
 set(ax(1:end-1,:), 'XTickLabel', [])
 
@@ -190,7 +205,7 @@ set(ax,'XScale','log')
 align_Ylabels(fig)
 
 %% FRF: all conditions
-cc = 0.9*jet(N{1,3});
+cc = hsv(N{1,3});
 
 fig = figure (2) ; clf
 set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2.2*n_plot 5*2])
@@ -212,15 +227,16 @@ for v = 1:N{1,3}
                       FRF_data.(T(n)).grand_std(v).gain, FRF_data.IOFv{v}, 1, 1, cc(v,:), 0.7*cc(v,:), 0.2, 1);
 
         ax(3,n) = subplot(5,n_plot,subI(3)); hold on
-            plot([0 20], [0 0], '--k')
+            yline(0, '--k')
             %plot(FRF_data.IOFv{v}, FRF_data.(T(n)).fly(v).phase, 'Color', [cc(v,:) fly_alpha], 'LineWidth', 0.5)
             [h.patch(3,n,v),h.line(3,n,v)] = PlotPatch(FRF_data.(T(n)).grand_mean(v).phase,...
                       FRF_data.(T(n)).grand_std(v).phase, FRF_data.IOFv{v}, 1, 1, cc(v,:), 0.7*cc(v,:), 0.2, 1);
 
         ax(4,n) = subplot(5,n_plot,subI(4)); hold on
-            %plot(FRF_data.IOFv{v}, FRF_data.(T(n)).fly(v).time_diff, 'Color', [cc(v,:) fly_alpha], 'LineWidth', 0.5)
-            [h.patch(4,n,v),h.line(4,n,v)] = PlotPatch(FRF_data.(T(n)).grand_mean(v).time_diff,...
-                      FRF_data.(T(n)).grand_std(v).time_diff, FRF_data.IOFv{v}, 1, 1, cc(v,:), 0.7*cc(v,:), 0.2, 1);
+            yline(1, '--k')
+            %plot(FRF_data.IOFv{v}, FRF_data.(T(n)).fly(v).error, 'Color', [cc(v,:) fly_alpha], 'LineWidth', 0.5)
+            [h.patch(4,n,v),h.line(4,n,v)] = PlotPatch(FRF_data.(T(n)).grand_mean(v).error,...
+                      FRF_data.(T(n)).grand_std(v).error, FRF_data.IOFv{v}, 1, 1, cc(v,:), 0.7*cc(v,:), 0.2, 1);
 
         ax(5,n) = subplot(5,n_plot,subI(5)); hold on
             %plot(FRF_data.Fv, FRF_data.(T(n)).fly(v).coherence, 'Color', [cc(v,:) fly_alpha], 'LineWidth', 0.5)
@@ -232,10 +248,12 @@ for v = 1:N{1,3}
                   
     end
 end
-leg = legend(squeeze(h.line(5,end,:)), string(U{1,3}{1}), ...
-    'Orientation', 'horizontal', 'Box', 'off');
-leg.Title.String = 'Stimulus speed (°/s)';
-leg.Position = [0.39 0.96 0.18 0.04];
+if N{1,3} > 1
+    leg = legend(squeeze(h.line(5,end,:)), string(U{1,3}{1}), ...
+        'Orientation', 'horizontal', 'Box', 'off');
+    leg.Title.String = 'Stimulus speed (°/s)';
+    leg.Position = [0.39 0.96 0.18 0.04];
+end
 
 % set(h.line(1:4,:,:), 'Marker', '.','MarkerFaceColor', 'none', 'MarkerSize', 11')
 % set(ax, 'LineWidth', 1.2, 'FontSize', 10, 'XLim', [0.2 20],...
@@ -243,7 +261,7 @@ leg.Position = [0.39 0.96 0.18 0.04];
 % set(ax, 'XTick', [0.1, 1 10])
 
 set(h.line(1:4,:,:), 'Marker', '.','MarkerFaceColor', 'none', 'MarkerSize', 10, 'LineWidth', 1)
-set(ax, 'Color', 'none', 'LineWidth', 1, 'FontSize', 10, 'XLim', [0.2 20],...
+set(ax, 'Color', 'none', 'LineWidth', 1, 'FontSize', 10, 'XLim', [0.2 25],...
     'XGrid', 'off', 'YGrid', 'off', 'Box', 'off')
 set(ax, 'XTick', [0.1, 1 10])
 
@@ -270,14 +288,14 @@ set([YLabelHC], 'String', 'Gain (°/°)')
 YLabelHC = get(ax(3,1), 'YLabel');
 set([YLabelHC], 'String', 'Phase difference (°)')
 YLabelHC = get(ax(4,1), 'YLabel');
-set([YLabelHC], 'String', 'Time difference (ms)')
+set([YLabelHC], 'String', 'Tracking error')
 YLabelHC = get(ax(5,1), 'YLabel');
 set([YLabelHC], 'String', 'Coherence')
 
 set(ax(1,1:end),'YLim',[0 80])
 % set(ax(2,1:end-1),'YLim',[0 1])
 set(ax(3,1:end),'YLim',[-300 200])
-set(ax(4,1:end),'YLim',300*[-1 1])
+set(ax(4,1:end),'YLim',[0 1.5])
 set(ax(5,1:end),'YLim',[0 1])
 % set(ax(1:end-1,:), 'XTickLabel', [])
 % set(ax(:,2:end-2), 'YTickLabels', [])
@@ -288,12 +306,12 @@ set(ax(1:end-1,:), 'XColor', 'none')
 set(ax(:,2:end), 'YColor', 'none')
 
 set(ax,'XScale','log')
-align_Ylabels(fig)
+% align_Ylabels(fig)
 
 %% Save FRF data
 filedata = textscan(FILE, '%s', 'delimiter', '_');
 dataset_name = [];
-for n = 1:5
+for n = 1:6
     dataset_name = [dataset_name '_' char(filedata{1}(n))];
 end
 fname = ['FRF' dataset_name];

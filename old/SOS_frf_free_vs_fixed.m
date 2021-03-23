@@ -14,7 +14,7 @@ HeadFree = load(fullfile(HeadFree_path,HeadFree_file),'FRF_data','FUNC','U','N')
 HeadFixed = load(fullfile(HeadFixed_path,HeadFixed_file),'FRF_data','FUNC','U','N');
 BodyFixed = load(fullfile(BodyFixed_path,BodyFixed_file),'FRF_data','FUNC','U','N');
 
-%%
+%% Compare head free, head-fixed, body-fixed
 clc
 clearvars -except HeadFree HeadFixed BodyFixed HeadFree_file HeadFree_file HeadFixed_file BodyFixed_file
 

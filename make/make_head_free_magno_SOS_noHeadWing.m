@@ -1,4 +1,4 @@
-function [] = make_head_free_magno_SOS(rootdir)
+function [] = make_head_free_magno_SOS_noHeadWing(rootdir)
 %% make_head_free_magno_SOS:
 %
 %   INPUTS:
@@ -9,29 +9,20 @@ function [] = make_head_free_magno_SOS(rootdir)
 %
 warning('off', 'signal:findpeaks:largeMinPeakHeight')
 
-clss = 'position';
-% clss = 'velocity';
-
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2';
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_amp_v3';
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_52';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_52';
 rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_52_wing_damage';
-exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
-exp_typ = exp_name{1}{end-1}; % type of stimuli (vel or pos)
-exp_ver = exp_name{1}{end}; % version of experiment (v1, v2, ...)
-filename = ['SOS_HeadFree_' exp_typ '_' exp_ver '_' num2str(clss)];
 
-% For wing damage
+exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-3}; % type of stimuli (vel or pos)
 exp_ver = exp_name{1}{end-2}; % version of experiment (v1, v2, ...)
-filename = ['SOS_HeadFree_' exp_typ '_' exp_ver '_' '_wing_damage_' num2str(clss)];
+
+% clss = 'position';
+clss = 'velocity';
+filename = ['SOS_HeadFree_WingDamage_' exp_typ '_' exp_ver '_' num2str(clss) '_WAEL'];
 
 %% Setup Directories %%
 root.base = rootdir;
 root.body = fullfile(root.base,'tracked_body');
-root.reg = fullfile(root.base,'registered');
-root.benifly = fullfile(root.reg ,'tracked_head_wing');
-root.head = fullfile(root.reg ,'tracked_head_tip');
 root.func = fullfile(root.base ,'function');
 
 % Load function files
@@ -46,14 +37,15 @@ end
 
 % Select files
 [D,I,N,U,T,~,~,basename] = GetFileData(root.body,'*.mat',false);
-% [D,I,N,U,T,~,~,basename] = GetFileData(root.benifly,'*.csv',false);
 
 %% Get Data %%
 close all
 clc
 
+min_coherence = [];
+
 % Body saccade detection parameters
-scd.threshold = [20, 1, 3, 0];
+scd.thresh = [20, 1, 3, 0];
 scd.true_thresh = 220;
 scd.Fc_detect = [40 nan];
 scd.Fc_ss = [20 nan];
@@ -85,9 +77,6 @@ for n = 1:N.file
     % Load DAQ, body, head, & wing data
 	data.daq = load(fullfile(root.base,  [basename{n} '.mat']),'data','t_p'); % load camera trigger & pattern x-position
     data.body = load(fullfile(root.body, [basename{n} '.mat']),'bAngles'); % load body angles
-	data.head = load(fullfile(root.head, [basename{n} '.mat']),'head_data'); % load head angles
- 	data.benifly = ImportBenifly(fullfile(root.benifly, ...  % load head & wing angles from Benifly
-                            [basename{n} '.csv']));
     
     % Get synced frame times and pattern data
     daq_time    = data.daq.t_p;
@@ -96,19 +85,10 @@ for n = 1:N.file
     [TRIG,PAT]  = sync_pattern_trigger(daq_time, daq_pattern, func_length, ...
                         trigger, true, [], false, false);
     trig_time   = TRIG.time_sync;
-    
-  	% Filter wing angles
-    lwing = rad2deg(data.benifly.LWing);
-    rwing = rad2deg(data.benifly.RWing);
-    lwing = hampel(data.benifly.Time, lwing);
-    rwing = hampel(data.benifly.Time, rwing);
-	lwing = filtfilt(b,a,lwing);
-    rwing = filtfilt(b,a,rwing);
-    
+
     % Get pattern, head, & body anlges
     pat = 3.75*PAT.pos;
     body = data.body.bAngles;
-	head = data.head.head_data.angle;
     
     % Interpolate so all signals have the same times
     [b_pat, a_pat] = butter(3, 20 / (Fs/2), 'low');
@@ -119,27 +99,21 @@ for n = 1:N.file
     
     Body    = interp1(trig_time, body,  tintrp, 'pchip');
     Body    = Body - mean(Body);
-    Head    = interp1(trig_time, head,  tintrp, 'pchip');
-    Head    = filtfilt(b, a, Head);
-    LWing   = interp1(trig_time, lwing, tintrp, 'pchip');
-    RWing   = interp1(trig_time, rwing, tintrp, 'pchip');
-    dWBA    = interp1(trig_time, lwing-rwing, tintrp, 'pchip');
     
     % Detect & remove saccades
-    body_scd = saccade_v1(Body, tintrp, scd, false);
+    body_scd = saccade_v1(Body, tintrp, scd.thresh, scd.true_thresh, scd.Fc_detect, ...
+                            scd.Fc_ss, scd.amp_cut, scd.dur_cut , scd.direction, scd.pks, ...
+                            scd.sacd_length, scd.min_pkdist, scd.min_pkwidth, scd.min_pkprom, ...
+                            scd.min_pkthresh, scd.boundThresh, false);
     
     % Store signals
     n_detrend = 5;
     DATA.body_saccade{n}    = body_scd;
     DATA.reference{n}       = singal_attributes(Reference, tintrp);
     DATA.body{n}            = singal_attributes(body_scd.shift.IntrpPosition, tintrp, [], n_detrend);
-    DATA.head{n}            = singal_attributes(Head, tintrp, [], n_detrend);
-    DATA.dwba{n}            = singal_attributes(dWBA, tintrp, 20, n_detrend);
-    DATA.lwing{n}           = singal_attributes(LWing, tintrp, 20);
-    DATA.rwing{n}           = singal_attributes(RWing, tintrp, 20);
     
-    Error                   = DATA.reference{n}.position - DATA.body{n}.position - 0*DATA.head{n}.position;
-	DATA.error{n}           = singal_attributes(Error, tintrp);
+    Error                   = DATA.reference{n}.position - DATA.body{n}.position;
+	DATA.error{n}           = singal_attributes(Error, tintrp, []);
 
 %     hold on
 %     plot(tintrp, body_scd.shift.IntrpPosition, 'b', 'LineWidth', 1)
@@ -157,11 +131,7 @@ for n = 1:N.file
         clear ax
         ax(1) = subplot(1,1,1) ; cla ; hold on
             plot(tintrp, DATA.reference{n}.position, 'k', 'LineWidth', 1)
-            %plot(tintrp, DATA.error{kk}.detrend, 'g', 'LineWidth', 1)
-            plot(tintrp, DATA.body{n}.position, 'r', 'LineWidth', 1)
-            plot(tintrp, DATA.head{n}.position, 'b', 'LineWidth', 1)
-            plot(tintrp, 5*DATA.dwba{n}.position_lpf, 'm', 'LineWidth', 1)
-            leg = legend('Reference','Body','Head','\DeltaWBA', 'Orientation', 'horizontal');
+            leg = legend('Reference','Body', 'Orientation', 'horizontal');
             xlabel('Time (s)')
             ylabel('(°)')
            	
@@ -171,23 +141,19 @@ for n = 1:N.file
         pause
     end
     
-    IOFreq = sort(FUNC{I{n,3}}.All.Freq, 'ascend');
+    IOFv = sort(FUNC{I{n,3}}.All.Freq, 'ascend');
     REF = DATA.reference{n}.(clss);
     BODY = DATA.body{n}.(clss);
-    HEAD = DATA.head{n}.(clss);
     ERROR = DATA.error{n}.(clss);
-    dWBA = DATA.dwba{n}.(clss);
-    %LWING = DATA.lwing{n}.(clss);
-    %RWING = DATA.rwing{n}.(clss);
 
-    SYS_ref2_head_body = frf(tintrp, REF , IOFreq, false, BODY, HEAD);
-	SYS_body2_head = frf(tintrp, BODY, IOFreq, false, HEAD);
-    SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, dWBA);
-    SYS_wing2_body = frf(tintrp, dWBA, IOFreq, false, BODY);
- 	SYS_err2_head_body = frf(tintrp, ERROR, IOFreq, false, BODY, HEAD);
+    %SYS_ref2body = frf(tintrp, REF , IOFv, false, BODY);
+    %SYS_ref2body = frf_v2(tintrp, IOFv, REF, BODY, min_coherence, false);
+    %SYS_err2body = frf_v2(tintrp, IOFv, ERROR, BODY, min_coherence, false);
     
-	SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_body2_head, SYS_ref2_wing, ...
-                                    SYS_wing2_body, SYS_err2_head_body);
+    SYS_ref2body = frf(tintrp, REF, IOFv, false, BODY);
+    SYS_err2body = frf(tintrp, ERROR, IOFv, false, BODY);
+        
+	SYS_all = CatStructFields(2, SYS_ref2body, SYS_err2body);
     
     ALL{I.fly(n),I{n,3}}(end+1,1) = SYS_all;
 end

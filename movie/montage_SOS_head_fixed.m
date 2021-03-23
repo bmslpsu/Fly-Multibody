@@ -80,7 +80,7 @@ body_data    	= load(fullfile(PATH.body_track,FILE.main),'bAngles','imgstats','i
 disp('DONE')
 
 %% Get pattern data & sync with start of visual stimulus
-func_time = 10;
+func_time = 20;
 startI = round(5000*0.5);
 [TRIG,PAT] = sync_pattern_trigger(raw_data.t_p, raw_data.data(:,2), func_time, ...
                         raw_data.data(:,1), true, startI, false, false);
@@ -258,8 +258,8 @@ for jj = 1:FLY.nframe
         end
         %Frame.raw = uint8(round(bright_scale*mean(FLY.raw(:,:,win), 3))); % raw frame
         %Frame.reg = uint8(round(1*mean(FLY.reg(:,:,win), 3))); % registered frame
-        Frame.raw = imadjust(median(FLY.raw(:,:,win), 3)); % raw frame
-        Frame.reg = imadjust(median(FLY.reg(:,:,win), 3)); % registered frame
+        Frame.raw = bright_scale*imadjust(median(FLY.raw(:,:,win), 3)); % raw frame
+        Frame.reg = bright_scale*imadjust(median(FLY.reg(:,:,win), 3)); % registered frame
         pat_pos = 3.75*(mean(PAT.pos_intrp_exp(win)));
         
         % Display raw video

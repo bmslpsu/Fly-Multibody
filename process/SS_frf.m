@@ -4,26 +4,38 @@ root = 'E:\DATA\Magno_Data\Multibody';
 [FILE,PATH] = uigetfile({'*.mat', 'DAQ-files'}, ...
     'Select head angle trials', root, 'MultiSelect','off');
 
-load(fullfile(PATH,FILE),'DATA','FUNC','GRAND','FLY','D','I','U','N')
+load(fullfile(PATH,FILE),'FUNC','GRAND','FLY','D','I','U','N')
 
 %%
 clc
 clearvars -except FILE DATA ALL GRAND FLY FUNC D I U N root
 
 % pI = [1 2 3 4 5 6 7 8];
-% T = ["ref2body", "ref2head", "ref2gaze", "head2body", "ref2wing", "wing2body", "error2body", "error2head"];
-% shift_I = {5:8, 7:8, 5:8, 5:8, 5:8, 5:8, 5:8, 7:8};
-% phase_lim = {[0 0 -50 -220], [0 0 0 0], [0 0 0 0], [0 0 0 0], [0 0 0 0], [0 0 0 0], [0 0 0 0], [nan nan]};
+% T = ["ref2body", "ref2head", "ref2gaze", "body2head", "ref2wing", "wing2body", "error2body", "error2head"];
+% shift_I = {5:8, 7:8, 5:8, 5:8, 1:8, 1:8, 5:8, 7:8};
+% phase_lim = {[0 0 -50 -220], [0 0 0 0], [0 0 0 0], [nan nan nan nan],  ...
+%     [20 0 0 0 0 0 0 0], [0 0 0 0 0 0 0 0], [0 0 0 0], [nan nan]};
 
-pI = [1 2 3];
-T = ["ref2head", "ref2wing", "head2wing"];
-shift_I = {5:8, 5:8, 5:8, 5:8, 5:8, 5:8};
-phase_lim = {[0 0 0 -120], [0 0 0 0], [0 0 0 0], [0 0 0 0], [0 0 0 0], [0 0 0 0]};
+% pI = [1 2 3];
+% T = ["ref2head", "ref2wing", "head2wing"];
+% shift_I = {5:8, 5:8, 5:8};
+% phase_lim = {[0 0 0 -120], [0 0 0 0], [0 0 0 0]};
 
 % pI = [1 2 3 4];
 % T = ["ref2body", "ref2head", "ref2gaze", "head2body"];
 % shift_I = {5:8, 7:8, 5:8, 5:8};
 % phase_lim = {[0 0 0 0], nan*[0 0 0 0], nan*[0 0 0 0], [0 0 0 0]};
+
+% pI = [1 2 3 4 5 6 7 8];
+% T = ["ref2body", "ref2head", "ref2gaze", "body2head", "ref2wing", "wing2body", "error2body", "error2head"];
+% shift_I = {5:8, 7:8, 5:8, 5:8, 1:8, 1:8, 5:8, 7:8};
+% phase_lim = {[0 0 -50 -300], [0 0 0 0], [0 0 0 0], [nan nan nan 0],  ...
+%     [20 0 0 0 0 0 0 0], [0 0 0 0 0 0 0 0], [0 0 0 0], [nan nan]};
+
+pI = [1 2 3];
+T = ["ref2head", "ref2wing", "head2wing"];
+shift_I = {5:8, 5:8, 5:8};
+phase_lim = {[0 0 0 -120], [0 0 0 0], [0 0 0 0]};
 
 n_plot = length(pI);
 for n = 1:n_plot
@@ -45,9 +57,14 @@ for n = 1:n_plot
         gain_std = GRAND.fly_stats(v).mean.IOGain.std(1,pI(n));
 
         phase_all = rad2deg(squeeze(GRAND.fly_all(v).circ_mean.IOPhaseDiff(:,pI(n),:)));
-        for r = 1:3
-            shift_all = any(v == shift_I{n}, 2) & (phase_all > phase_lim{n}(v == shift_I{n}));
-            phase_all(shift_all) = phase_all(shift_all) - 360;
+        for r = 1:2
+            if any(strcmp(T(n),["wing2body","body2head"]))
+                shift_all = any(v == shift_I{n}, 2) & (phase_all < phase_lim{n}(v == shift_I{n}));
+                phase_all(shift_all) = phase_all(shift_all) + 360;
+            else
+                shift_all = any(v == shift_I{n}, 2) & (phase_all > phase_lim{n}(v == shift_I{n}));
+                phase_all(shift_all) = phase_all(shift_all) - 360; 
+            end
         end
         
         phase_med = rad2deg(GRAND.fly_stats(v).circ_mean.IOPhaseDiff.circ_mean(:,pI(n)));
@@ -56,8 +73,13 @@ for n = 1:n_plot
         phase_med = mean(phase_all);
         phase_std = std(phase_all);
         for r = 1:2
-            shift_all = any(v == shift_I{n}, 2) & (phase_med > phase_lim{n}(v == shift_I{n}));
-            phase_med(shift_all) = phase_med(shift_all) - 360;
+            if any(strcmp(T(n),["wing2body","body2head"]))
+                shift_all = any(v == shift_I{n}, 2) & (phase_med < phase_lim{n}(v == shift_I{n}));
+                phase_med(shift_all) = phase_med(shift_all) + 360;
+            else
+                shift_all = any(v == shift_I{n}, 2) & (phase_med > phase_lim{n}(v == shift_I{n}));
+                phase_med(shift_all) = phase_med(shift_all) - 360;
+            end
         end
 
         time_diff_all = 1000 * (phase_all ./360) .* (1 ./FRF_data.IOFv(v));
@@ -198,9 +220,9 @@ YLabelHC = get(ax(6,1), 'YLabel');
 set([YLabelHC], 'String', 'Coherence')
 
 % set(ax(1,1:end),'YLim',[0 3.2])
-set(ax(2,1:end),'YLim',[0 1])
+% set(ax(2,1:end),'YLim',[0 1])
 % set(ax(3,1:end),'YLim',[-500 200])
-set(ax(3,1:end),'YLim',[-550 200])
+set(ax(3,1:end),'YLim',[-600 200])
 % set(ax(4,1:end),'YLim',400*[-1 1])
 set(ax(5,1:end),'YLim',[0 1.5])
 set(ax(6,1:end),'YLim',[0 1])
@@ -262,7 +284,6 @@ ax(5,1) = subplot(5,1,5); hold on
                   1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
     end
     
-
 leg_label = trf_names;
 leg = legend(squeeze(h.line(1,:)), leg_label, ...
     'Box', 'off', 'interpreter', 'none', 'Orientation', 'vertical');
@@ -276,7 +297,7 @@ end
 delete(h.patch)
 
 set(h.line, 'Marker', '.','MarkerFaceColor', 'none', 'MarkerSize', 11, 'LineWidth', 1.5)
-set(ax, 'Color', 'none', 'LineWidth', 1.2, 'FontSize', 10, 'XLim', [0.1 10],...
+set(ax, 'Color', 'none', 'LineWidth', 1.2, 'FontSize', 10, 'XLim', [0.5 20],...
     'XGrid', 'off', 'YGrid', 'off', 'Box', 'off')
 set(ax, 'XTick', [0.1, 1 10])
 set(ax,'XScale','log')
@@ -357,11 +378,11 @@ for n = 1:n_plot
             elps = Ellipse([real(mu(f)) imag(mu(f))], 2*n_std*gain_std, 2*n_std*b, ...
                 'ellipse', theta, 0, cc(f,:), 0.4);
 
-            elps = draw(elps);
-            set(elps.h.patch, 'EdgeColor', 'k')
-            set(elps.h.centroid, 'MarkerSize', 10, 'MarkerEdgeColor', 'k')
-            hh.patch(v,n,f) = elps.h.patch;
-            hh.med(v,n,f) = elps.h.centroid;
+            %elps = draw(elps);
+            %set(elps.h.patch, 'EdgeColor', 'k')
+            %set(elps.h.centroid, 'MarkerSize', 10, 'MarkerEdgeColor', 'k')
+            %hh.patch(v,n,f) = elps.h.patch;
+            %hh.med(v,n,f) = elps.h.centroid;
         end
         if n==1
             leg = legend(squeeze(h(:,n)), string(FRF_data.IOFv), 'Box', 'off', 'Location', 'east');
@@ -420,7 +441,7 @@ set([YLabelHC], 'String', 'R^{2}')
 %% Save FRF data
 filedata = textscan(FILE, '%s', 'delimiter', '_');
 dataset_name = [];
-for n = 1:4
+for n = 1:5
     dataset_name = [dataset_name '_' char(filedata{1}(n))];
 end
 fname = ['FRF' dataset_name];

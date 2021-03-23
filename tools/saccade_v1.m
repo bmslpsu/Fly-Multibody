@@ -437,7 +437,7 @@ classdef saccade_v1
                 locs(locs_rmv) = [];
 
                 % Exclude saccades in very beginning and end of signal
-                window = round(obj.Fs*0.02); % window length at start & end to ignore saccades [samples]
+                window = round(obj.Fs*0.05); % window length at start & end to ignore saccades [samples]
                 %window = 0;
                 I = (locs > window) & (locs < (obj.n - (window+1))); % saccades inside middle window
                 obj.peaks.index = locs(I);             
@@ -747,7 +747,7 @@ classdef saccade_v1
                 obj.shift = obj.removed_all;
                 obj.shift.Index = obj.index;
                 obj.shift.Time = obj.time;
-                
+                                
                 % Shift position between saccades so data after a saccade
                 % starts where the last saccades ends
                 for ww = 1:obj.count % every saccade
@@ -755,10 +755,23 @@ classdef saccade_v1
                         - ( obj.SACD.EndPos(ww) - obj.SACD.StartPos(ww) );
                 end
                 
+                % If saccades are detected at the start or end of the signal, set extrapolation value
+                first_sacd = find(saccade_idx, 1, 'first');
+                if first_sacd == 1
+                    first_int = obj.shift.Position(find(~saccade_idx, 1, 'first'));
+                    obj.shift.Position(1) = first_int;
+                end
+                
+                last_sacd = find(saccade_idx, 1, 'last');
+                if last_sacd == obj.n
+                    last_int = obj.shift.Position(find(~saccade_idx, 1, 'last'));
+                    obj.shift.Position(obj.n) = last_int;
+                end
+                
                 % Remove nan's for interpolation
-                time_shift = obj.removed_all.Time(~isnan(obj.removed_all.Time));
-                pos_shift  = obj.shift.Position(~isnan(obj.removed_all.Time));
-                %vel_shift  = obj.shift.Velocity(~isnan(obj.removed_all.Time));
+                time_shift = obj.shift.Time(~isnan(obj.shift.Position));
+                pos_shift  = obj.shift.Position(~isnan(obj.shift.Position));
+                %vel_shift  = obj.shift.Velocity(~isnan(obj.shift.Position));
                 
                 % Interpolate between saccades
                 intrp_pos = table( interp1(time_shift, pos_shift, obj.shift.Time, 'spline'),... % interpolate
