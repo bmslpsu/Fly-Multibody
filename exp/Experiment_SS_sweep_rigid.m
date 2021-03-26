@@ -5,9 +5,9 @@ daqreset
 imaqreset
 % Fn = 0;
 %% Set directories & experimental parameters
-root = 'C:\BC\Experiment_SS_vel_250_body_fixed_CL';
-val = [3.75 7.5 11.25 18.75 26.25 41.25 60]'; % amplitude of each SS function in order in PControl
-freq = [10.6 5.3 3.5 2.1 1.5 1 0.7]'; % amplitude of each SS function in order in PControl
+root = 'C:\BC\Rigid_data\Experiment_SS_vel_250_body_fixed_CL';
+val = [11.25 18.75 26.25 3.75 41.25 60 7.5]'; % amplitude of each SS function in order in PControl
+freq = [3.5 2.1 1.5 10.6 1 0.7 5.3]'; % frequency of each SS function in order in PControl
 name = 'amp'; % name of identifier at end of file name
 
 %% EXPERIMENTAL PARAMETERS
@@ -20,8 +20,9 @@ xUpdate = 400;           	% function update rate
 FPS = 100;                  % camera frame rate
 nFrame = FPS*n_tracktime;   % # of frames to log
 Fs = 5000;                  % DAQ sampling rate [Hz]
-AI = 0:2;                	% Analog input channels
-AO = 1;                     % Analog output channels
+AI = 1:6;                	% Analog input channels
+AO = 0;                     % Analog output channels
+Gain = 900;
 
 %% Set up data acquisition on MCC (session mode)
 % DAQ Setup
@@ -69,7 +70,8 @@ n_trial = n_rep * n_func;
 %% EXPERIMENT LOOP
 disp('Start Experiment:')
 for ii = 1:n_trial
-    fprintf('Trial: %i   Amp = %i \n', ii, val_all(ii))
+    disp(['Trial: ' num2str(ii) '    Amp = ' num2str(val_all(ii)) ...
+        '    Freq = ' num2str(freq_all(ii))])
     preview(vid) % open video preview window
     
     Panel_com('stop')
@@ -92,9 +94,11 @@ for ii = 1:n_trial
     pause(n_pause)
     Panel_com('set_funcY_freq', 50); % update rate for y-channel
     pause(n_pause)
-    Panel_com('set_mode', [4,0]); % 0=open,1=closed,2=fgen,3=vmode,4=pmode
+    Panel_com('send_gain_bias', [-10 0 0 0])
     pause(n_pause)
-    Panel_com('send_gain_bias', [0 0 0 0])
+    Panel_com('set_mode', [2,0]); % 0=open,1=closed,2=fgen,3=vmode,4=pmode
+    
+    
 	
     % START EXPERIMENT & DATA COLLECTION
     start(vid) % start video buffer
@@ -112,7 +116,7 @@ for ii = 1:n_trial
   	disp(['Fs = ' num2str(Fs)])
     
     % CL BUFFER
-    Arena_CL(1,'X',-15)
+    Arena_CL(2,'X',-10)
     
     % SAVE DATA
     disp('Saving...')
