@@ -15,8 +15,8 @@ exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-3}; % version of experiment (v1, v2, ...)
 exp_ver = exp_name{1}{end-2}; % % type of stimuli (vel or pos)
 
-clss = 'position';
-% clss = 'velocity';
+% clss = 'position';
+clss = 'velocity';
 filename = ['SOS_HeadFixed_' exp_typ '_' exp_ver '_' num2str(clss)];
 
 %% Setup Directories %%
@@ -109,7 +109,6 @@ for n = 1:N.file
     
     Body    = interp1(trig_time, body,  tintrp, 'pchip');
     Body    = Body - mean(Body);
-    Error   = Reference - Body;
     LWing   = interp1(trig_time, lwing, tintrp, 'pchip');
     RWing   = -interp1(trig_time, rwing, tintrp, 'pchip');
     dWBA    = interp1(trig_time, lwing-rwing, tintrp, 'pchip');
@@ -125,10 +124,12 @@ for n = 1:N.file
     DATA.body_saccade{n}    = body_scd;
     DATA.reference{n}       = singal_attributes(Reference, tintrp);
     DATA.body{n}            = singal_attributes(body_scd.shift.IntrpPosition, tintrp, [], n_detrend);
-    DATA.error{n}           = singal_attributes(Error, tintrp);
     DATA.dwba{n}            = singal_attributes(dWBA, tintrp, 20, n_detrend);
     DATA.lwing{n}           = singal_attributes(LWing, tintrp, 20);
     DATA.rwing{n}           = singal_attributes(RWing, tintrp, 20);
+    
+    Error                   = DATA.reference{n}.position - DATA.body{n}.position;
+	DATA.error{n}           = singal_attributes(Error, tintrp);
     
     % Debug plot
     if debug
@@ -152,6 +153,7 @@ for n = 1:N.file
     IOFreq = sort(FUNC{I{n,3}}.All.Freq, 'ascend');
     REF = DATA.reference{n}.(clss);
     BODY = DATA.body{n}.(clss);
+    ERROR = DATA.error{n}.(clss);
     dWBA = DATA.dwba{n}.(clss);
     %LWING = DATA.lwing{n}.(clss);
     %RWING = DATA.rwing{n}.(clss);
@@ -159,8 +161,9 @@ for n = 1:N.file
     SYS_ref2_body = frf(tintrp, REF , IOFreq, false, BODY);
     SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, dWBA);
     SYS_wing2_body = frf(tintrp, dWBA, IOFreq, false, BODY);
+    SYS_err2_body = frf(tintrp, ERROR, IOFreq, false, BODY);
     
-	SYS_all = CatStructFields(2, SYS_ref2_body, SYS_ref2_wing, SYS_wing2_body);
+	SYS_all = CatStructFields(2, SYS_ref2_body, SYS_ref2_wing, SYS_wing2_body, SYS_err2_body);
     
     ALL{I.fly(n),I{n,3}}(end+1,1) = SYS_all;
 end

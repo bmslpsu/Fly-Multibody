@@ -157,7 +157,7 @@ for v = 1:n_cond
 end
 
 %% Grand response
-cc_fly = distinguishable_colors(N.fly);
+cc_fly = grey(N.fly);
 cc_fly = [cc_fly , 0.5*ones(size(cc_fly,1),1)];
 cc_data = [0 0 0];
 

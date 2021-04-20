@@ -138,7 +138,7 @@ for n = 1:N.file
     DATA.lwing{n}           = singal_attributes(LWing, tintrp, 20);
     DATA.rwing{n}           = singal_attributes(RWing, tintrp, 20);
     
-    Error                   = DATA.reference{n}.position - DATA.body{n}.position - 0*DATA.head{n}.position;
+    Error                   = DATA.reference{n}.position - DATA.body{n}.position - DATA.head{n}.position;
 	DATA.error{n}           = singal_attributes(Error, tintrp);
 
 %     hold on

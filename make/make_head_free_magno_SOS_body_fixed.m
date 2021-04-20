@@ -90,17 +90,19 @@ for n = 1:N.file
     
     Head    = interp1(trig_time, head,  tintrp, 'pchip');
     Head    = filtfilt(b, a, Head);
-    Error   = Reference - Head;
     %LWing   = interp1(trig_time, lwing, tintrp, 'pchip');
     %RWing   = -interp1(trig_time, rwing, tintrp, 'pchip');
     %dWBA    = interp1(trig_time, lwing-rwing, tintrp, 'pchip');
     
     % Store signals
+    n_detrend = 1;
     DATA.body_saccade{n}    = [];
     DATA.reference{n}       = singal_attributes(Reference, tintrp);
     DATA.body{n}            = [];
-    DATA.head{n}            = singal_attributes(Head, tintrp);
-    DATA.error{n}           = singal_attributes(Error, tintrp);
+    DATA.head{n}            = singal_attributes(Head, tintrp, [], n_detrend);
+    
+    Error                   = DATA.reference{n}.position - DATA.head{n}.position;
+	DATA.error{n}           = singal_attributes(Error, tintrp);
     %DATA.dwba{n}            = singal_attributes(dWBA, tintrp, [], n_detrend);
     %DATA.dwba{n}            = singal_attributes(DATA.dwba{n}.detrend, tintrp, [], []);
     %DATA.lwing{n}           = singal_attributes(LWing, tintrp, []);
@@ -128,6 +130,7 @@ for n = 1:N.file
     IOFreq = sort(FUNC{I{n,3}}.All.Freq, 'ascend');
     REF = DATA.reference{n}.(clss);
     HEAD = DATA.head{n}.(clss);
+    ERROR = DATA.error{n}.(clss);
     %dWBA = DATA.dwba{n}.(clss);
     %LWING = DATA.lwing{n}.(clss);
     %RWING = DATA.rwing{n}.(clss);
@@ -135,10 +138,11 @@ for n = 1:N.file
     SYS_ref2_head = frf(tintrp, REF , IOFreq, false, HEAD);
     %SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, dWBA);
     %SYS_wing2_body = frf(tintrp, dWBA, IOFreq, false, BODY);
+    SYS_err2_head = frf(tintrp, ERROR, IOFreq, false, HEAD);
     
-	%SYS_all = CatStructFields(2, SYS_ref2_head);
+	SYS_all = CatStructFields(2, SYS_ref2_head, SYS_err2_head);
     
-    ALL{I.fly(n),I{n,3}}(end+1,1) = SYS_ref2_head;
+    ALL{I.fly(n),I{n,3}}(end+1,1) = SYS_all;
 end
 
 %% Group Data

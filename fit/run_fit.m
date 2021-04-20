@@ -1,0 +1,338 @@
+function [] = run_fit()
+%% run_fit:
+%
+root = 'E:\DATA\Magno_Data\Multibody\Processed';
+[FILE,PATH] = uigetfile({'*.mat'}, 'Select data file', root, 'MultiSelect','off');
+load(fullfile(PATH,FILE),'ALL');
+
+%% Set initialization parameters
+clearvars -except PATH FILE ALL
+clc
+vI = 2;
+IOFv = ALL.HeadFree.FRF_data.IOFv{vI};
+frange = 0:0.02:20;
+
+opt = tfestOptions('EnforceStability', true, 'InitializeMethod', 'all');
+
+%% HeadFree: err2body
+close all
+clc
+clear Cn sys
+clss = 'HeadFree';
+trf = 'err2body';
+Cn = {ALL.(clss).FRF_data.(trf).fly(vI).gain , ALL.(clss).FRF_data.(trf).fly(vI).phase};
+data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUnit', 'hz');
+
+tffit = [];
+tffit{end+1} = tfest(data, 1, 0, 0.02, opt);
+tffit{end+1} = tfest(data, 1, 1, 0.02, opt);
+
+% delay = 0:0.001:0.05;
+% [tffit{end+1}, sys_list, fitpercent, delay_sort] = tfest_delay(data, 1, 0, opt, delay);
+
+[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
+
+suptitle(trf)
+h.fig.Position(3:4) = [2.5 6];
+set(h.data, 'MarkerSize', 5)
+set(h.sys_freq, 'MarkerSize', 10)
+set(h.ax, 'LineWidth', 0.5)
+% set(h.ax, 'XGrid', 'off', 'YGrid', 'off')
+set(h.ax(1), 'YLim', [-7 1], 'XLim', [-2 6])
+set(h.ax(2), 'YLim', [0 5])
+set(h.ax(3), 'YLim', [-250 150])
+
+%% HeadFree: err2head
+close all
+clc
+clear Cn sys
+clss = 'HeadFree';
+trf = 'err2head';
+Cn = {ALL.(clss).FRF_data.(trf).fly(vI).gain , ALL.(clss).FRF_data.(trf).fly(vI).phase};
+data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUnit', 'hz');
+
+tffit = [];
+% delay = 0:0.001:0.05;
+% [tffit{end+1}, sys_list, fitpercent, delay_sort] = tfest_delay(data, 1, 1, opt, delay);
+
+tffit{end+1} = tfest(data, 1, 1, 0.02, opt);
+tffit{end+1} = tfest(data, 1, 0, 0.02, opt);
+% tffit{end+1} = tfest(data, 2, 1, 0.02, opt);
+% tffit{end+1} = tfest(data, 2, 2, [], opt);
+
+% [temp, h] = fitBode(Cn, IOFv, [1 1], [1 1], 0.02, 'lsqnonlin', false);
+% tffit{end+1} = temp.tf.G;
+
+[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
+
+suptitle(trf)
+h.fig.Position(3:4) = [3 7];
+set(h.data, 'MarkerSize', 5)
+set(h.sys_freq, 'MarkerSize', 10)
+set(h.ax, 'LineWidth', 0.5)
+% set(h.ax, 'XGrid', 'off', 'YGrid', 'off')
+set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+set(h.ax(2), 'YLim', [0 1])
+set(h.ax(3), 'YLim', [-250 150])
+
+%% HeadFree: ref2body
+close all
+clc
+clear Cn sys
+clss = 'HeadFree';
+trf = 'ref2body';
+Cn = {ALL.(clss).FRF_data.(trf).fly(vI).gain , ALL.(clss).FRF_data.(trf).fly(vI).phase};
+data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUnit', 'hz');
+
+tffit = [];
+tffit{end+1} = tfest(data, 2, 1, NaN, opt);
+% tffit{end+1} = tfest(sys, 2, 0, NaN, opt);
+
+[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
+
+set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+set(h.ax(2), 'YLim', [0 1])
+set(h.ax(3), 'YLim', [-250 150])
+
+%% HeadFree: ref2head
+close all
+clc
+clear Cn sys
+clss = 'HeadFree';
+trf = 'ref2head';
+Cn = {ALL.(clss).FRF_data.(trf).fly(vI).gain , ALL.(clss).FRF_data.(trf).fly(vI).phase};
+data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUnit', 'hz');
+
+tffit = [];
+tffit{end+1} = tfest(data, 2, 2, [], opt);
+% tffit{end+1} = tfest(data, 1, 2, [], opt);
+% tffit{end+1} = tfest(data, 2, 1, [], opt);
+
+[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
+
+set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+set(h.ax(2), 'YLim', [0 1])
+set(h.ax(3), 'YLim', [-250 150])
+
+%% HeadFree: ref2gaze
+close all
+clc
+clear Cn sys
+clss = 'HeadFree';
+trf = 'ref2gaze';
+Cn = {ALL.(clss).FRF_data.(trf).fly(vI).gain , ALL.(clss).FRF_data.(trf).fly(vI).phase};
+data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUnit', 'hz');
+
+tffit = [];
+tffit{end+1} = tfest(data, 2, 2, [], opt);
+% tffit{end+1} = tfest(sys, 1, 2, NaN, opt);
+
+[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
+
+set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+set(h.ax(2), 'YLim', [0 1])
+set(h.ax(3), 'YLim', [-250 150])
+
+%% HeadFixed: err2body
+close all
+clc
+clear Cn sys
+clss = 'HeadFixed';
+trf = 'err2body';
+Cn = {ALL.(clss).FRF_data.(trf).fly(vI).gain , ALL.(clss).FRF_data.(trf).fly(vI).phase};
+data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUnit', 'hz');
+
+tffit = [];
+
+% delay = 0:0.001:0.05;
+% [best_fit, sys_list, fitpercent, delay_sort] = tfest_delay(data, 1, 0, opt, delay);
+
+tffit{end+1} = tfest(data, 1, 0, 0.023, opt);
+
+[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
+
+% set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+set(h.ax(2), 'YLim', [0 3])
+set(h.ax(3), 'YLim', [-250 150])
+
+%% BodyFixed: err2head
+close all
+clc
+clear Cn sys
+clss = 'BodyFixed';
+trf = 'err2head';
+Cn = {ALL.(clss).FRF_data.(trf).fly(vI).gain , ALL.(clss).FRF_data.(trf).fly(vI).phase};
+data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUnit', 'hz');
+
+tffit = [];
+
+% delay = 0:0.001:0.05;
+% [best_fit, sys_list, fitpercent, delay_sort] = tfest_delay(data, 1, 1, opt, delay);
+
+% tffit{end+1} = tfest(data, 2, 2, 0, opt);
+tffit{end+1} = tfest(data, 1, 1, 0.029, opt);
+% tffit{end+1} = tfest(sys, 1, 1, NaN, opt);
+
+[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
+
+% set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+set(h.ax(2), 'YLim', [0 1])
+set(h.ax(3), 'YLim', [-250 150])
+
+%% HeadFixed: ref2body
+close all
+clc
+clear Cn sys
+clss = 'HeadFixed';
+trf = 'ref2body';
+Cn = {ALL.(clss).FRF_data.(trf).fly(vI).gain , ALL.(clss).FRF_data.(trf).fly(vI).phase};
+data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUnit', 'hz');
+
+tffit = [];
+tffit{end+1} = tfest(data, 2, 1, [], opt);
+
+[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
+
+% set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+set(h.ax(2), 'YLim', [0 1])
+set(h.ax(3), 'YLim', [-250 150])
+
+%% BodyFixed: ref2head
+close all
+clc
+clear Cn sys
+clss = 'BodyFixed';
+trf = 'ref2head';
+Cn = {ALL.(clss).FRF_data.(trf).fly(vI).gain , ALL.(clss).FRF_data.(trf).fly(vI).phase};
+data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUnit', 'hz');
+
+tffit = [];
+tffit{end+1} = tfest(data, 2, 2, 0, opt);
+
+[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
+
+% set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+set(h.ax(2), 'YLim', [0 1])
+set(h.ax(3), 'YLim', [-250 150])
+
+%% Create closed-loop transforms from open-loop fits
+clss = 'HeadFree';
+MODEL.(clss).G.body = MODEL.(clss).fit.err2body(1).models;
+MODEL.(clss).G.body_bad = MODEL.(clss).fit.err2body(2).models;
+MODEL.(clss).G.head = MODEL.(clss).fit.err2head(1).models;
+MODEL.(clss).G.head_bad = MODEL.(clss).fit.err2head(2).models;
+
+MODEL.(clss).P.body = tf(1, MODEL.(clss).G.body.denominator);
+MODEL.(clss).P.head = tf(1, MODEL.(clss).G.head.denominator);
+MODEL.(clss).P_norm.body = tf(MODEL.(clss).G.body.denominator(end), MODEL.(clss).G.body.denominator);
+MODEL.(clss).P_norm.head = tf(MODEL.(clss).G.head.denominator(end), MODEL.(clss).G.head.denominator);
+
+MODEL.(clss).C.body = tf(MODEL.(clss).G.body.numerator, 1);
+MODEL.(clss).C.head = tf(MODEL.(clss).G.head.numerator, 1);
+MODEL.(clss).C_norm.body = minreal(MODEL.(clss).C.body / MODEL.(clss).G.body.denominator(end));
+MODEL.(clss).C_norm.head = minreal(MODEL.(clss).C.head / MODEL.(clss).G.head.denominator(end));
+
+MODEL.(clss).H.body = minreal( MODEL.(clss).G.body / (1 + MODEL.(clss).G.body + MODEL.(clss).G.head) );
+MODEL.(clss).H.head = minreal( MODEL.(clss).G.head / (1 + MODEL.(clss).G.body + MODEL.(clss).G.head) );
+MODEL.(clss).H.gaze = minreal( (MODEL.(clss).G.body + MODEL.(clss).G.head) / (1 + MODEL.(clss).G.body + MODEL.(clss).G.head) );
+
+MODEL.(clss).H.body_no_head = minreal( MODEL.(clss).G.body / (1 + MODEL.(clss).G.body));
+MODEL.(clss).H.head_no_body = minreal( MODEL.(clss).G.head / (1 + MODEL.(clss).G.head));
+
+clss = 'HeadFixed';
+MODEL.(clss).G.body = MODEL.(clss).fit.err2body(1).models;
+MODEL.(clss).H.body = minreal( MODEL.(clss).G.body / (1 + MODEL.(clss).G.body));
+
+MODEL.(clss).P.body = tf(1, MODEL.(clss).G.body.denominator);
+MODEL.(clss).P_norm.body = tf(MODEL.(clss).G.body.denominator(end), MODEL.(clss).G.body.denominator);
+
+MODEL.(clss).C.body = tf(MODEL.(clss).G.body.numerator, 1);
+
+clss = 'BodyFixed';
+MODEL.(clss).G.head = MODEL.(clss).fit.err2head(1).models;
+MODEL.(clss).H.head = minreal( MODEL.(clss).G.head / (1 + MODEL.(clss).G.head));
+
+MODEL.(clss).P.head = tf(1, MODEL.(clss).G.head.denominator);
+MODEL.(clss).P_norm.head = tf(MODEL.(clss).G.head.denominator(end), MODEL.(clss).G.head.denominator);
+
+MODEL.(clss).C.head = tf(MODEL.(clss).G.head.numerator, 1);
+
+%% HeadFree: ref2body compare
+close all
+clc
+trf = 'ref2body';
+% models = {MODEL.HeadFree.fit.(trf)(1).models, MODEL.HeadFree.H.body};
+% models = {MODEL.HeadFree.H.body, MODEL.HeadFree.H.body_no_head};
+models = {MODEL.HeadFree.H.body, MODEL.HeadFree.H.body_no_head, MODEL.HeadFixed.H.body};
+[sys,~,h] = plotFit(MODEL.HeadFixed.data.(trf).input, IOFv, models, frange, 1);
+
+fitpercent = [sys.fitpercent];
+disp('Fit percent:')
+disp([fitpercent.combined])
+
+suptitle(trf)
+h.fig.Position(3:4) = [2 5];
+set(h.data, 'MarkerSize', 5, 'Marker', '.')
+set(h.sys_freq, 'MarkerSize', 7)
+set(h.ax, 'LineWidth', 0.5)
+% set(h.ax, 'XGrid', 'off', 'YGrid', 'off')
+set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+set(h.ax(2), 'YLim', [0 1])
+set(h.ax(3), 'YLim', [-250 150])
+
+%% HeadFree: ref2head compare
+close all
+clc
+trf = 'ref2head';
+% models = {MODEL.HeadFree.fit.(trf)(1).models, MODEL.HeadFree.H.head};
+% models = {MODEL.HeadFree.H.head, MODEL.HeadFree.H.head_no_body};
+models = {MODEL.HeadFree.H.head, MODEL.HeadFree.H.head_no_body, MODEL.BodyFixed.H.head};
+[sys,~,h] = plotFit(MODEL.BodyFixed.data.(trf).input, IOFv, models, frange, 1);
+
+fitpercent = [sys.fitpercent];
+disp('Fit percent:')
+disp([fitpercent.combined])
+
+suptitle(trf)
+h.fig.Position(3:4) = [2 5];
+set(h.data, 'MarkerSize', 5, 'Marker', 'none')
+set(h.sys_freq, 'MarkerSize', 7)
+set(h.ax, 'LineWidth', 0.5)
+% set(h.ax, 'XGrid', 'off', 'YGrid', 'off')
+set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+set(h.ax(2), 'YLim', [0 1])
+set(h.ax(3), 'YLim', [-250 150])
+
+%% HeadFree: ref2gaze compare
+trf = 'ref2gaze';
+% models = {MODEL.HeadFree.fit.(trf)(1).models, MODEL.(clss).H.gaze};
+models = {MODEL.HeadFree.H.gaze};
+[~,~,h] = plotFit(MODEL.HeadFree.data.(trf).input, IOFv, models, frange, 1);
+
+suptitle(trf)
+h.fig.Position(3:4) = [2.5 4.5];
+set(h.data, 'MarkerSize', 5)
+set(h.sys_freq, 'MarkerSize', 7)
+set(h.ax, 'LineWidth', 0.5)
+% set(h.ax, 'XGrid', 'off', 'YGrid', 'off')
+set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+set(h.ax(2), 'YLim', [0 1])
+set(h.ax(3), 'YLim', [-250 150])
+
+%%
+% set(h.fig, 'CurrentAxes', h.ax(1))
+% plot(R, I, 'c')
+% 
+% set(h.fig, 'CurrentAxes', h.ax(2))
+% plot(fout, gain, 'c')
+% 
+% set(h.fig, 'CurrentAxes', h.ax(3))
+% plot(fout, phase, 'c')
+
+%% Save TF fit data
+fname = ['MODEL_' FILE]; 
+root = 'E:\DATA\Magno_Data\Multibody';
+savedir = fullfile(root,'processed');
+mkdir(savedir)
+save(fullfile(savedir, [fname '.mat']), 'MODEL','ALL');
+end

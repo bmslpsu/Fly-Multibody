@@ -3,7 +3,7 @@ function [K] = get_PID(clsys, plant_order, dc_num, control_type)
 %
 %   INPUT:
 %       sys             : transfer function object
-%       plant_order     : order of plant numertaor & denominator. if 2x1 then [den_order num_order]
+%       plant_order     : order of plant numerator & denominator. if 2x1 then [den_order num_order]
 %       dc_num          : dc magnitude or b0 of numerator
 %       control_type   	: character string of any combination of 'P' , 'I' and 'D' to set type of controller
 %

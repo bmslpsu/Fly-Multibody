@@ -13,7 +13,7 @@ function [] = batch_headtrack(root, npoints, center, playback, showpoint)
 %
 
 showpoint = true;
-npoints = 2;
+npoints = 4;
 center = [];
 playback = 20;
 % root = 'H:\EXPERIMENTS\MAGNO\Experiment_Ramp\registered';

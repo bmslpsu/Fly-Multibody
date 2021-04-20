@@ -9,36 +9,29 @@ load(fullfile(PATH,FILE),'DATA','FUNC','GRAND','U','N')
 clc
 clearvars -except FILE DATA ALL GRAND FLY FUNC D I U N root
 
-% % Head-free
-% pI = [1 2 3 4 5 6 7 8];
-% T = ["ref2body", "ref2head", "ref2gaze", "body2head", "ref2wing", "wing2body", ...
-%     "err2body", "err2head"];
-% shift_I = {7:10, 9, 9, 9, 7:9, 9, 9  9};
-% phase_lim = [0 nan nan nan 0 nan 20 nan];
-% fI = (1:9)';
+pI = [1 2 3 4 5 6 7 8];
+T = ["ref2body", "ref2head", "ref2gaze", "body2head", "ref2wing", "wing2body", ...
+    "err2body","err2head"];
 
-% Head-fixed
-% pI = [1 2 3 4];
-% T = ["ref2body", "ref2wing", "wing2body", "err2body"];
-% shift_I = {7:10, 1:9, 1:9, 9};
-% phase_lim = [0 nan -25 0];
-% fI = (1:9)';
-
-% Body-fixed
-pI = [1 2];
-T = ["ref2head", "err2head"];
-shift_I = {7:10, 1:9};
-phase_lim = [nan nan];
-fI = (1:9)';
+% pI = [1 2];
+% T = ["ref2body", "ref2wing"];
+% 
+% pI = [1];
+% T = ["ref2head"];
 
 % pI = [1 2 3];
 % T = ["ref2body", "ref2head", "ref2gaze"];
 
+FRF_data = [];
+FRF_data.Fv = DATA.reference{1}.Fv;
+
+shift_I = {7:10, 9, 9, 9, 7:9, 9, 9  9};
+phase_lim = [0 nan nan nan 0 nan 20 nan];
+fI = (1:9)';
+
 % shift_I = {3:7, 5, 6, 3:7, 9};
 % phase_lim = [0 nan nan 0 0];
 % fI = (1:7)';
-FRF_data = [];
-FRF_data.Fv = DATA.reference{1}.Fv;
 n_plot = length(pI);
 for v = 1:N{1,3}
     for n = 1:n_plot
@@ -47,15 +40,13 @@ for v = 1:N{1,3}
         n_freq = length(GRAND.fly_stats(v).mean.IOFv.mean);
         
         % FRF properties
-        try
-            mag_all = squeeze(GRAND.fly_all(v).mean.IOMag(fI,pI(n),:));
-            mag_med = GRAND.fly_stats(v).mean.IOMag.mean(fI,pI(n));
-            mag_std = GRAND.fly_stats(v).mean.IOMag.std(fI,pI(n));
-        catch
-            mag_all = squeeze(GRAND.fly_all(v).mean.refIOMag(fI,pI(1),:));
-            mag_med = GRAND.fly_stats(v).mean.refIOMag.mean(fI,pI(1));
-            mag_std = GRAND.fly_stats(v).mean.refIOMag.std(fI,pI(1));
-        end
+        mag_all = squeeze(GRAND.fly_all(v).mean.IOMag(fI,pI(n),:));
+        mag_med = GRAND.fly_stats(v).mean.IOMag.mean(fI,pI(n));
+        mag_std = GRAND.fly_stats(v).mean.IOMag.std(fI,pI(n));
+        
+        complex_all = squeeze(GRAND.fly_all(v).mean.IOFRF(:,pI(n),:));
+        complex_med = GRAND.fly_stats(v).mean.IOFRF.mean(:,pI(n));
+        complex_std = GRAND.fly_stats(v).mean.IOFRF.std(:,pI(n));
 
         gain_all = squeeze(GRAND.fly_all(v).mean.IOGain(fI,pI(n),:));
         gain_med = GRAND.fly_stats(v).mean.IOGain.mean(fI,pI(n));
@@ -87,13 +78,14 @@ for v = 1:N{1,3}
         
         % Fly means
         FRF_data.(T(n)).fly(v).mag = mag_all;
+        FRF_data.(T(n)).fly(v).complex = complex_all;
         FRF_data.(T(n)).fly(v).gain = gain_all;
         FRF_data.(T(n)).fly(v).phase = phase_all;
         FRF_data.(T(n)).fly(v).time_diff = time_diff_all;
         FRF_data.(T(n)).fly(v).coherence = cohr_all;
         FRF_data.(T(n)).fly(v).IO_coherence = IOcohr_all;
         for f = 1:N.fly
-            FRF_data.(T(n)).fly(v).complex(:,f) = gain_all(:,f) .* ...
+            FRF_data.(T(n)).fly(v).complex_gp(:,f) = gain_all(:,f) .* ...
                 (cosd(phase_all(:,f)) + 1i*sind(phase_all(:,f)));
             FRF_data.(T(n)).fly(v).error(:,f) = abs((1 + 0*1i) - FRF_data.(T(n)).fly(v).complex(:,f));
             
@@ -111,7 +103,8 @@ for v = 1:N{1,3}
         FRF_data.(T(n)).grand_mean(v).time_diff = time_diff_med;
         FRF_data.(T(n)).grand_mean(v).coherence = cohr_med;
         FRF_data.(T(n)).grand_mean(v).IO_coherence = IOcohr_med;
-        FRF_data.(T(n)).grand_mean(v).complex = gain_med .* (cosd(phase_med) + 1i*sind(phase_med));
+        FRF_data.(T(n)).grand_mean(v).complex = complex_med;
+        FRF_data.(T(n)).grand_mean(v).complex_gp = gain_med .* (cosd(phase_med) + 1i*sind(phase_med));
         FRF_data.(T(n)).grand_mean(v).error = mean(FRF_data.(T(n)).fly(v).error, 2);
         FRF_data.(T(n)).grand_mean(v).time_constant = mean(FRF_data.(T(n)).fly(v).time_constant, 2);
         FRF_data.(T(n)).grand_mean(v).time_constant_r2 = mean(FRF_data.(T(n)).fly(v).time_constant_r2, 2);
@@ -125,6 +118,7 @@ for v = 1:N{1,3}
     	FRF_data.(T(n)).grand_std(v).IO_coherence = IOcohr_std;
         FRF_data.(T(n)).grand_std(v).error = std(FRF_data.(T(n)).fly(v).error, [], 2);
         FRF_data.(T(n)).grand_std(v).complex = std(FRF_data.(T(n)).fly(v).complex, [], 2);
+        FRF_data.(T(n)).grand_std(v).complex_gp = std(FRF_data.(T(n)).fly(v).complex_gp, [], 2);
         FRF_data.(T(n)).grand_std(v).time_constant = std(FRF_data.(T(n)).fly(v).time_constant, [], 2);
         FRF_data.(T(n)).grand_std(v).time_constant_r2 = std(FRF_data.(T(n)).fly(v).time_constant_r2, [], 2);
     end
