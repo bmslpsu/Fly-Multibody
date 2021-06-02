@@ -221,6 +221,7 @@ MODEL.(clss).G.body = MODEL.(clss).fit.err2body(1).models;
 MODEL.(clss).G.body_bad = MODEL.(clss).fit.err2body(2).models;
 MODEL.(clss).G.head = MODEL.(clss).fit.err2head(1).models;
 MODEL.(clss).G.head_bad = MODEL.(clss).fit.err2head(2).models;
+MODEL.(clss).G.gaze = MODEL.(clss).G.body + MODEL.(clss).G.head;
 
 MODEL.(clss).P.body = tf(1, MODEL.(clss).G.body.denominator);
 MODEL.(clss).P.head = tf(1, MODEL.(clss).G.head.denominator);

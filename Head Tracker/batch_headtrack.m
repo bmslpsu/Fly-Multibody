@@ -13,16 +13,16 @@ function [] = batch_headtrack(root, npoints, center, playback, showpoint)
 %
 
 showpoint = true;
-npoints = 4;
+npoints = 2;
 center = [];
 playback = 20;
 % root = 'H:\EXPERIMENTS\MAGNO\Experiment_Ramp\registered';
 % root = 'H:\EXPERIMENTS\MAGNO\Experiment_SOS\registered';
 % root = 'H:\EXPERIMENTS\RIGID\Experiment_Static_Wave';
 
-% center = "H:\EXPERIMENTS\RIGID\Experiment_Sinusoid\18.75\Vid\tracked_head\fly_5_trial_10_freq_1.mat";
-% center = load(center);
-% center = center.cPoint;
+center = "E:\EXPERIMENTS\RIGID\Experiment_ramp_glue_head\tracked_head\fly_17_trial_1_vel_-60_wave_30.mat";
+center = load(center);
+center = center.cPoint;
 
 [FILES, PATH] = uigetfile({'*.mat', 'MAT-files'},'Select videos', root, 'MultiSelect','on');
 FILES = string(FILES);

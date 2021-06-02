@@ -15,8 +15,8 @@ exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-1}; % type of stimuli (vel or pos)
 exp_ver = exp_name{1}{end}; % version of experiment (v1, v2, ...)
 
-clss = 'position';
-% clss = 'velocity';
+% clss = 'position';
+clss = 'velocity';
 filename = ['SS_HeadFree_' exp_typ '_' exp_ver '_' num2str(clss)];
 
 %% Setup Directories %%
@@ -97,8 +97,8 @@ for n = 1:N.file
     trig_time   = TRIG.time_sync;
     
   	% Filter wing angles
-    lwing = rad2deg(data.benifly.LWing);
-    rwing = rad2deg(data.benifly.RWing);
+    lwing = rad2deg(data.benifly.RWing);
+    rwing = rad2deg(data.benifly.LWing);
     lwing = hampel(data.benifly.Time, lwing);
     rwing = hampel(data.benifly.Time, rwing);
 	lwing = filtfilt(b,a,lwing);
@@ -150,13 +150,13 @@ for n = 1:N.file
     Error                   = DATA.reference{n}.position - DATA.body{n}.position - DATA.head{n}.position;
     DATA.error{n}           = singal_attributes(Error, tintrp, [], n_detrend);
     
-    hold on
-    plot(tintrp, Body, 'k', 'LineWidth', 1)
-%     plot(tintrp, body_scd.shift.IntrpPosition, 'b', 'LineWidth', 1)
-%     plot(tintrp, DATA.body{n}.trend, 'g--', 'LineWidth', 1)
-%     plot(tintrp, DATA.body{n}.position, 'r', 'LineWidth', 1)
-    pause
-    cla
+%     hold on
+%     plot(tintrp, Body, 'k', 'LineWidth', 1)
+% %     plot(tintrp, body_scd.shift.IntrpPosition, 'b', 'LineWidth', 1)
+% %     plot(tintrp, DATA.body{n}.trend, 'g--', 'LineWidth', 1)
+% %     plot(tintrp, DATA.body{n}.position, 'r', 'LineWidth', 1)
+%     pause
+%     cla
 
     % Debug plot
     if debug

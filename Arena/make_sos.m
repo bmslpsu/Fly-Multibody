@@ -4,8 +4,8 @@ function [All] = make_sos(T, Fs, res, F, A, norm_vel, cent, Phase, showplot, roo
 %   INPUT:
 %     	T           :   total time [s]
 %     	Fs          :   sampling frequency [Hz]
-%     	res         :   arena resolution
-%     	F           :   frequencies in signal
+%     	res         :   arena resolution [°/pixel]
+%     	F           :   vector containg frequencies in signal [Hz]
 %      	A           :   amplitude vector (+/-), can be salar for all frequencies with same amplitude [°]
 %    	norm_vel   	:   peak velocity of each frequency component. "A" must be empty to set this. [°/s]
 %    	cent        :   center pixel on arena

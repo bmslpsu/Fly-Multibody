@@ -3,7 +3,7 @@ function [stats] = val_fly_stats(DATA, use_val, time_avg)
 %
 %   INPUTS:
 %       dataset    	: table containing singal_attributes objects
-%       use_val     : group by this coulum of the table or set to false to not group
+%       use_val     : group by this column of the table or set to false to not group
 %       time_avg    : average in time (boolean)
 %
 %   OUTPUTS:

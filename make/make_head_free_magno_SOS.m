@@ -9,8 +9,8 @@ function [] = make_head_free_magno_SOS(rootdir)
 %
 warning('off', 'signal:findpeaks:largeMinPeakHeight')
 
-clss = 'position';
-% clss = 'velocity';
+% clss = 'position';
+clss = 'velocity';
 
 % rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2';
 % rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_amp_v3';
@@ -24,7 +24,7 @@ filename = ['SOS_HeadFree_' exp_typ '_' exp_ver '_' num2str(clss)];
 % For wing damage
 exp_typ = exp_name{1}{end-3}; % type of stimuli (vel or pos)
 exp_ver = exp_name{1}{end-2}; % version of experiment (v1, v2, ...)
-filename = ['SOS_HeadFree_' exp_typ '_' exp_ver '_' '_wing_damage_' num2str(clss)];
+filename = ['SOS_HeadFree_' exp_typ '_' exp_ver '_wing_damage_' num2str(clss)];
 
 %% Setup Directories %%
 root.base = rootdir;
@@ -45,6 +45,7 @@ for f = 1:n_cond
 end
 
 % Select files
+% [D,I,N,U,T,~,~,basename] = GetFileData(root.head,'*.mat',false);
 [D,I,N,U,T,~,~,basename] = GetFileData(root.body,'*.mat',false);
 % [D,I,N,U,T,~,~,basename] = GetFileData(root.benifly,'*.csv',false);
 
@@ -176,13 +177,13 @@ for n = 1:N.file
     BODY = DATA.body{n}.(clss);
     HEAD = DATA.head{n}.(clss);
     ERROR = DATA.error{n}.(clss);
-    dWBA = DATA.dwba{n}.(clss);
+    dWBA = DATA.dwba{n}.position; % rerun for this
     %LWING = DATA.lwing{n}.(clss);
     %RWING = DATA.rwing{n}.(clss);
 
     SYS_ref2_head_body = frf(tintrp, REF , IOFreq, false, BODY, HEAD);
 	SYS_body2_head = frf(tintrp, BODY, IOFreq, false, HEAD);
-    SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, dWBA);
+    SYS_ref2_wing = frf(tintrp, DATA.reference{n}.position, IOFreq, false, dWBA);
     SYS_wing2_body = frf(tintrp, dWBA, IOFreq, false, BODY);
  	SYS_err2_head_body = frf(tintrp, ERROR, IOFreq, false, BODY, HEAD);
     
@@ -230,7 +231,7 @@ end
 %% SAVE
 disp('Saving...')
 savedir = 'E:\DATA\Magno_Data\Multibody';
-save(fullfile(savedir, [filename '_' datestr(now,'mm-dd-yyyy') '.mat']), ...
+save(fullfile(savedir, [filename '_new3_' datestr(now,'mm-dd-yyyy') '.mat']), ...
     'FUNC', 'DATA', 'GRAND', 'FLY', 'D', 'I', 'U', 'N', 'T', '-v7.3')
 disp('SAVING DONE')
 end
