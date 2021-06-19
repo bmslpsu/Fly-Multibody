@@ -57,6 +57,8 @@ tffit = [];
 
 tffit{end+1} = tfest(data, 1, 1, 0.02, opt);
 tffit{end+1} = tfest(data, 1, 0, 0.02, opt);
+% tffit{1} = tf([tffit{1}.Numerator(1) 0], tffit{1}.Denominator, 'IODelay', 0.02);
+tffit{1}.Numerator = [tffit{1}.Numerator(1) 0];
 % tffit{end+1} = tfest(data, 2, 1, 0.02, opt);
 % tffit{end+1} = tfest(data, 2, 2, [], opt);
 
@@ -86,7 +88,7 @@ data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUni
 
 tffit = [];
 tffit{end+1} = tfest(data, 2, 1, NaN, opt);
-% tffit{end+1} = tfest(sys, 2, 0, NaN, opt);
+% tffit{end+1} = tfest(data, 1, 0, 0.02, opt);
 
 [MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
 
@@ -171,6 +173,7 @@ tffit = [];
 
 % tffit{end+1} = tfest(data, 2, 2, 0, opt);
 tffit{end+1} = tfest(data, 1, 1, 0.029, opt);
+tffit{1}.Numerator = [tffit{1}.Numerator(1) 0];
 % tffit{end+1} = tfest(sys, 1, 1, NaN, opt);
 
 [MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
@@ -217,21 +220,28 @@ set(h.ax(3), 'YLim', [-250 150])
 
 %% Create closed-loop transforms from open-loop fits
 clss = 'HeadFree';
+MODEL.morph.body.Jzz = 0.01834078; % [mg*mm^2] body inertia
+MODEL.morph.head.Jzz = 0.00431881; % [mg*mm^2] head inertia
+MODEL.morph.J_ratio = MODEL.morph.head.Jzz / MODEL.morph.body.Jzz; % head/body inertia ratio
+
 MODEL.(clss).G.body = MODEL.(clss).fit.err2body(1).models;
 MODEL.(clss).G.body_bad = MODEL.(clss).fit.err2body(2).models;
 MODEL.(clss).G.head = MODEL.(clss).fit.err2head(1).models;
 MODEL.(clss).G.head_bad = MODEL.(clss).fit.err2head(2).models;
 MODEL.(clss).G.gaze = MODEL.(clss).G.body + MODEL.(clss).G.head;
 
-MODEL.(clss).P.body = tf(1, MODEL.(clss).G.body.denominator);
-MODEL.(clss).P.head = tf(1, MODEL.(clss).G.head.denominator);
+[MODEL.(clss).C.body, MODEL.(clss).P.body] = get_controller(MODEL.(clss).G.body, MODEL.morph.body.Jzz);
+[MODEL.(clss).C.head, MODEL.(clss).P.head] = get_controller(MODEL.(clss).G.head, MODEL.morph.head.Jzz);
+
+% MODEL.(clss).P.body = tf(1, MODEL.(clss).G.body.denominator);
+% MODEL.(clss).P.head = tf(1, MODEL.(clss).G.head.denominator);
 MODEL.(clss).P_norm.body = tf(MODEL.(clss).G.body.denominator(end), MODEL.(clss).G.body.denominator);
 MODEL.(clss).P_norm.head = tf(MODEL.(clss).G.head.denominator(end), MODEL.(clss).G.head.denominator);
 
-MODEL.(clss).C.body = tf(MODEL.(clss).G.body.numerator, 1);
-MODEL.(clss).C.head = tf(MODEL.(clss).G.head.numerator, 1);
-MODEL.(clss).C_norm.body = minreal(MODEL.(clss).C.body / MODEL.(clss).G.body.denominator(end));
-MODEL.(clss).C_norm.head = minreal(MODEL.(clss).C.head / MODEL.(clss).G.head.denominator(end));
+% MODEL.(clss).C.body = tf(MODEL.(clss).G.body.numerator, 1);
+% MODEL.(clss).C.head = tf(MODEL.(clss).G.head.numerator, 1);
+MODEL.(clss).C_norm.body = tf(MODEL.(clss).G.body.numerator / MODEL.(clss).G.body.denominator(end), 1);
+MODEL.(clss).C_norm.head = tf(MODEL.(clss).G.head.numerator / MODEL.(clss).G.head.denominator(end), 1);
 
 MODEL.(clss).H.body = minreal( MODEL.(clss).G.body / (1 + MODEL.(clss).G.body + MODEL.(clss).G.head) );
 MODEL.(clss).H.head = minreal( MODEL.(clss).G.head / (1 + MODEL.(clss).G.body + MODEL.(clss).G.head) );
@@ -240,23 +250,30 @@ MODEL.(clss).H.gaze = minreal( (MODEL.(clss).G.body + MODEL.(clss).G.head) / (1 
 MODEL.(clss).H.body_no_head = minreal( MODEL.(clss).G.body / (1 + MODEL.(clss).G.body));
 MODEL.(clss).H.head_no_body = minreal( MODEL.(clss).G.head / (1 + MODEL.(clss).G.head));
 
+MODEL.(clss).W.body = minreal( MODEL.(clss).C.body / (1 + MODEL.(clss).G.body + MODEL.(clss).G.head) );
+MODEL.(clss).W.head = ( MODEL.(clss).C.head / (1 + MODEL.(clss).G.body + MODEL.(clss).G.head) );
+
 clss = 'HeadFixed';
 MODEL.(clss).G.body = MODEL.(clss).fit.err2body(1).models;
 MODEL.(clss).H.body = minreal( MODEL.(clss).G.body / (1 + MODEL.(clss).G.body));
 
-MODEL.(clss).P.body = tf(1, MODEL.(clss).G.body.denominator);
+[MODEL.(clss).C.body, MODEL.(clss).P.body] = get_controller(MODEL.(clss).G.body, MODEL.morph.body.Jzz);
+
+% MODEL.(clss).P.body = tf(1, MODEL.(clss).G.body.denominator);
 MODEL.(clss).P_norm.body = tf(MODEL.(clss).G.body.denominator(end), MODEL.(clss).G.body.denominator);
 
-MODEL.(clss).C.body = tf(MODEL.(clss).G.body.numerator, 1);
+% MODEL.(clss).C.body = tf(MODEL.(clss).G.body.numerator, 1);
 
 clss = 'BodyFixed';
 MODEL.(clss).G.head = MODEL.(clss).fit.err2head(1).models;
 MODEL.(clss).H.head = minreal( MODEL.(clss).G.head / (1 + MODEL.(clss).G.head));
 
-MODEL.(clss).P.head = tf(1, MODEL.(clss).G.head.denominator);
+[MODEL.(clss).C.head, MODEL.(clss).P.head] = get_controller(MODEL.(clss).G.head, MODEL.morph.head.Jzz);
+
+% MODEL.(clss).P.head = tf(1, MODEL.(clss).G.head.denominator);
 MODEL.(clss).P_norm.head = tf(MODEL.(clss).G.head.denominator(end), MODEL.(clss).G.head.denominator);
 
-MODEL.(clss).C.head = tf(MODEL.(clss).G.head.numerator, 1);
+% MODEL.(clss).C.head = tf(MODEL.(clss).G.head.numerator, 1);
 
 %% HeadFree: ref2body compare
 close all

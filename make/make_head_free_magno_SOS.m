@@ -12,19 +12,19 @@ warning('off', 'signal:findpeaks:largeMinPeakHeight')
 % clss = 'position';
 clss = 'velocity';
 
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2';
 % rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_amp_v3';
 % rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_52';
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_52_wing_damage';
+% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_52_wing_damage';
 exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-1}; % type of stimuli (vel or pos)
 exp_ver = exp_name{1}{end}; % version of experiment (v1, v2, ...)
 filename = ['SOS_HeadFree_' exp_typ '_' exp_ver '_' num2str(clss)];
 
-% For wing damage
-exp_typ = exp_name{1}{end-3}; % type of stimuli (vel or pos)
-exp_ver = exp_name{1}{end-2}; % version of experiment (v1, v2, ...)
-filename = ['SOS_HeadFree_' exp_typ '_' exp_ver '_wing_damage_' num2str(clss)];
+% % For wing damage
+% exp_typ = exp_name{1}{end-3}; % type of stimuli (vel or pos)
+% exp_ver = exp_name{1}{end-2}; % version of experiment (v1, v2, ...)
+% filename = ['SOS_HeadFree_' exp_typ '_' exp_ver '_wing_damage_' num2str(clss)];
 
 %% Setup Directories %%
 root.base = rootdir;

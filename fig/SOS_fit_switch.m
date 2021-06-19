@@ -7,22 +7,29 @@ load(fullfile(PATH,FILE),'ALL','MODEL');
 
 %% Set initialization parameters
 clearvars -except PATH FILE ALL MODEL
+clc
 % sys = MODEL.HeadFree.G.head;
 % sys
 clss = 'HeadFree';
 
-MODEL.(clss).G.gaze = MODEL.(clss).G.body + MODEL.(clss).G.head;
+MODEL.(clss).W.body = minreal( MODEL.(clss).C.body / (1 + MODEL.(clss).G.body + MODEL.(clss).G.head) );
+MODEL.(clss).W.head = ( MODEL.(clss).C.head / (1 + MODEL.(clss).G.body + MODEL.(clss).G.head) );
+
 SWITCH = [];
 
-SWITCH.(clss).G.body = MODEL.HeadFree.P_norm.body * MODEL.HeadFree.C.head;
-SWITCH.(clss).G.body.IODelay = MODEL.HeadFree.P_norm.body.IODelay;
-SWITCH.(clss).G.head = MODEL.HeadFree.P_norm.head * MODEL.HeadFree.C.body;
+SWITCH.(clss).G.body = MODEL.HeadFree.P.body * MODEL.HeadFree.C.head;
+SWITCH.(clss).G.body.IODelay = MODEL.HeadFree.P.body.IODelay;
+SWITCH.(clss).G.head = MODEL.HeadFree.P.head * MODEL.HeadFree.C.body;
 SWITCH.(clss).G.head.IODelay = MODEL.HeadFree.G.head.IODelay;
 SWITCH.(clss).G.gaze = SWITCH.(clss).G.body + SWITCH.(clss).G.head;
 
 SWITCH.(clss).H.body = minreal( SWITCH.(clss).G.body / (1 + SWITCH.(clss).G.body + SWITCH.(clss).G.head) );
 SWITCH.(clss).H.head = minreal( SWITCH.(clss).G.head / (1 + SWITCH.(clss).G.body + SWITCH.(clss).G.head) );
 SWITCH.(clss).H.gaze = minreal( (SWITCH.(clss).G.body + SWITCH.(clss).G.head) / (1 + SWITCH.(clss).G.body + SWITCH.(clss).G.head) );
+
+
+SWITCH.(clss).W.body = minreal( MODEL.(clss).C.body / (1 + SWITCH.(clss).G.body + SWITCH.(clss).G.head) );
+SWITCH.(clss).W.head = ( MODEL.(clss).C.head / (1 + SWITCH.(clss).G.body + SWITCH.(clss).G.head) );
 
 %% Switched closed-loop models comparison
 clc

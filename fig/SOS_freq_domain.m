@@ -37,7 +37,6 @@ set(ax, 'Color', 'none', 'LineWidth', 1, 'FontSize', 10, 'XLim', [0.2 15])
 set(ax, 'XGrid', 'on', 'YGrid', 'off')
 set(ax, 'XScale', 'log')
 
-
 YLabelHC = get(ax(:,1), 'YLabel');
 set([YLabelHC{:}], 'String', {'Velocity', 'magnitude (°/s)'})
 

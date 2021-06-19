@@ -106,16 +106,17 @@ for v = 1:N.freq
         %set(ax(v,1), 'YTick', FUNC{v}.All.Amp*[0 1])
         %set(ax(v,1), 'YLim', FUNC{v}.All.Amp*[-1.3 1.3])
         set(ax(v,1), 'YLim', FUNC{v}.All.norm_vel*[-1.3 1.3])
-        plot(func_time_span, FUNC{v}.All.norm_vel * FUNC{v}.All.X(func_span) ./ max(abs(FUNC{v}.All.X(func_span))), '-k', 'LineWidth', 0.5)
-        plot(func_time_span, FUNC{v}.All.dX(func_span), '--k', 'LineWidth', 0.5)
+        %plot(func_time_span, FUNC{v}.All.norm_vel * FUNC{v}.All.X(func_span) ./ max(abs(FUNC{v}.All.X(func_span))), '-k', 'LineWidth', 0.5)
+        plot(func_time_span, FUNC{v}.All.dX(func_span), '-k', 'LineWidth', 0.5)
         %plot(func_time_span, FUNC{v}.All.Amp * FUNC{v}.All.dX(func_span) ./ FUNC{v}.All.norm_vel, '-m', 'LineWidth', 0.5)
         %plot(func_time_span, -FUNC{v}.All.X(func_span), '--k', 'LineWidth', 0.5)
+        
         
         vel_state = central_diff(GRAND.fly_stats(v).mean.State.mean(data_span,pI(1)), 1/Fs);
         %vel_state = GRAND.fly_stats(v).mean.State.mean(data_span,pI(1));
         vel_state = FUNC{v}.All.norm_vel * vel_state ./ max(abs(vel_state));
         %vel_state = -GRAND.fly_stats(v).mean.State.mean(data_span,pI(1));
-        [h.patch(v,1),h.line(v,1)] = PlotPatch(vel_state,...
+        [h.patch(v,1),h.line(v,1)] = PlotPatch(GRAND.fly_stats(v).mean.State.mean(data_span,pI(1)),...
                   GRAND.fly_stats(v).std.State.mean(data_span,pI(1)), time_span, ...
                   0, 1, cc(1,:), 0.7*cc(1,:), 0.2, 0.75);
         %[h.patch(v,1),h.line(v,1)] = PlotPatch(GRAND.all_trial(v).State.median(data_span,2),...
@@ -136,7 +137,7 @@ leg = legend(h.line(end,:), T, 'Box', 'off', 'Location', 'east', 'Orientation', 
 leg.Position = [0.2 0.96 0.5 0.02];
 linkaxes(ax(:,2), 'y')
 set(ax(:,2), 'YLim', 1.3*[-1 1])
-set(ax(:,2), 'YTick', 1*[1])
+set(ax(:,2), 'YTick', 1*[0 1])
 set(ax, 'Color', 'none', 'LineWidth', 0.75, 'FontSize', 8, 'XGrid', 'off', 'YGrid', 'off', 'Box', 'off')
 set(ax, 'XColor', 'none')
 

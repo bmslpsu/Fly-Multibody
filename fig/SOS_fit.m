@@ -624,8 +624,8 @@ n = 1;
 for m = 1:n_curve
     sI = 1:4;
   	D = MODEL.(clss(m)).data.(trf(m));
-    P = MODEL.(clss(m)).P_norm.(cl(m));
-    f_cut = P.denominator{1}(2) / (2*pi);
+    P = MODEL.(clss(m)).P.(cl(m));
+    f_cut = (1 / P.denominator{1}(1)) / (2*pi);
 	M = plotFit(D.input, IOFv, P, 0:0.02:20, false);
     ax(1,m) = subplot(4,n_plot,sI(1)) ; hold on ; box on; set(ax(1), 'DataAspectRatio', [1 1 1])
         title('Nyquist')
@@ -662,7 +662,7 @@ set(ax(2:end,:), 'XLim', [0.1 20])
 set(ax(2:end,:), 'XScale', 'log')
 set(ax(2:end,:), 'XTick', [0.1 1 10])
 set(ax(1,:), 'YLim', [-1 1], 'XLim', [-1 1])
-set(ax(2,:), 'YLim', [0 1.1])
+set(ax(2,:), 'YLim', [0 20])
 set(ax(3,:), 'YLim', [-100 100])
 set(ax(4,:), 'YLim', [0 1.5])
 linkaxes(ax(2:end,:), 'x')
