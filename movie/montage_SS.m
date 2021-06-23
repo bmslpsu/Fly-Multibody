@@ -14,13 +14,13 @@ function [MOV] = montage_SS(rootdir,rootpat,vidFs,export)
 %       MOV         : structure containing movie 
 %
 
-% Example Input %
+% Example Input
 clear ; clc ; close all
 export = true;
 vidFs = 50;
 % rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250';
 rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_amp_3.75';
-rootpat = 'C:\Users\BC\Box\Git\Arena\Patterns';
+rootpat = 'Q:\OneDrive - PSU\OneDrive - The Pennsylvania State University\Git\Arena\Patterns';
 
 if ~isfolder(rootdir)
     dirflag = false;
