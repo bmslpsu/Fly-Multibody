@@ -1,22 +1,5 @@
-function [] = run_sos_normvel(T, Fs, res, F, A, norm_vel, cent, root)
+function [] = run_sos_normvel()
 %% run_sos_amp_norm: makes normalized velocity ss functions
-%
-%   INPUT:
-%       T           :   total time [s]
-%       Fs          :   sampling frequency [Hz]
-%       res         :   arena resolution
-%       F           :   frequencies in signal
-%       A           :   amplitude vector (+/-), can be salar for all same amplitude [°]
-%       norm_vel   	:   peak velocity of each frequency component. "A" must be empty to set this. [°/s]
-%       cent        :   center pixel on arena
-%       showplot  	:   boolean (1= show time & freuency domain of signal)
-%       root:       :   root directory to save position function file. Don't save if empty.
-%
-%
-%   OUTPUT:
-%       - 
-%
-
 clear ; close all ; clc
 
 root        = 'C:\Users\BC\Box\Git\Fly-Multibody\Arena\functions';
