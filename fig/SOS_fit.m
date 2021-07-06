@@ -18,6 +18,7 @@ n_freq = length(IOFv);
 
 clss = ["HeadFree", "HeadFree"];
 trf = ["err2body", "err2head"];
+% trf = ["ref2body", "ref2head"];
 cc_fit = [0.9 0 0 ; 0 0.4 1];
 cc_data = repmat([0.5 0.5 0.5], [n_freq, 1]);
 n_plot = length(trf);
@@ -88,10 +89,10 @@ XLabelHC = get(ax(1,1), 'XLabel');
 set([XLabelHC], 'String', 'Imaginary')
 
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Tracking error')
@@ -176,10 +177,10 @@ XLabelHC = get(ax(1,1), 'XLabel');
 set([XLabelHC], 'String', 'Imaginary')
 
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Tracking error')
@@ -211,8 +212,8 @@ for m = 1:n_plot
 	M = plotFit(D.input, IOFv, MODEL.(clss(m)).H.(cl(m)), 0:0.02:20, false);
     ax(1,m) = subplot(4,n_plot,sI(1)); cla ; hold on ; box on; set(ax(1), 'DataAspectRatio', [1 1 1])
         title('Nyquist')
-        xline(0, '--k')
-        yline(0, '--k')
+        xline(0, '--k');
+        yline(0, '--k');
         h.data(1,m,:) = gscatter(D.real(:), D.imag(:), D.freq_all(:), ...
             cc_data, '.', 10, false);
         h.sys(1,m) = plot(M(n).real, M(n).imag, 'Color', cc_fit(m,:));
@@ -228,7 +229,7 @@ for m = 1:n_plot
             '.', 'Color', cc_fit(m,:), 'MarkerSize', 15);
         
     ax(3,m) = subplot(4,n_plot,sI(3)); cla ; hold on ; box on
-        yline(0, '--k')
+        yline(0, '--k');
         h.data(3,m,:) = gscatter(D.freq_all(:), D.phase(:), D.freq_all(:), ...
             cc_data, '.', 10, false);
         h.sys(3,m) = plot(M(n).fv_bode, M(n).phase, 'Color', cc_fit(m,:));
@@ -236,7 +237,7 @@ for m = 1:n_plot
             '.', 'Color', cc_fit(m,:), 'MarkerSize', 15);
 
     ax(4,m) = subplot(4,n_plot,sI(4)); cla ; hold on ; box on
-        yline(1, '--k')
+        yline(1, '--k');
         h.data(4,m,:) = gscatter(D.freq_all(:), D.error(:), D.freq_all(:), ...
             cc_data, '.', 10, false);
         h.sys(4,m) = plot(M(n).fv_bode, M(n).error, 'Color', cc_fit(m,:));
@@ -266,10 +267,10 @@ XLabelHC = get(ax(1,1), 'XLabel');
 set([XLabelHC], 'String', 'Imaginary')
 
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Tracking error')
@@ -356,10 +357,10 @@ XLabelHC = get(ax(1,1), 'XLabel');
 set([XLabelHC], 'String', 'Imaginary')
 
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Tracking error')
@@ -435,10 +436,10 @@ XLabelHC = get(ax(1,1), 'XLabel');
 set([XLabelHC], 'String', 'Imaginary')
 
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Tracking error')
@@ -514,10 +515,10 @@ XLabelHC = get(ax(1,1), 'XLabel');
 set([XLabelHC], 'String', 'Imaginary')
 
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Tracking error')
@@ -593,10 +594,10 @@ XLabelHC = get(ax(1,1), 'XLabel');
 set([XLabelHC], 'String', 'Imaginary')
 
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Tracking error')
@@ -621,16 +622,18 @@ fig.Position(3:4) = [n_plot*(3/2) 5];
 movegui(fig, 'center')
 ax = gobjects(4,n_plot);
 n = 1;
+temp = [];
 for m = 1:n_curve
     sI = 1:4;
   	D = MODEL.(clss(m)).data.(trf(m));
     P = MODEL.(clss(m)).P.(cl(m));
     f_cut = (1 / P.denominator{1}(1)) / (2*pi);
 	M = plotFit(D.input, IOFv, P, 0:0.02:20, false);
+    %temp(:,m) = M(n).gain;
     ax(1,m) = subplot(4,n_plot,sI(1)) ; hold on ; box on; set(ax(1), 'DataAspectRatio', [1 1 1])
         title('Nyquist')
-        xline(0, '--k')
-        yline(0, '--k')
+        xline(0, '--k');
+        yline(0, '--k');
         h.sys(1,m) = plot(M(n).real, M(n).imag, 'Color', cc_fit(m,:));
         h.sys_freq(1,m) = plot(M(n).real_freq, M(n).imag_freq, ...
             '.', 'Color', cc_fit(m,:), 'MarkerSize', 15);
@@ -640,17 +643,17 @@ for m = 1:n_curve
         h.sys(2,m) = plot(M(n).fv_bode, M(n).gain, 'Color', cc_fit(m,:));
         h.sys_freq(2,m) = plot(D.freq, M(n).gain_freq, ...
             '.', 'Color', cc_fit(m,:), 'MarkerSize', 15);
-        xline(f_cut, 'Color', cc_fit(m,:))
+        xline(f_cut, 'Color', cc_fit(m,:));
         
     ax(3,m) = subplot(4,n_plot,sI(3)) ; hold on ; box on
-        yline(0, '--k')
+        yline(0, '--k');
         h.sys(3,m) = plot(M(n).fv_bode, M(n).phase, 'Color', cc_fit(m,:));
         h.sys_freq(3,m) = plot(D.freq, M(n).phase_freq, ...
             '.', 'Color', cc_fit(m,:), 'MarkerSize', 15);
-        xline(f_cut, 'Color', cc_fit(m,:))
+        xline(f_cut, 'Color', cc_fit(m,:));
 
     ax(4,m) = subplot(4,n_plot,sI(4)) ; hold on ; box on
-        yline(1, '--k')
+        yline(1, '--k');
         h.sys(4,m) = plot(M(n).fv_bode, M(n).error, 'Color', cc_fit(m,:));
         h.sys_freq(4,m) = plot(D.freq, M(n).error_freq, ...
             '.', 'Color', cc_fit(m,:), 'MarkerSize', 15);
@@ -662,7 +665,7 @@ set(ax(2:end,:), 'XLim', [0.1 20])
 set(ax(2:end,:), 'XScale', 'log')
 set(ax(2:end,:), 'XTick', [0.1 1 10])
 set(ax(1,:), 'YLim', [-1 1], 'XLim', [-1 1])
-set(ax(2,:), 'YLim', [0 20])
+set(ax(2,:), 'YLim', [0 1.2])
 set(ax(3,:), 'YLim', [-100 100])
 set(ax(4,:), 'YLim', [0 1.5])
 linkaxes(ax(2:end,:), 'x')
@@ -676,10 +679,10 @@ XLabelHC = get(ax(1,1), 'XLabel');
 set([XLabelHC], 'String', 'Imaginary')
 
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Tracking error')
@@ -709,8 +712,8 @@ for m = 1:n_plot
     D = MODEL.(clss(m)).data.(trf(m));
     ax(1,m) = subplot(4,n_plot,sI(1)); cla ; hold on ; box on; set(ax(1), 'DataAspectRatio', [1 1 1])
         title('Nyquist')
-        xline(0, '--k')
-        yline(0, '--k')
+        xline(0, '--k');
+        yline(0, '--k');
         h.data(1,m,:) = gscatter(D.real(:), D.imag(:), D.freq_all(:), ...
             cc_data, '.', 10, false);
         h.sys(1,m) = plot(M(n).real, M(n).imag, 'Color', cc_fit(m,:));
@@ -726,7 +729,7 @@ for m = 1:n_plot
             '.', 'Color', cc_fit(m,:), 'MarkerSize', 15);
         
     ax(3,m) = subplot(4,n_plot,sI(3)); cla ; hold on ; box on
-        yline(0, '--k')
+        yline(0, '--k');
         h.data(3,m,:) = gscatter(D.freq_all(:), D.phase(:), D.freq_all(:), ...
             cc_data, '.', 10, false);
         h.sys(3,m) = plot(M(n).fv_bode, M(n).phase, 'Color', cc_fit(m,:));
@@ -734,7 +737,7 @@ for m = 1:n_plot
             '.', 'Color', cc_fit(m,:), 'MarkerSize', 15);
 
     ax(4,m) = subplot(4,n_plot,sI(4)); cla ; hold on ; box on
-        yline(1, '--k')
+        yline(1, '--k');
         h.data(4,m,:) = gscatter(D.freq_all(:), D.error(:), D.freq_all(:), ...
             cc_data, '.', 10, false);
         h.sys(4,m) = plot(M(n).fv_bode, M(n).error, 'Color', cc_fit(m,:));
@@ -763,10 +766,10 @@ XLabelHC = get(ax(1,1), 'XLabel');
 set([XLabelHC], 'String', 'Imaginary')
 
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Tracking error')

@@ -14,12 +14,12 @@ function [MOV] = MagnoMontage_SOS_v3(rootdir,rootpat,vidFs,export)
 %       MOV         : structure containing movie 
 %
 
-% Example Input %
+% Example Input
 clear ; clc ; close all 
 export = false;
 vidFs = 50;
-rootdir = 'E:\Experiment_SOS_v1';
-rootpat = 'C:\Users\BC\Box\Git\Arena\Patterns';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2';
+rootpat = 'C:\Users\boc5244\Documents\GitHub\Arena\Patterns';
 
 if ~isfolder(rootdir)
     dirflag = false;

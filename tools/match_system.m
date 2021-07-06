@@ -1,8 +1,8 @@
-function [sys, data, h] = switch_system(P1, P2, C1, C2, delay1, delay2, colors)
-% switch_system: takes in parallel plant and controller transfer functions
-% (& optional correspondiong delays) and computes the closed-loop (H) & control input (W)
-% transfer functions. Then computes the closed-loop & control input response if P1/P2 
-% had a controller (C_switch) that lead to the same closed-loop response as H1/H2.
+function [sys, data, h] = match_system(P1, P2, H1, H2, delay1, delay2, colors)
+% match_system: takes in parallel plant and closed-loop transfer functions
+% (& optional correspondiong delays) and computes the controller (C) & control input (W)
+% transfer functions. Then computes the controller & control input response if P1/P2 
+% had a closed-loop response (C_switch) that lead to the same closed-loop response as H1/H2.
 %
 %  INPUTS:
 %       P1          : plant #1
@@ -32,19 +32,22 @@ end
 % Make system equations
 equations = controller_from_cl();
         
-% 1st open-loop system
+% 1st plant & closed-loop system
 sys.P1 = P1; % plant #1
-sys.C1 = C1; % controller #1
-sys.G1 = sys.P1 * sys.C1; % open-loop system #1
-sys.G1.IODelay = delay1; % set delay
-sys.G1 = pade(sys.G1); % approximate as linear system if delay is nonzero
+sys.H1 = H1; % closed-loop #1
 
-% 2nd open-loop system
+% 2nd plant & closed-loop system
 sys.P2 = P2; % plant #2
-sys.C2 = C2; % controller #2
-sys.G2 = sys.P2 * sys.C2; % open-loop system #2
-sys.G2.IODelay = delay2; % set delay
-sys.G2 = pade(sys.G2); % approximate as linear system if delay is nonzero
+sys.H2 = H2; % closed-loop #2
+
+sys.C1 = subs(equations.single.controllers.C1, [H1 P1], [tf2sym(sys.H2) tf2sym(sys.P1)]);
+sys.C1 = subs(equations.single.controllers.C1, [H1 P1], [tf2sym(sys.H2) tf2sym(sys.P1)]);
+
+
+% sys.C1 = C1; % controller #1
+% sys.G1 = sys.P1 * sys.C1; % open-loop system #1
+% sys.G1.IODelay = delay1; % set delay
+% sys.G1 = pade(sys.G1); % approximate as linear system if delay is nonzero
 
 % Closed-loop systems and combined system
 sys.H1 = minreal( sys.G1 / (1 + sys.G1 + sys.G2) ); % closed-loop system #1

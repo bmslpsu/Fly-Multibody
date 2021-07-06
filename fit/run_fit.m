@@ -87,7 +87,7 @@ Cn = {ALL.(clss).FRF_data.(trf).fly(vI).gain , ALL.(clss).FRF_data.(trf).fly(vI)
 data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUnit', 'hz');
 
 tffit = [];
-tffit{end+1} = tfest(data, 2, 1, NaN, opt);
+tffit{end+1} = tfest(data, 1, 0, 0.02, opt);
 % tffit{end+1} = tfest(data, 1, 0, 0.02, opt);
 
 [MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
@@ -106,7 +106,8 @@ Cn = {ALL.(clss).FRF_data.(trf).fly(vI).gain , ALL.(clss).FRF_data.(trf).fly(vI)
 data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUnit', 'hz');
 
 tffit = [];
-tffit{end+1} = tfest(data, 2, 2, [], opt);
+tffit{end+1} = tfest(data, 1, 1, 0.02, opt);
+tffit{1}.Numerator = [tffit{1}.Numerator(1) 0];
 % tffit{end+1} = tfest(data, 1, 2, [], opt);
 % tffit{end+1} = tfest(data, 2, 1, [], opt);
 
@@ -126,7 +127,7 @@ Cn = {ALL.(clss).FRF_data.(trf).fly(vI).gain , ALL.(clss).FRF_data.(trf).fly(vI)
 data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUnit', 'hz');
 
 tffit = [];
-tffit{end+1} = tfest(data, 2, 2, [], opt);
+tffit{end+1} = tfest(data, 2, 2, 0.02, opt);
 % tffit{end+1} = tfest(sys, 1, 2, NaN, opt);
 
 [MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
@@ -146,7 +147,7 @@ data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUni
 
 tffit = [];
 
-% delay = 0:0.001:0.05;
+% delay = 0:0.001:0.04;
 % [best_fit, sys_list, fitpercent, delay_sort] = tfest_delay(data, 1, 0, opt, delay);
 
 tffit{end+1} = tfest(data, 1, 0, 0.023, opt);
@@ -192,7 +193,7 @@ Cn = {ALL.(clss).FRF_data.(trf).fly(vI).gain , ALL.(clss).FRF_data.(trf).fly(vI)
 data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUnit', 'hz');
 
 tffit = [];
-tffit{end+1} = tfest(data, 2, 1, [], opt);
+tffit{end+1} = tfest(data, 1, 0, 0.028, opt);
 
 [MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
 
@@ -210,7 +211,7 @@ Cn = {ALL.(clss).FRF_data.(trf).fly(vI).gain , ALL.(clss).FRF_data.(trf).fly(vI)
 data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUnit', 'hz');
 
 tffit = [];
-tffit{end+1} = tfest(data, 2, 2, 0, opt);
+tffit{end+1} = tfest(data, 1, 2, 0.029, opt);
 
 [MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
 
@@ -220,8 +221,15 @@ set(h.ax(3), 'YLim', [-250 150])
 
 %% Create closed-loop transforms from open-loop fits
 clss = 'HeadFree';
-MODEL.morph.body.Jzz = 0.01834078; % [mg*mm^2] body inertia
-MODEL.morph.head.Jzz = 0.00431881; % [mg*mm^2] head inertia
+MODEL.morph.body.M = 0.84185066; % [mg] body mass
+MODEL.morph.head.M = 0.08957730; % [mg] head mass
+MODEL.morph.body.R = 2.22; % [mm] body radius
+MODEL.morph.head.R = 0.42; % [mm] head radius
+% MODEL.morph.body.Jzz = 0.01834078; % [mg*mm^2] body inertia
+% MODEL.morph.head.Jzz = 0.00431881; % [mg*mm^2] head inertia
+MODEL.morph.body.Jzz = 0.56650720; % [mg*mm^2] body inertia
+MODEL.morph.head.Jzz = 0.00619410; % [mg*mm^2] head inertia
+
 MODEL.morph.J_ratio = MODEL.morph.head.Jzz / MODEL.morph.body.Jzz; % head/body inertia ratio
 
 MODEL.(clss).G.body = MODEL.(clss).fit.err2body(1).models;

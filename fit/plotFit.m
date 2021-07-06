@@ -89,8 +89,10 @@ for n = 1:n_model
     gain_nmse = goodnessOfFit(data.gain(:), gain_freq_all, 'NMSE');
     phase_nmse = goodnessOfFit(data.phase(:), phase_freq_all, 'NMSE');
     
-    sys(n).fitpercent.gain = 1 - gain_nmse;
-    sys(n).fitpercent.phase = 1 - phase_nmse;
+    %sys(n).fitpercent.gain = 1 - gain_nmse;
+    %sys(n).fitpercent.phase = 1 - phase_nmse;
+    sys(n).fitpercent.gain = gain_nmse;
+    sys(n).fitpercent.phase = phase_nmse;
     sys(n).fitpercent.combined = mean([sys(n).fitpercent.gain sys(n).fitpercent.phase]);
 end
 
@@ -109,8 +111,8 @@ if showplot
     movegui(fig, 'center')
     ax(1) = subplot(4,1,1); cla ; hold on ; box on; set(ax(1), 'DataAspectRatio', [1 1 1])
         title('Nyquist')
-        xline(0, '--k')
-        yline(0, '--k')
+        xline(0, '--k');
+        yline(0, '--k');
         %plot(1, 0, 'g.', 'MarkerSize', 25)
         for n = 1:n_model
             h.data(1,n,:) = gscatter(data.real(:), data.imag(:), data.freq_all(:), ...
@@ -142,7 +144,7 @@ if showplot
         ylabel('Phase')
         
     ax(4) = subplot(4,1,4); cla ; hold on ; box on
-        yline(1, '--k')
+        yline(1, '--k');
         for n = 1:n_model
             h.data(4,n,:) = gscatter(data.freq_all(:), data.error(:), data.freq_all(:), ...
                 cc, '.', 10, false);

@@ -19,7 +19,7 @@ h = idfrd(complex_response, IOFv_rad, Ts);
 plot(IOFv_rad, abs(complex_response), '-k*')
 
 %% All speeds
-trf_names = "head2body";
+trf_names = "body2head";
 n_cond = HeadFree.N{1,3};
 cc = colorcube(n_cond);
 cc = [0 0.7 0.7 ; 0.9 0.9 0; 0.7 0 0.7];

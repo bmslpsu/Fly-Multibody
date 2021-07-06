@@ -9,13 +9,13 @@ load(fullfile(PATH,FILE),'DATA','FUNC','GRAND','U','N')
 clc
 clearvars -except FILE DATA ALL GRAND FLY FUNC D I U N root
 
-% % Head-free
-% pI = [1 2 3 4 5 6 7 8];
-% T = ["ref2body", "ref2head", "ref2gaze", "body2head", "ref2wing", "wing2body", ...
-%     "err2body", "err2head"];
-% shift_I = {7:10, 9, 9, 9, 7:9, 9, 9  9};
-% phase_lim = [0 nan nan nan 0 nan 20 nan];
-% fI = (1:9)';
+% Head-free
+pI = [1 2 3 4 5 6 7 8];
+T = ["ref2body", "ref2head", "ref2gaze", "body2head", "ref2wing", "wing2body", ...
+    "err2body", "err2head"];
+shift_I = {7:10, 9, 9, 9, 7:9, 9, 9  9};
+phase_lim = [0 nan nan nan 0 nan 20 nan];
+fI = (1:9)';
 
 % Head-fixed
 % pI = [1 2 3 4];
@@ -24,12 +24,12 @@ clearvars -except FILE DATA ALL GRAND FLY FUNC D I U N root
 % phase_lim = [0 nan -25 0];
 % fI = (1:9)';
 
-% Body-fixed
-pI = [1 2];
-T = ["ref2head", "err2head"];
-shift_I = {7:10, 1:9};
-phase_lim = [nan nan];
-fI = (1:9)';
+% % Body-fixed
+% pI = [1 2];
+% T = ["ref2head", "err2head"];
+% shift_I = {7:10, 1:9};
+% phase_lim = [nan nan];
+% fI = (1:9)';
 
 % pI = [1 2 3];
 % T = ["ref2body", "ref2head", "ref2gaze"];
@@ -138,7 +138,7 @@ set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2.2*n_plot 5*2])
 movegui(fig, 'center')
 clear ax h
 ax = gobjects(4,n_plot);
-v = 2;
+v = 1;
 for n = 1:n_plot
     subI = n + (0:4)*n_plot;
     ax(1,n) = subplot(5,n_plot,subI(1)); hold on ; title(T(n), 'interpreter', 'none')

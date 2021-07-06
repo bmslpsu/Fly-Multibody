@@ -1,8 +1,7 @@
-function [sys, data, h] = switch_system(P1, P2, C1, C2, delay1, delay2, colors)
-% switch_system: takes in parallel plant and controller transfer functions
+function [sys, data, h] = multi_body_system(P1, P2, C1, C2, delay1, delay2, colors)
+% multi_body_system: takes in parallel plant and controller transfer functions
 % (& optional correspondiong delays) and computes the closed-loop (H) & control input (W)
-% transfer functions. Then computes the closed-loop & control input response if P1/P2 
-% had a controller (C_switch) that lead to the same closed-loop response as H1/H2.
+% transfer functions.
 %
 %  INPUTS:
 %       P1          : plant #1
@@ -29,9 +28,6 @@ if nargin < 7
     end
 end
 
-% Make system equations
-equations = controller_from_cl();
-        
 % 1st open-loop system
 sys.P1 = P1; % plant #1
 sys.C1 = C1; % controller #1
@@ -54,40 +50,8 @@ sys.H12 = minreal( sys.H1 + sys.H2 ); % full closed-loop system
 % Control input transfer functions
 sys.W1 = minreal( sys.C1 / (1 + sys.G1 + sys.G2) ); % control-input system #1
 sys.W2 = minreal( sys.C2 / (1 + sys.G1 + sys.G2) ); % control-input system #2
-% sys.W12 = minreal( sys.W1 + sys.W2 );
 
-% Compute controller than shapes P1 alone into H2
-syms s H1 P1 C1
-sys.C1_switch = subs(equations.single.controllers.C1, [H1 P1], [tf2sym(sys.H2) tf2sym(sys.P1)]);
-% sys.C1_switch = subs(equations.single.controllers.C1, [H1 P1], [tf2sym(sys.H12) tf2sym(sys.P1)]);
-sys.C1_switch = minreal_sym(collect(simplify(expand(sys.C1_switch)),s),s);
-
-% Recompute H1, which should now match H2
-sys.H1_switch = subs(equations.single.closedloop.H1, [C1 P1], [sys.C1_switch tf2sym(sys.P1)]);
-sys.H1_switch = minreal_sym(collect(simplify(expand(sys.H1_switch)),s),s);
-sys.H1_switch = minreal(sym2tf(sys.H1_switch));
-
-% Compute the new control input needed for P1 to match H2
-sys.C1_switch = minreal( sym2tf(sys.C1_switch) );
-sys.G1_switch = sys.P1 * sys.C1_switch;
-sys.W1_switch = minreal( sys.C1_switch / (1 + sys.G1_switch) );
-
-% Compute controller than shapes P2 alone into H1
-sys.C2_switch = subs(equations.single.controllers.C1, [H1 P1], [tf2sym(sys.H1) tf2sym(sys.P2)]);
-% sys.C2_switch = subs(equations.single.controllers.C1, [H1 P1], [tf2sym(sys.H12) tf2sym(sys.P2)]);
-sys.C2_switch = minreal_sym(collect(simplify(expand(sys.C2_switch)),s),s);
-
-% Recompute H2, which should now match H1
-sys.H2_switch = subs(equations.single.closedloop.H1, [C1 P1], [sys.C2_switch tf2sym(sys.P2)]);
-sys.H2_switch = minreal_sym(collect(simplify(expand(sys.H2_switch)),s),s);
-sys.H2_switch = minreal(sym2tf(sys.H2_switch));
-
-% Compute the new control input needed for P2 to match H1
-sys.C2_switch = minreal( sym2tf(sys.C2_switch) );
-sys.G2_switch = sys.P2 * sys.C2_switch;
-sys.W2_switch = minreal( sys.C2_switch / (1 + sys.G2_switch) );
-
-%% Plant, Conctroller, CLosed-loop, Control-input bod eplot computations   
+%% Plant, Controller, Closed-loop, Control-input bode plot computations   
 plot_tf = string(fieldnames(sys));    
 n_tf = length(plot_tf);
 
@@ -103,17 +67,20 @@ for n = 1:n_tf
     data.phase.(plot_tf(n)) = squeeze(phase);
     
     name = char(plot_tf(n));
-    if strcmp(name(1),'W')
+    if strcmp(name(1),'W') || strcmp(name(1),'C')
         data.power.(plot_tf(n)) = data.fv .* data.gain.(plot_tf(n));
     end
 end
 data.gain.Csum = data.gain.C1 + data.gain.C2;
 data.gain.Wsum = data.gain.W1 + data.gain.W2;
 data.power.Wsum = data.power.W1 + data.power.W2;
-data.power.ratio_1 = data.power.W2 ./ data.power.W1_switch;
-data.power.ratio_2 = data.power.W1 ./ data.power.W2_switch;
-
+% data.power.ratio_1 = data.power.W2 ./ data.power.W1_switch;
+% data.power.ratio_2 = data.power.W1 ./ data.power.W2_switch;
 data.power.ratio_1 = (data.power.W1_switch - data.power.W2) ./ data.power.W2;
+data.power.ratio_2 = (data.power.W2_switch - data.power.W1) ./ data.power.W1;
+
+% data.power.ratio_1 = (data.power.C1_switch - data.power.C2) ./ data.power.C2;
+% data.power.ratio_2 = (data.power.C2_switch - data.power.C1) ./ data.power.C1;
 
 %% Plots
 if ~isempty(colors)
@@ -156,7 +123,7 @@ ax(1,1) = subplot(2,4,1); cla ; hold on ; title('Plant') ; ylabel('gain')
     h.P(1,2) = plot(data.fv, data.gain.P2, 'Color', cc.two);
             
 ax(2,1) = subplot(2,4,5); cla ; hold on ; ylabel('phase (°)')
-    yline(0, '--k')
+    yline(0, '--k');
     h.P(1,3) = plot(data.fv, data.phase.P1, 'Color', cc.one);
     h.P(1,4) = plot(data.fv, data.phase.P2, 'Color', cc.two);
             
@@ -164,15 +131,15 @@ ax(1,2) = subplot(2,4,2); cla ; hold on ; title('Controller')
     h.C(1,1) = plot(data.fv, data.gain.C1, 'Color', cc.one);
     h.C(1,2) = plot(data.fv, data.gain.C2, 'Color', cc.two);
     h.C(1,3) = plot(data.fv, data.gain.Csum, 'Color', cc.comb);
-    h.C(1,4) = plot(data.fv, data.gain.C1_switch, 'Color', cc.switch1);
-    h.C(1,5) = plot(data.fv, data.gain.C2_switch, 'Color', cc.switch2);
+    h.C(1,4) = plot(data.fv, data.gain.C1_switch, '--', 'Color', cc.switch1);
+    h.C(1,5) = plot(data.fv, data.gain.C2_switch, '--', 'Color', cc.switch2);
         
 ax(2,2) = subplot(2,4,6); cla ; hold on
-    yline(0, '--k')
+    yline(0, '--k');
     h.C(1,6) = plot(data.fv, data.phase.C1, 'Color', cc.one);
     h.C(1,7) = plot(data.fv, data.phase.C2, 'Color', cc.two);
-    h.C(1,8) = plot(data.fv, data.phase.C1_switch, 'Color', cc.switch1);
-    h.C(1,9) = plot(data.fv, data.phase.C2_switch, 'Color', cc.switch2);
+    h.C(1,8) = plot(data.fv, data.phase.C1_switch, '--', 'Color', cc.switch1);
+    h.C(1,9) = plot(data.fv, data.phase.C2_switch, '--', 'Color', cc.switch2);
         
 ax(1,3) = subplot(2,4,3); cla ; hold on ; title('Closed-loop')
     h.H(1,1) = plot(data.fv, data.gain.H1, 'Color', cc.one);
@@ -182,7 +149,7 @@ ax(1,3) = subplot(2,4,3); cla ; hold on ; title('Closed-loop')
   	h.H(1,5) = plot(data.fv, data.gain.H2_switch, '--', 'Color', cc.switch2);
         
 ax(2,3) = subplot(2,4,7); cla ; hold on
-    yline(0, '--k')
+    yline(0, '--k');
     h.H(1,6) = plot(data.fv, data.phase.H1, 'Color', cc.one);
     h.H(1,7) = plot(data.fv, data.phase.H2, 'Color', cc.two);
     h.H(1,8) = plot(data.fv, data.phase.H12, 'Color', cc.comb);
@@ -193,15 +160,15 @@ ax(1,4) = subplot(2,4,4); cla ; hold on ; title('Control input')
     h.W(1,1) = plot(data.fv, data.gain.W1, 'Color', cc.one);
     h.W(1,2) = plot(data.fv, data.gain.W2, 'Color', cc.two);
     h.W(1,3) = plot(data.fv, data.gain.Wsum, 'Color', cc.comb);
-    h.W(1,4) = plot(data.fv, data.gain.W1_switch, 'Color', cc.switch1);
-    h.W(1,5) = plot(data.fv, data.gain.W2_switch, 'Color', cc.switch2);
+    h.W(1,4) = plot(data.fv, data.gain.W1_switch, '--', 'Color', cc.switch1);
+    h.W(1,5) = plot(data.fv, data.gain.W2_switch, '--', 'Color', cc.switch2);
         
 ax(2,4) = subplot(2,4,8); cla ; hold on
-    yline(0, '--k')
+    yline(0, '--k');
     h.W(1,6) = plot(data.fv, data.phase.W1, 'Color', cc.one);
     h.W(1,7) = plot(data.fv, data.phase.W2, 'Color', cc.two);
-    h.W(1,8) = plot(data.fv, data.phase.W1_switch, 'Color', cc.switch1);
-    h.W(1,9) = plot(data.fv, data.phase.W2_switch, 'Color', cc.switch2);
+    h.W(1,8) = plot(data.fv, data.phase.W1_switch, '--', 'Color', cc.switch1);
+    h.W(1,9) = plot(data.fv, data.phase.W2_switch, '--', 'Color', cc.switch2);
 
 linkaxes(ax, 'x')
 linkaxes(ax(2,:), 'y')
@@ -223,7 +190,7 @@ clear ax
 
 % cc = [0.6 0.6 0.6];
 ax = subplot(1,1,1); hold on ; cla
-yline(1, 'k--')
+yline(1, 'k--');
 h.power(1) = plot(data.fv, data.power.ratio_1, 'Color', cc.switch1, 'LineWidth', 2);
 % h.power(2) = plot(data.fv, data.power.ratio_2, 'Color', cc.switch2, 'LineWidth', 2);
 xlabel('Frequency (hz')

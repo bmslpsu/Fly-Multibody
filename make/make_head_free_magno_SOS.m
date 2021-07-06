@@ -49,7 +49,7 @@ end
 [D,I,N,U,T,~,~,basename] = GetFileData(root.body,'*.mat',false);
 % [D,I,N,U,T,~,~,basename] = GetFileData(root.benifly,'*.csv',false);
 
-%% Get Data %%
+%% Get Data
 close all
 clc
 
@@ -142,15 +142,15 @@ for n = 1:N.file
     Error                   = DATA.reference{n}.position - DATA.body{n}.position - DATA.head{n}.position;
 	DATA.error{n}           = singal_attributes(Error, tintrp);
 
-%     hold on
-%     plot(tintrp, body_scd.shift.IntrpPosition, 'b', 'LineWidth', 1)
-%     plot(tintrp, DATA.body{n}.trend, 'g--', 'LineWidth', 1)
-%     plot(tintrp, DATA.body{n}.position, 'r', 'LineWidth', 1)
-%     %plot(tintrp, Head, 'k', 'LineWidth', 1)
-%     %plot(tintrp, DATA.head{n}.trend, 'g--', 'LineWidth', 1)
-%     %plot(tintrp, DATA.head{n}.position, 'r', 'LineWidth', 1)
-%     pause
-%     cla
+    hold on
+    plot(tintrp, body_scd.shift.IntrpPosition, 'b', 'LineWidth', 1)
+    plot(tintrp, DATA.body{n}.trend, 'g--', 'LineWidth', 1)
+    plot(tintrp, DATA.body{n}.position, 'r', 'LineWidth', 1)
+    %plot(tintrp, Head, 'k', 'LineWidth', 1)
+    %plot(tintrp, DATA.head{n}.trend, 'g--', 'LineWidth', 1)
+    %plot(tintrp, DATA.head{n}.position, 'r', 'LineWidth', 1)
+    pause
+    cla
 
     % Debug plot
     if debug
