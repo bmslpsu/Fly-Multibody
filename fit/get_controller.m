@@ -5,7 +5,7 @@ function [cntrl, plant, tau, C, K, cutoff_freq] = get_controller(sys, I)
 %
 %   INPUT:
 %     	sys     	: 1st order transfer function
-%       I           : "inertia" of plant
+%       I           : "inertia" of plant, if nan then normalize plant to have gain of one
 %
 %   OUTPUT:
 %       cntrl   	: controller transfer function
@@ -28,7 +28,12 @@ num_norm = num / den(2);
 
 tau = den_norm(1);
 cutoff_freq = (1 / tau) / (2*pi);
-C = I / tau;
+
+if ~isnan(I)
+    C = I / tau;
+else
+    C = 1;
+end
 K = 1 / C;
 
 plant = tf(K, [tau 1]);

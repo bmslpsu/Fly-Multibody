@@ -549,8 +549,8 @@ for m = 1:n_curve
 	M = plotFit(D.input, IOFv, MODEL.(clss(m)).C_norm.(cl(m)), 0:0.02:20, false);
     ax(1,m) = subplot(4,n_plot,sI(1)) ; hold on ; box on; set(ax(1), 'DataAspectRatio', [1 1 1])
         title('Nyquist')
-        xline(0, '--k')
-        yline(0, '--k')
+        xline(0, '--k');
+        yline(0, '--k');
         h.sys(1,m) = plot(M(n).real, M(n).imag, 'Color', cc_fit(m,:));
         h.sys_freq(1,m) = plot(M(n).real_freq, M(n).imag_freq, ...
             '.', 'Color', cc_fit(m,:), 'MarkerSize', 15);
@@ -562,13 +562,13 @@ for m = 1:n_curve
             '.', 'Color', cc_fit(m,:), 'MarkerSize', 15);
         
     ax(3,m) = subplot(4,n_plot,sI(3)) ; hold on ; box on
-        yline(0, '--k')
+        yline(0, '--k');
         h.sys(3,m) = plot(M(n).fv_bode, M(n).phase, 'Color', cc_fit(m,:));
         h.sys_freq(3,m) = plot(D.freq, M(n).phase_freq, ...
             '.', 'Color', cc_fit(m,:), 'MarkerSize', 15);
 
     ax(4,m) = subplot(4,n_plot,sI(4)) ; hold on ; box on
-        yline(1, '--k')
+        yline(1, '--k');
         h.sys(4,m) = plot(M(n).fv_bode, M(n).error, 'Color', cc_fit(m,:));
         h.sys_freq(4,m) = plot(D.freq, M(n).error_freq, ...
             '.', 'Color', cc_fit(m,:), 'MarkerSize', 15);

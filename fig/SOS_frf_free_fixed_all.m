@@ -1,5 +1,5 @@
-function [] = SOS_frf_free_fixed()
-%% SOS_frf_free_fixed:
+function [] = SOS_frf_free_fixed_all()
+%% SOS_frf_free_fixed_all:
 root = 'E:\DATA\Magno_Data\Multibody\Processed';
 [FILE{1},PATH{1}] = uigetfile({'*.mat'},'Select head-free data', root, 'MultiSelect','off');
 [FILE{2},PATH{2}] = uigetfile({'*.mat'}, 'Select head-fixed data', root, 'MultiSelect','off');
@@ -12,6 +12,9 @@ end
 n_cond = ALL.HeadFree.N{1,3};
 
 %% Virtual gaze (head-fixed body + body-fixed head)
+clc
+clearvars -except ALL FILE PATH n_cond
+
 ALL.VirtualGaze = [];
 ALL.VirtualGaze.FRF_data.IOFv = ALL.HeadFree.FRF_data.IOFv;
 body_class = 'HeadFixed';
@@ -44,20 +47,27 @@ for v = 1:n_cond
     ALL.VirtualGaze.FRF_data.ref2gaze.grand_std(v).error = sqrt( ...
         ALL.(body_class).FRF_data.ref2body.grand_std(v).error.^(2) + ...
         ALL.BodyFixed.FRF_data.ref2head.grand_std(v).error.^(2));
+    
+    % NaN
+    ALL.VirtualGaze.FRF_data.ref2gaze.grand_mean(v).IO_coherence = nan*...
+        ALL.VirtualGaze.FRF_data.ref2gaze.grand_mean(v).gain;
+    ALL.VirtualGaze.FRF_data.ref2gaze.grand_std(v).IO_coherence = nan*...
+        ALL.VirtualGaze.FRF_data.ref2gaze.grand_mean(v).gain;
+    ALL.VirtualGaze.FRF_data.ref2gaze.grand_mean(v).mag = nan*...
+        ALL.VirtualGaze.FRF_data.ref2gaze.grand_mean(v).gain;
+    ALL.VirtualGaze.FRF_data.ref2gaze.grand_std(v).mag = nan*...
+        ALL.VirtualGaze.FRF_data.ref2gaze.grand_mean(v).gain;
 end
 
 %% Compare head free, head-fixed, body-fixed
-clc
-clearvars -except ALL FILE PATH
-
-set_names = ["HeadFree", "HeadFixed", "HeadFree", "HeadFree", "BodyFixed"];
-trf_names = ["ref2body", "ref2body", "ref2gaze", "ref2head", "ref2head"];
+set_names = ["HeadFree", "HeadFixed", "HeadFree", "HeadFree", "BodyFixed", "VirtualGaze"];
+trf_names = ["ref2body", "ref2body", "ref2gaze", "ref2head", "ref2head", "ref2gaze"];
 plot_names = ["mag", "gain", "phase", "error", "IO_coherence"];
 yLines = [nan nan 0 1 nan];
 n_set = length(trf_names);
 n_plot = length(plot_names);
 cond = ALL.HeadFree.U{1,3}{1};
-cc = [0.9 0 0 ; 1 0.6 0.1; 0.5 0.3 1 ; 0 0.4 1 ; 0 0.8 0.2];
+cc = [0.9 0 0 ; 1 0.6 0.1 ; 0.5 0.3 1 ; 0 0.4 1 ; 0 0.8 0.2 ; 0.2 0.8 1];
 % cc = distinguishable_colors(n_set);
 
 fig = figure (1) ; clf
@@ -70,7 +80,7 @@ for v = 1:n_cond
     for p = 1:n_plot
         ax(p,v) = subplot(n_plot,n_cond,subI(p)); hold on
         if p == 1
-            title([num2str(cond(v)) '째/s'], 'interpreter', 'none')
+            title([num2str(cond(v)) '�/s'], 'interpreter', 'none')
         end
         for n = 1:n_set
             if ~isnan(yLines(p))
@@ -113,7 +123,7 @@ YLabelHC = get(ax(5,1), 'YLabel');
 set([YLabelHC], 'String', 'Coherence')
 
 set(ax(1,1:end),'YLim',[0 65])
-set(ax(2,1:end-1),'YLim',[0 1])
+set(ax(2,1:end),'YLim',[0 1.3])
 set(ax(3,1:end),'YLim',[-250 150])
 set(ax(5,1:end),'YLim',[0 1])
 set(ax(1:end-1,:), 'XTickLabel', [])
@@ -155,7 +165,7 @@ for n = 1:n_set
             title(trf_names(n) + "_" + set_names(n), 'interpreter', 'none')
         end
         if ~isnan(yLines(p))
-            yline(yLines(p), '--', 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
+            yline(yLines(p), '--', 'Color', [0.5 0.5 0.5], 'LineWidth', 1);
         end
         for v = 1:n_cond
             [h.patch(p,v,n),h.line(p,v,n)] = PlotPatch(...
@@ -210,84 +220,6 @@ set(ax,'XScale','log')
 % align_Ylabels(fig)
 % delete(h.patch)
 
-%%
-
-clc
-clearvars -except ALL FILE PATH
-
-set_names = ["HeadFree", "BodyFixed", "HeadFree", "VirtualGaze"];
-trf_names = ["ref2body", "ref2head", "ref2gaze", "ref2gaze"];
-plot_names = ["gain", "phase", "error"];
-yLines = [1 0 1];
-n_set = length(trf_names);
-n_plot = length(plot_names);
-n_cond = ALL.HeadFree.N{1,3};
-cond = ALL.HeadFree.U{1,3}{1};
-cc = [0.9 0 0 ; 0 0.8 0.2; 0.5 0.3 1; 0.2 0.8 1];
-% cc = flipud(distinguishable_colors(n_cond+6));
-
-fig = figure (3) ; clf
-set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 n_cond*2 n_plot*1.8])
-movegui(fig, 'center')
-clear ax h
-ax = gobjects(n_plot,n_cond);
-for v = 1:n_cond
-    subI = v + (0:n_plot-1)*n_cond;
-    for p = 1:n_plot
-        ax(p,v) = subplot(n_plot,n_cond,subI(p)); hold on
-        if p == 1
-            title([num2str(cond(v)) '째/s'], 'interpreter', 'none')
-        end
-        for n = 1:n_set
-            if ~isnan(yLines(p))
-                yline(yLines(p), '--', 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
-            end
-            [h.patch(p,v,n),h.line(p,v,n)] = PlotPatch(...
-                    ALL.(set_names(n)).FRF_data.(trf_names(n)).grand_mean(v).(plot_names(p)),...
-                  	ALL.(set_names(n)).FRF_data.(trf_names(n)).grand_std(v).(plot_names(p)), ...
-                    ALL.(set_names(n)).FRF_data.IOFv{v}, 1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
-        end
-    end
-end
-leg_label = trf_names + "_" + set_names;
-leg = legend(squeeze(h.line(1,1,:)), leg_label, ...
-    'Box', 'off', 'interpreter', 'none', 'Orientation', 'vertical');
-leg.Position  = [0.63 0.32 0.29 0.13];
-
-linkaxes(ax, 'x')
-for a = 1:size(ax,1)
-    linkaxes(ax(a,:), 'y')
-end
-
-set(h.line, 'Marker', '.','MarkerFaceColor', 'none', 'MarkerSize', 10, 'LineWidth', 1)
-set(ax, 'Color', 'none', 'LineWidth', 0.75, 'FontSize', 10, 'XLim', [0.2 20],...
-    'XGrid', 'off', 'YGrid', 'off', 'Box', 'off')
-set(ax, 'XTick', [0.1, 1 10])
-
-XLabelHC = get(ax(end,:), 'XLabel');
-set([XLabelHC{:}], 'String', 'Frequency (Hz)')
-
-YLabelHC = get(ax(1,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (째/째)')
-YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (째)')
-YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Error')
-
-set(ax(1,1:end),'YLim',[0 1.5])
-set(ax(2,1:end),'YLim',[-250 150])
-set(ax(3,1:end),'YLim',[0 1.5])
-set(ax(1:end-1,:), 'XTickLabel', [])
-set(ax(:,2:end), 'YTickLabels', [])
-
-set(ax(1:end-1,:), 'XColor', 'none')
-set(ax(:,2:end), 'YColor', 'none')
-
-set(ax,'XScale','log')
-% set(ax,'XScale','linear')
-% align_Ylabels(fig)
-% delete(h.patch)
-
 %% Error transforms
 clc
 clearvars -except ALL FILE PATH
@@ -316,7 +248,7 @@ for n = 1:n_set
             title(trf_names(n) + "_" + set_names(n), 'interpreter', 'none')
         end
         if ~isnan(yLines(p))
-            yline(yLines(p), '--', 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
+            yline(yLines(p), '--', 'Color', [0.5 0.5 0.5], 'LineWidth', 1);
         end
         for v = 1:n_cond
             [h.patch(p,v,n),h.line(p,v,n)] = PlotPatch(...
@@ -330,7 +262,7 @@ leg_label = string(cond);
 leg = legend(squeeze(h.line(1,:,1)), leg_label, ...
     'Box', 'off', 'interpreter', 'none', 'Orientation', 'vertical');
 leg.Position  = [0.005 0.91 0.07 0.08];
-leg.Title.String = 'Speed (째/s)';
+leg.Title.String = 'Speed (�/s)';
 
 linkaxes(ax, 'x')
 for a = 2:size(ax,1)
@@ -346,9 +278,9 @@ XLabelHC = get(ax(end,:), 'XLabel');
 set([XLabelHC{:}], 'String', 'Frequency (Hz)')
 
 YLabelHC = get(ax(1,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (째/째)')
+set([YLabelHC], 'String', 'Gain (�/�)')
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (째)')
+set([YLabelHC], 'String', 'Phase difference (�)')
 YLabelHC = get(ax(3,1), 'YLabel');
 set([YLabelHC], 'String', 'Coherence')
 
@@ -435,7 +367,7 @@ clear ax h
 time_const_keep = time_const_group(:);
 r2_keep = r2_group(:);
 G_keep = G(:);
-r2_check = r2_keep < 0;
+r2_check = r2_keep < 0.5;
 disp(['Removing ' num2str(sum(r2_check,'all')) ' of ' num2str(numel(r2_check)) ' flies'])
 
 time_const_keep = time_const_keep(~r2_check);
@@ -462,7 +394,7 @@ ax(1,1) = subplot(2,1,1); hold on
     set(findobj(ax(1),'tag','Lower Whisker'), 'Color', 'k','LineStyle','-');
     ax(1).Children = ax(1).Children([end 1:end-1]);
     
-    plot(G_keep + jitter, time_const_keep, '.', 'Color', [0.5 0.5 0.5 0.2], 'MarkerSize', 5)
+    plot(G_keep + jitter, time_const_keep, '.', 'Color', [0.5 0.5 0.5 0.2], 'MarkerSize', 2)
 
 ax(2,1) = subplot(2,1,2); hold on
     %b = boxchart(r2_const_keep,'GroupByColor', G_keep, 'MarkerStyle', '.');
@@ -500,65 +432,6 @@ set([YLabelHC], 'String', 'R^{2}')
 [p,~,stats] = anova1(time_const_keep, G_keep);
 % [p,tb,stats] = kruskalwallis(time_const_keep, G_keep);
 [c,m] = multcompare(stats, 'alpha', 0.001);
-
-%% Coherence
-close all ; clc
-n_freq = length(ALL.HeadFree.FRF_data.IOFv{1});
-cc = [0.9 0 0 ; 1 0.6 0.1];
-
-fig = figure (6) ; clf
-set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 1*n_freq 1.2*n_cond])
-movegui(fig, 'center')
-clear ax h
-ax = gobjects(n_cond, n_freq);
-pp = 1;
-rng(1)
-spread = 0.3;
-P = nan(n_cond, n_freq);
-for v = 1:n_cond
-    cohr_free = ALL.HeadFree.FRF_data.ref2body.fly(v).IO_coherence';
-  	cohr_fixed = ALL.HeadFixed.FRF_data.ref2body.fly(v).IO_coherence';
-    cohr_all = [cohr_free ; cohr_fixed];
-    
-    G_free = ones(size(cohr_free,1),1);
-    G_fixed = 2*ones(size(cohr_fixed,1),1);
-    G = [G_free ; G_fixed];
-    %G_freq = repmat(G,[n_freq 1]);
-    
-    for f = 1:n_freq
-        %[~,P(v,f)] = ttest2(cohr_free(:,f), cohr_fixed(:,f));
-        P(v,f) = ranksum(cohr_free(:,f), cohr_fixed(:,f));
-        ax(v,f) = subplot(n_cond,n_freq,pp); hold on
-        title(num2str(round(P(v,f),2,'significant')))
-        if P(v,f) < 0.01
-           ax(v,f).Title.Color = 'r'; 
-        end
-        %if v == 1 ; title(num2str(f)) ; end
-            %b = boxchart(cohr_all(:,f),'GroupByColor', G, 'MarkerStyle', '.');
-        bx = boxplot(cohr_all(:,f), G, ...
-            'Width', 0.7, 'Symbol', '', 'Whisker', 2, 'OutlierSize', 0.5);
-
-        h = get(bx(5,:),{'XData','YData'});
-        for c = 1:size(h,1)
-           patch(h{c,1},h{c,2}, cc(c,:), 'EdgeColor', 'none', 'FaceAlpha', 0.2);
-        end
-
-        set(findobj(ax(v,f),'tag','Median'), 'Color', 'k','LineWidth', 1);
-        set(findobj(ax(v,f),'tag','Median'), {'Color'}, flipud(num2cell(cc,2)));
-        set(findobj(ax(v,f),'tag','Box'), 'Color', 'none');
-        set(findobj(ax(v,f),'tag','Upper Whisker'), 'Color', 'k','LineStyle','-');
-        set(findobj(ax(v,f),'tag','Lower Whisker'), 'Color', 'k','LineStyle','-');
-        ax(v,f).Children = ax(v,f).Children([end 1:end-1]);
-        
-        
-        jitter = rand(size(G)) * spread - (spread/2);
-        plot(G + jitter, cohr_all(:,f), '.', 'Color', [0.5 0.5 0.5 0.2], 'MarkerSize', 4)
-    	pp = pp + 1;
-    end
-end
-linkaxes(ax)
-set(ax, 'Color', 'none', 'Box', 'off', 'XColor', 'none', 'LineWidth', 0.75, 'YLim', [0.4 1], 'YTick', [0.5 1])
-set(ax(1:end,2:end), 'YColor', 'none')
 
 %% Save FRF & time constant data
 fname = 'FRF_combined';

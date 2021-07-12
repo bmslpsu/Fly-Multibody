@@ -13,6 +13,7 @@ IOFv = ALL.HeadFree.FRF_data.IOFv{vI};
 frange = 0:0.02:20;
 
 opt = tfestOptions('EnforceStability', true, 'InitializeMethod', 'all');
+showplot = true;
 
 %% HeadFree: err2body
 close all
@@ -30,17 +31,19 @@ tffit{end+1} = tfest(data, 1, 1, 0.02, opt);
 % delay = 0:0.001:0.05;
 % [tffit{end+1}, sys_list, fitpercent, delay_sort] = tfest_delay(data, 1, 0, opt, delay);
 
-[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
+[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, showplot);
 
-suptitle(trf)
-h.fig.Position(3:4) = [2.5 6];
-set(h.data, 'MarkerSize', 5)
-set(h.sys_freq, 'MarkerSize', 10)
-set(h.ax, 'LineWidth', 0.5)
-% set(h.ax, 'XGrid', 'off', 'YGrid', 'off')
-set(h.ax(1), 'YLim', [-7 1], 'XLim', [-2 6])
-set(h.ax(2), 'YLim', [0 5])
-set(h.ax(3), 'YLim', [-250 150])
+if showplot
+    suptitle(trf)
+    h.fig.Position(3:4) = [2.5 6];
+    set(h.data, 'MarkerSize', 5)
+    set(h.sys_freq, 'MarkerSize', 10)
+    set(h.ax, 'LineWidth', 0.5)
+    % set(h.ax, 'XGrid', 'off', 'YGrid', 'off')
+    set(h.ax(1), 'YLim', [-7 1], 'XLim', [-2 6])
+    set(h.ax(2), 'YLim', [0 5])
+    set(h.ax(3), 'YLim', [-250 150])
+end
 
 %% HeadFree: err2head
 close all
@@ -65,17 +68,19 @@ tffit{1}.Numerator = [tffit{1}.Numerator(1) 0];
 % [temp, h] = fitBode(Cn, IOFv, [1 1], [1 1], 0.02, 'lsqnonlin', false);
 % tffit{end+1} = temp.tf.G;
 
-[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
+[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, showplot);
 
-suptitle(trf)
-h.fig.Position(3:4) = [3 7];
-set(h.data, 'MarkerSize', 5)
-set(h.sys_freq, 'MarkerSize', 10)
-set(h.ax, 'LineWidth', 0.5)
-% set(h.ax, 'XGrid', 'off', 'YGrid', 'off')
-set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
-set(h.ax(2), 'YLim', [0 1])
-set(h.ax(3), 'YLim', [-250 150])
+if showplot
+    suptitle(trf)
+    h.fig.Position(3:4) = [3 7];
+    set(h.data, 'MarkerSize', 5)
+    set(h.sys_freq, 'MarkerSize', 10)
+    set(h.ax, 'LineWidth', 0.5)
+    % set(h.ax, 'XGrid', 'off', 'YGrid', 'off')
+    set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+    set(h.ax(2), 'YLim', [0 1])
+    set(h.ax(3), 'YLim', [-250 150])
+end
 
 %% HeadFree: ref2body
 close all
@@ -90,11 +95,13 @@ tffit = [];
 tffit{end+1} = tfest(data, 1, 0, 0.02, opt);
 % tffit{end+1} = tfest(data, 1, 0, 0.02, opt);
 
-[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
+[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, showplot);
 
-set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
-set(h.ax(2), 'YLim', [0 1])
-set(h.ax(3), 'YLim', [-250 150])
+if showplot
+    set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+    set(h.ax(2), 'YLim', [0 1])
+    set(h.ax(3), 'YLim', [-250 150])
+end
 
 %% HeadFree: ref2head
 close all
@@ -111,11 +118,13 @@ tffit{1}.Numerator = [tffit{1}.Numerator(1) 0];
 % tffit{end+1} = tfest(data, 1, 2, [], opt);
 % tffit{end+1} = tfest(data, 2, 1, [], opt);
 
-[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
+[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, showplot);
 
-set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
-set(h.ax(2), 'YLim', [0 1])
-set(h.ax(3), 'YLim', [-250 150])
+if showplot
+    set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+    set(h.ax(2), 'YLim', [0 1])
+    set(h.ax(3), 'YLim', [-250 150])
+end
 
 %% HeadFree: ref2gaze
 close all
@@ -130,11 +139,13 @@ tffit = [];
 tffit{end+1} = tfest(data, 2, 2, 0.02, opt);
 % tffit{end+1} = tfest(sys, 1, 2, NaN, opt);
 
-[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
+[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, showplot);
 
-set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
-set(h.ax(2), 'YLim', [0 1])
-set(h.ax(3), 'YLim', [-250 150])
+if showplot
+    set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+    set(h.ax(2), 'YLim', [0 1])
+    set(h.ax(3), 'YLim', [-250 150])
+end
 
 %% HeadFixed: err2body
 close all
@@ -152,11 +163,13 @@ tffit = [];
 
 tffit{end+1} = tfest(data, 1, 0, 0.023, opt);
 
-[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
+[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, showplot);
 
-% set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
-set(h.ax(2), 'YLim', [0 3])
-set(h.ax(3), 'YLim', [-250 150])
+if showplot
+    % set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+    set(h.ax(2), 'YLim', [0 3])
+    set(h.ax(3), 'YLim', [-250 150])
+end
 
 %% BodyFixed: err2head
 close all
@@ -177,11 +190,13 @@ tffit{end+1} = tfest(data, 1, 1, 0.029, opt);
 tffit{1}.Numerator = [tffit{1}.Numerator(1) 0];
 % tffit{end+1} = tfest(sys, 1, 1, NaN, opt);
 
-[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
+[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, showplot);
 
-% set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
-set(h.ax(2), 'YLim', [0 1])
-set(h.ax(3), 'YLim', [-250 150])
+if showplot
+    % set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+    set(h.ax(2), 'YLim', [0 1])
+    set(h.ax(3), 'YLim', [-250 150])
+end
 
 %% HeadFixed: ref2body
 close all
@@ -195,11 +210,13 @@ data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUni
 tffit = [];
 tffit{end+1} = tfest(data, 1, 0, 0.028, opt);
 
-[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
+[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, showplot);
 
-% set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
-set(h.ax(2), 'YLim', [0 1])
-set(h.ax(3), 'YLim', [-250 150])
+if showplot
+    % set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+    set(h.ax(2), 'YLim', [0 1])
+    set(h.ax(3), 'YLim', [-250 150])
+end
 
 %% BodyFixed: ref2head
 close all
@@ -213,11 +230,13 @@ data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUni
 tffit = [];
 tffit{end+1} = tfest(data, 1, 2, 0.029, opt);
 
-[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, 1);
+[MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, showplot);
 
-% set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
-set(h.ax(2), 'YLim', [0 1])
-set(h.ax(3), 'YLim', [-250 150])
+if showplot
+    % set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+    set(h.ax(2), 'YLim', [0 1])
+    set(h.ax(3), 'YLim', [-250 150])
+end
 
 %% Create closed-loop transforms from open-loop fits
 clss = 'HeadFree';
@@ -229,7 +248,6 @@ MODEL.morph.head.R = 0.42; % [mm] head radius
 % MODEL.morph.head.Jzz = 0.00431881; % [mg*mm^2] head inertia
 MODEL.morph.body.Jzz = 0.56650720; % [mg*mm^2] body inertia
 MODEL.morph.head.Jzz = 0.00619410; % [mg*mm^2] head inertia
-
 MODEL.morph.J_ratio = MODEL.morph.head.Jzz / MODEL.morph.body.Jzz; % head/body inertia ratio
 
 MODEL.(clss).G.body = MODEL.(clss).fit.err2body(1).models;
@@ -238,8 +256,8 @@ MODEL.(clss).G.head = MODEL.(clss).fit.err2head(1).models;
 MODEL.(clss).G.head_bad = MODEL.(clss).fit.err2head(2).models;
 MODEL.(clss).G.gaze = MODEL.(clss).G.body + MODEL.(clss).G.head;
 
-[MODEL.(clss).C.body, MODEL.(clss).P.body] = get_controller(MODEL.(clss).G.body, MODEL.morph.body.Jzz);
-[MODEL.(clss).C.head, MODEL.(clss).P.head] = get_controller(MODEL.(clss).G.head, MODEL.morph.head.Jzz);
+[MODEL.(clss).C.body, MODEL.(clss).P.body] = get_controller(MODEL.(clss).G.body, nan);
+[MODEL.(clss).C.head, MODEL.(clss).P.head] = get_controller(MODEL.(clss).G.head, nan);
 
 % MODEL.(clss).P.body = tf(1, MODEL.(clss).G.body.denominator);
 % MODEL.(clss).P.head = tf(1, MODEL.(clss).G.head.denominator);
@@ -296,15 +314,17 @@ fitpercent = [sys.fitpercent];
 disp('Fit percent:')
 disp([fitpercent.combined])
 
-suptitle(trf)
-h.fig.Position(3:4) = [2 5];
-set(h.data, 'MarkerSize', 5, 'Marker', '.')
-set(h.sys_freq, 'MarkerSize', 7)
-set(h.ax, 'LineWidth', 0.5)
-% set(h.ax, 'XGrid', 'off', 'YGrid', 'off')
-set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
-set(h.ax(2), 'YLim', [0 1])
-set(h.ax(3), 'YLim', [-250 150])
+if showplot
+    suptitle(trf)
+    h.fig.Position(3:4) = [2 5];
+    set(h.data, 'MarkerSize', 5, 'Marker', '.')
+    set(h.sys_freq, 'MarkerSize', 7)
+    set(h.ax, 'LineWidth', 0.5)
+    % set(h.ax, 'XGrid', 'off', 'YGrid', 'off')
+    set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+    set(h.ax(2), 'YLim', [0 1])
+    set(h.ax(3), 'YLim', [-250 150])
+end
 
 %% HeadFree: ref2head compare
 close all
@@ -313,37 +333,41 @@ trf = 'ref2head';
 % models = {MODEL.HeadFree.fit.(trf)(1).models, MODEL.HeadFree.H.head};
 % models = {MODEL.HeadFree.H.head, MODEL.HeadFree.H.head_no_body};
 models = {MODEL.HeadFree.H.head, MODEL.HeadFree.H.head_no_body, MODEL.BodyFixed.H.head};
-[sys,~,h] = plotFit(MODEL.BodyFixed.data.(trf).input, IOFv, models, frange, 1);
+[sys,~,h] = plotFit(MODEL.BodyFixed.data.(trf).input, IOFv, models, frange, showplot);
 
 fitpercent = [sys.fitpercent];
 disp('Fit percent:')
 disp([fitpercent.combined])
 
-suptitle(trf)
-h.fig.Position(3:4) = [2 5];
-set(h.data, 'MarkerSize', 5, 'Marker', 'none')
-set(h.sys_freq, 'MarkerSize', 7)
-set(h.ax, 'LineWidth', 0.5)
-% set(h.ax, 'XGrid', 'off', 'YGrid', 'off')
-set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
-set(h.ax(2), 'YLim', [0 1])
-set(h.ax(3), 'YLim', [-250 150])
+if showplot
+    suptitle(trf)
+    h.fig.Position(3:4) = [2 5];
+    set(h.data, 'MarkerSize', 5, 'Marker', 'none')
+    set(h.sys_freq, 'MarkerSize', 7)
+    set(h.ax, 'LineWidth', 0.5)
+    % set(h.ax, 'XGrid', 'off', 'YGrid', 'off')
+    set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+    set(h.ax(2), 'YLim', [0 1])
+    set(h.ax(3), 'YLim', [-250 150])
+end
 
 %% HeadFree: ref2gaze compare
 trf = 'ref2gaze';
 % models = {MODEL.HeadFree.fit.(trf)(1).models, MODEL.(clss).H.gaze};
 models = {MODEL.HeadFree.H.gaze};
-[~,~,h] = plotFit(MODEL.HeadFree.data.(trf).input, IOFv, models, frange, 1);
+[~,~,h] = plotFit(MODEL.HeadFree.data.(trf).input, IOFv, models, frange, showplot);
 
-suptitle(trf)
-h.fig.Position(3:4) = [2.5 4.5];
-set(h.data, 'MarkerSize', 5)
-set(h.sys_freq, 'MarkerSize', 7)
-set(h.ax, 'LineWidth', 0.5)
-% set(h.ax, 'XGrid', 'off', 'YGrid', 'off')
-set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
-set(h.ax(2), 'YLim', [0 1])
-set(h.ax(3), 'YLim', [-250 150])
+if showplot
+    suptitle(trf)
+    h.fig.Position(3:4) = [2.5 4.5];
+    set(h.data, 'MarkerSize', 5)
+    set(h.sys_freq, 'MarkerSize', 7)
+    set(h.ax, 'LineWidth', 0.5)
+    % set(h.ax, 'XGrid', 'off', 'YGrid', 'off')
+    set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
+    set(h.ax(2), 'YLim', [0 1])
+    set(h.ax(3), 'YLim', [-250 150])
+end
 
 %%
 % set(h.fig, 'CurrentAxes', h.ax(1))
