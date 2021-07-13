@@ -24,7 +24,7 @@ plot_tf = string(fieldnames(sys));
 n_tf = length(plot_tf);
 
 data = [];
-data.fv = (0:0.001:100)';
+data.fv = (0:0.01:30)';
 data.win = data.fv * 2*pi;
 for n = 1:n_tf
     [gain,phase,~] = bode(sys.(plot_tf(n)), data.win);

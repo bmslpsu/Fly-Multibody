@@ -19,7 +19,7 @@ function [] = run_ss_amp_norm(T, Fs, res, F, A, norm_vel, cent, root)
 
 clear ; close all ; clc
 
-root        = 'C:\Users\BC\Box\Git\Fly-Multibody\arena\functions';
+root        = 'C:\Users\boc5244\Documents\GitHub\Fly-Multibody';
 T           = 10;
 Fs          = 400.63;
 res         = 3.75;
@@ -31,9 +31,14 @@ showplot    = true;
 % norm_vel   	= [];
 % F           = [1 3 6 9 12 15 18 21];
 
-A           = 15;
+% A           = 15;
+% norm_vel   	= [];
+% F           = [0.2 0.7 1.2 1.5 1.9 2.4 3.4 4.1];
+
+A           = 3.75*7;
 norm_vel   	= [];
-F           = [0.2 0.7 1.2 1.5 1.9 2.4 3.4 4.1];
+F           = 1;
+T           = 15;
 
 % All = make_sos(T, Fs, res, F, A, norm_vel, cent, showplot, []);
 % disp('Freq')

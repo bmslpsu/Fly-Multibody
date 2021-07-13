@@ -44,15 +44,15 @@ P_eye = tf(1, [0.13 1]);
 % bopt = bodeoptions; bopt.FreqUnits = 'Hz'; bopt.MagUnits = 'abs'; bopt.XLim = [0.1 20];
 % h = bodeplot(P_eye, P_head, bopt, 2*pi*(0:0.01:20));
 
-[sys.human, data.human, ~] = plant_power(P_head, P_eye, true);
+[sys.human, data.human, ~] = plant_power(P_head, P_eye, false);
 
 %% Time constants
 tau_norm = 0.1554;
 P_norm = tf(1, [tau_norm 1]);
 % tau_all = round(logspace(1,2,10))';
 % tau_all = linspace(0.01,0.1554, 10)';
-tau_all = logspace(-2.5,log10(0.1554), 10)';
-
+% tau_all = logspace(-2.5,log10(0.1554), 10)';
+tau_all = linspace(0.001, 0.1554, 20)';
 tau_leg = "tau = " + round(tau_norm./tau_all,3,'significant');
 n_tau = length(tau_all);
 for t = 1:n_tau
@@ -66,8 +66,8 @@ end
 close all ; clc
 power_ratio = structfun(@(x) x.power.ratio_1, data, 'UniformOutput', false);
 negI = structfun(@(x) sign(x), power_ratio, 'UniformOutput', false);
-
 animal_names = fieldnames(power_ratio);
+tau_names = animal_names(3:end);
 na = length(animal_names);
 power_ratio_log = structfun(@(x,y) log10(abs(x)), power_ratio, 'UniformOutput', false);
 for n = 1:na
