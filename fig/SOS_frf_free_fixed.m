@@ -432,10 +432,15 @@ set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2.5 2*2])
 movegui(fig, 'center')
 clear ax h
 
-time_const_keep = time_const_group(:);
-r2_keep = r2_group(:);
+speedI = 2;
+time_const_keep = time_const_group(:,2);
+r2_keep = r2_group(:,2);
 G_keep = G(:);
+<<<<<<< Updated upstream
 r2_check = r2_keep < 0;
+=======
+r2_check = r2_keep < 0.1;
+>>>>>>> Stashed changes
 disp(['Removing ' num2str(sum(r2_check,'all')) ' of ' num2str(numel(r2_check)) ' flies'])
 
 time_const_keep = time_const_keep(~r2_check);
@@ -462,7 +467,11 @@ ax(1,1) = subplot(2,1,1); hold on
     set(findobj(ax(1),'tag','Lower Whisker'), 'Color', 'k','LineStyle','-');
     ax(1).Children = ax(1).Children([end 1:end-1]);
     
+<<<<<<< Updated upstream
     plot(G_keep + jitter, time_const_keep, '.', 'Color', [0.5 0.5 0.5 0.2], 'MarkerSize', 5)
+=======
+    plot(G_keep + jitter, time_const_keep, '.', 'Color', [0.5 0.5 0.5 0.2], 'MarkerSize', 6)
+>>>>>>> Stashed changes
 
 ax(2,1) = subplot(2,1,2); hold on
     %b = boxchart(r2_const_keep,'GroupByColor', G_keep, 'MarkerStyle', '.');
@@ -480,7 +489,7 @@ ax(2,1) = subplot(2,1,2); hold on
     set(findobj(ax(2),'tag','Lower Whisker'), 'Color', 'k','LineStyle','-');
     ax(2).Children = ax(2).Children([end 1:end-1]);
     
-    plot(G_keep + jitter, r2_keep, '.', 'Color', [0.5 0.5 0.5 0.2], 'MarkerSize', 2)
+    plot(G_keep + jitter, r2_keep, '.', 'Color', [0.5 0.5 0.5 0.2], 'MarkerSize', 6)
     
 linkaxes(ax, 'x')
 for a = 1:size(ax,1)
@@ -489,7 +498,7 @@ end
 set(ax(1,:), 'YLim', [-80 0])
 set(ax(2,:), 'YLim', [0 1])
 
-set(ax, 'Color', 'none', 'LineWidth', 1.2, 'FontSize', 10, 'Box', 'off', 'XColor', 'none')
+set(ax, 'Color', 'none', 'LineWidth', 1, 'FontSize', 10, 'Box', 'off', 'XColor', 'none')
 
 YLabelHC = get(ax(1,1), 'YLabel');
 set([YLabelHC], 'String', 'Time constant (ms)')

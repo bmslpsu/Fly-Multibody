@@ -14,13 +14,12 @@ function [MOV] = montage_SOS(rootdir,rootpat,vidFs,export)
 %       MOV         : structure containing movie 
 %
 
-% Example Input %
+% Example Input
 clear ; clc ; close all
 export = true;
 vidFs = 50;
 rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2';
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_amp_v3';
-rootpat = 'C:\Users\BC\Box\Git\Arena\Patterns';
+rootpat = 'C:\Users\boc5244\Documents\GitHub\Arena\Patterns';
 
 if ~isfolder(rootdir)
     dirflag = false;
