@@ -57,7 +57,8 @@ if showplot
     
     set(ax, 'Color', 'none', 'LineWidth', 1)
     set(ax, 'XScale', 'log', 'XLim', [0.1 20])
-    
+else
+    h = [];    
 end
 
 end

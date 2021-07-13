@@ -41,11 +41,26 @@ wn = 2*pi*0.3;
 P_head = tf(wn^(2), [1 2*zeta*wn wn^(2)]);
 P_eye = tf(1, [0.13 1]);
 
-bopt = bodeoptions; bopt.FreqUnits = 'Hz'; bopt.MagUnits = 'abs'; bopt.XLim = [0.1 20];
-h = bodeplot(P_eye, P_head, bopt, 2*pi*(0:0.01:20));
+% bopt = bodeoptions; bopt.FreqUnits = 'Hz'; bopt.MagUnits = 'abs'; bopt.XLim = [0.1 20];
+% h = bodeplot(P_eye, P_head, bopt, 2*pi*(0:0.01:20));
 
 [sys.human, data.human, ~] = plant_power(P_head, P_eye, true);
 
+%% Time constants
+tau_norm = 0.1554;
+P_norm = tf(1, [tau_norm 1]);
+% tau_all = round(logspace(1,2,10))';
+% tau_all = linspace(0.01,0.1554, 10)';
+tau_all = logspace(-2.5,log10(0.1554), 10)';
+
+tau_leg = "tau = " + round(tau_norm./tau_all,3,'significant');
+n_tau = length(tau_all);
+for t = 1:n_tau
+    name = ['tau_' num2str(t)];
+    P_new = P_norm;
+    P_new.denominator{1}(1) = tau_all(t);
+    [sys.(name), data.(name)] = plant_power(P_norm, P_new, true); 
+end
 
 %% Animal comparison
 close all ; clc
@@ -68,9 +83,10 @@ fig.Position(3:4) = [3 4];
 set(fig, 'Visible', 'on')
 clear ax h
 
-cc = hsv(na);
+cc = hsv(na-2);
+cc = [0 0 0 ; 0.5 0.5 0.5 ; cc];
 ax = subplot(1,1,1); hold on ; cla
-for n = 1:na
+for n = na:-1:1
     h.power(n) = plot(data.fly.fv, 100*power_ratio.(animal_names{n}), ...
         'Color', cc(n,:), 'LineWidth', 2);
 end
@@ -78,14 +94,15 @@ xlabel('Frequency (hz')
 ylabel('Power factor (%)')
 set(ax, 'Color', 'none', 'LineWidth', 1)
 set(ax, 'XScale', 'log', 'YScale', 'linear')
-xlim([0.1 20])
+xlim([0.001 20])
 
 ylim([-10^(2) 10^(6)])
 symlog(ax,'y',1)
 
 yline(0, 'k--');
 
-leg = legend(h.power, animal_names);
+leg_name = string(animal_names);
+leg = legend(h.power, [leg_name(1:2) ; tau_leg]);
 set(leg, 'Box', 'off')
 
 end
