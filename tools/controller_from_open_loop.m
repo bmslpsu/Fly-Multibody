@@ -16,7 +16,7 @@ function [C_new] = controller_from_open_loop(G, P_new)
 if isa(G,'sym')
     C_new = G / P_new;
 else
-    G_linear = tf([G.numerator{1}, G.denominator{1}]);
+    G_linear = tf(G.numerator{1}, G.denominator{1});
     C_new = G_linear / P_new;
 end
 

@@ -28,9 +28,9 @@ body_tau = 1 / P_body.Denominator{1}(2);
 body_static = double(subs(tf2sym(P_body),s,0));
 head_static = double(subs(tf2sym(P_head),s,0));
 
-% delay = 0.02;
-% [sys.fly, data.fly, ~] = switch_system_v3(P_body, P_head, C_body, C_head, delay, delay, false);
-[sys.fly, data.fly, ~] = plant_power(P_body, P_head, false);
+delay = 0.02;
+[sys.fly, data.fly, ~] = switch_system_v3(P_body, P_head, C_body, C_head, delay, delay, true);
+% [sys.fly, data.fly, ~] = plant_power(P_body, P_head, false);
 
 %% Animal #1: human head-eye
 close all
