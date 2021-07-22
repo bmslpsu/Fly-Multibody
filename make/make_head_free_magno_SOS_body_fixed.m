@@ -38,7 +38,7 @@ end
 [D,I,N,U,T,~,~,basename] = GetFileData(root.head,'*.mat',false);
 % [D,I,N,U,T,~,~,basename] = GetFileData(root.benifly,'*.csv',false);
 
-%% Get Data %%
+%% Get Data
 close all
 clc
 

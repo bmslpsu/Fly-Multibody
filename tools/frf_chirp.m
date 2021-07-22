@@ -80,6 +80,7 @@ end
 
 % Convert state outputs to frequency response functions
 FRF = Freq ./ refFreq;
+FRF(1) = nan;
 
 % Bin if specified
 if bin_sz
@@ -90,7 +91,7 @@ if bin_sz
             win = (k-bin_sz):(k+bin_sz);
             win(win < 1) = [];
             win(win > n_fv) = [];
-            FRF_binned(k,n) = mean(FRF_binned(win,n),1);
+            FRF_binned(k,n) = nanmean(FRF_binned(win,n),1);
         end
     end
     FRF = FRF_binned;

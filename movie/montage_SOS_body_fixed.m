@@ -19,7 +19,7 @@ clear ; clc ; close all
 export = false;
 vidFs = 50;
 rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2_body_fixed';
-rootpat = 'C:\Users\BC\Box\Git\Arena\Patterns';
+rootpat = 'C:\Users\boc5244\Documents\GitHub\Arena\Patterns';
 
 if ~isfolder(rootdir)
     dirflag = false;

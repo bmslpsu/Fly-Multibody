@@ -14,8 +14,8 @@ exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-1}; % type of stimuli (vel or pos)
 exp_ver = exp_name{1}{end}; % version of experiment (v1, v2, ...)
 
-clss = 'position';
-% clss = 'velocity';
+% clss = 'position';
+clss = 'velocity';
 filename = ['SS_HeadFree_' exp_typ '_' exp_ver '_' num2str(clss)];
 
 %% Setup Directories %%
@@ -27,7 +27,7 @@ root.head = fullfile(root.reg,'tracked_head_tip');
 % Select files
 [D,I,N,U,T,~,~,basename] = GetFileData(root.head,'*.mat',false);
 
-%% Get Data %%
+%% Get Data
 close all
 clc
 
@@ -108,7 +108,7 @@ for n = 1:N.file
 %     close all
     
     % Store signals
-    n_detrend = 5;
+    n_detrend = 4;
     DATA.body_saccade{n}    = body_scd;
     DATA.reference{n}       = singal_attributes(Reference, tintrp);
     DATA.body{n}            = singal_attributes(body_scd.shift.IntrpPosition, tintrp, [], n_detrend);
@@ -135,10 +135,10 @@ for n = 1:N.file
     
     REF = DATA.reference{n}.(clss);
     BODY = DATA.body{n}.(clss);
-    HEAD = DATA.head{n}.(clss);
+    %HEAD = DATA.head{n}.(clss);
     
     bin_sz = 5;
-    SYS_ref2_body_head = frf_chirp(tintrp, REF, bin_sz, false, BODY, HEAD);
+    SYS_ref2_body_head = frf_chirp(tintrp, REF, bin_sz, false, BODY);
 
     %SYS_all = CatStructFields(2, SYS_ref2_head_body, SYS_head2_body, SYS_ref2_wing, SYS_wing2_body);
     
@@ -194,18 +194,20 @@ time = GRAND.fly_stats.mean(v).Time.mean;
 ref = 15*chirp(time,0.1,20,6.5, 'logarithmic');
 ref_vel = central_diff(ref, 1/Fs);
 ax(1,1) = subplot(1,1,1); hold on
-    plot(time, ref, 'Color', [0 0 0], 'LineWidth', 1)
+    plot(time, ref_vel, 'Color', [0 0 0], 'LineWidth', 1)
     %plot(time, squeeze(GRAND.fly_all.mean(1).State(:,pI,:)), ...
         %'Color', [0.5 0.5 0.5 0.5], 'LineWidth', fly_lw)
+%     plot(time, squeeze(GRAND.all(1).State(:,pI,:)), ...
+%         'Color', [0.5 0.5 0.5 0.5], 'LineWidth', fly_lw)
     [h.patch(1,v),h.line(1,v)] = PlotPatch(GRAND.fly_stats.mean(v).State.mean(:,pI),...
               GRAND.fly_stats.mean(v).State.std(:,pI), time, 1, 1, cc(1,:), 0.7*cc(1,:), 0.2, 1);
-    [h.patch(2,v),h.line(2,v)] = PlotPatch(GRAND.fly_stats.mean(v).State.mean(:,3),...
-              GRAND.fly_stats.mean(v).State.std(:,pI), time, 1, 1, cc(3,:), 0.7*cc(3,:), 0.2, 1);
+%     [h.patch(2,v),h.line(2,v)] = PlotPatch(GRAND.fly_stats.mean(v).State.mean(:,3),...
+%               GRAND.fly_stats.mean(v).State.std(:,3), time, 1, 1, cc(3,:), 0.7*cc(3,:), 0.2, 1);
 ax(1,1).Position(4) = 0.8*ax(1,1).Position(4);
 ax(1,1).Position(2) = 1.5*ax(1,1).Position(2);
 xlabel('Time (s)')
 ylabel('Body (°)')
-set(ax, 'Color', 'none', 'LineWidth', 1, 'FontSize', 8, 'XLim', [0 20], 'YLim', 30*[-1 1], ...
+set(ax, 'Color', 'none', 'LineWidth', 1, 'FontSize', 8, 'XLim', [0 20], 'YLim', 600*[-1 1], ...
     'XGrid', 'off', 'YGrid', 'off', 'Box', 'off')         
           
 ax_freq = axes;
@@ -213,11 +215,16 @@ set(ax_freq, 'Color', 'none', 'YColor', 'none', 'XColor', 'k', 'Position', ax(1)
     'XAxisLocation', 'top', 'XLim', [0.1 6.5], 'XScale', 'log', 'XTick', [0.1 1:6], 'FontSize', 8, ...
     'LineWidth', ax(1).LineWidth)
 xlabel('Frequency (Hz)')
-  
+
+%%
+Fv = GRAND.fly_stats.mean(v).Fv.mean;
+plot(Fv, squeeze(GRAND.all(1).Mag(:,pI,:)), ...
+        'Color', [0.5 0.5 0.5 0.5], 'LineWidth', fly_lw)
+xlim([0 6.5])
 
 %% BODE
 n_cond = N.A;
-pI = 3;
+pI = 1;
 
 fig = figure (2) ; clf
 set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2*n_cond 5*1.5])
@@ -225,7 +232,7 @@ movegui(fig, 'center')
 clear ax h
 ax = gobjects(5,n_cond);
 Fv = GRAND.fly_stats.mean(v).Fv.mean;
-% cc = [0 0.1 0.7];
+cc = [0 0.1 0.7; 1 0 0; 1 0 0];
 fly_lw = 0.25;
 for v = 1
     subI = v + (0:4)*n_cond;
@@ -261,6 +268,86 @@ for v = 1
         [h.patch(5,v,1),h.line(5,v,1)] = PlotPatch(GRAND.fly_stats.mean(v).Cohr.mean(:,pI),...
                   GRAND.fly_stats.mean(v).Cohr.std(:,pI), Fv, 1, 1, cc(pI,:), 0.7*cc(pI,:), 0.2, 1);
 
+end
+linkaxes(ax, 'x')
+
+% delete(h.patch)
+
+set(h.line, 'Marker', 'none','MarkerFaceColor', 'none', 'MarkerSize', 10, 'LineWidth', 1)
+set(ax, 'Color', 'none', 'LineWidth', 1, 'FontSize', 8, 'XLim', [0.1 6.5],...
+    'XGrid', 'off', 'YGrid', 'off', 'Box', 'off')
+set(ax, 'XTick', [0.1, 1:6])
+
+XLabelHC = get(ax(end,:), 'XLabel');
+set([XLabelHC], 'String', 'Frequency (Hz)')
+
+YLabelHC = get(ax(1,1), 'YLabel');
+set([YLabelHC], 'String', 'Magnitude (°)')
+YLabelHC = get(ax(2,1), 'YLabel');
+set([YLabelHC], 'String', 'Gain (°/°)')
+YLabelHC = get(ax(3,1), 'YLabel');
+set([YLabelHC], 'String', 'Phase difference (°)')
+YLabelHC = get(ax(4,1), 'YLabel');
+set([YLabelHC], 'String', 'Compensation error')
+YLabelHC = get(ax(5,1), 'YLabel');
+set([YLabelHC], 'String', 'Coherence')
+
+set(ax(1,1:end),'YLim',[0 6])
+set(ax(2,1:end-1),'YLim',[0 1])
+set(ax(3,1:end),'YLim',[-150 150])
+set(ax(4,1:end),'YLim',[0 1.5])
+set(ax(5,1:end),'YLim',[0 1])
+set(ax(1:end-1,:), 'XTickLabel', [])
+set(ax(:,2:end), 'YTickLabels', [])
+
+set(ax(1:end-1,:), 'XColor', 'none')
+set(ax(:,2:end), 'YColor', 'none')
+% 
+% set(ax,'XScale','log')
+
+align_Ylabels(fig)
+
+%% BODE Grand
+tt = GRAND.fly_stats.mean(v).Time.mean;
+REF = GRAND.fly_stats.mean(v).refState.mean;
+BODY = GRAND.fly_stats.mean(v).State.mean(:,1);
+HEAD = GRAND.fly_stats.mean(v).State.mean(:,2);
+test = frf_chirp(tt, REF, bin_sz, false, BODY, HEAD);
+
+n_cond = N.A;
+pI = 1;
+
+fig = figure (2) ; clf
+set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2*n_cond 5*1.5])
+movegui(fig, 'center')
+clear ax h
+ax = gobjects(5,n_cond);
+Fv = GRAND.fly_stats.mean(v).Fv.mean;
+% cc = [0 0.1 0.7];
+fly_lw = 0.25;
+for v = 1
+    subI = v + (0:4)*n_cond;
+    ax(1,v) = subplot(5,n_cond,subI(1)); hold on
+        [h.patch(1,v,1),h.line(1,v,1)] = PlotPatch(GRAND.fly_stats.mean(v).Mag.mean(:,pI),...
+                  GRAND.fly_stats.mean(v).Mag.std(:,pI)*0, Fv, 1, 1, cc(pI,:), 0.7*cc(pI,:), 0.2, 1);
+              
+    ax(2,v) = subplot(5,n_cond,subI(2)); hold on
+        [h.patch(2,v,1),h.line(2,v,1)] = PlotPatch(squeeze(test.Gain(:,pI,:)),...
+                  GRAND.fly_stats.mean(v).Gain.std(:,pI)*0, Fv, 1, 1, cc(pI,:), 0.7*cc(pI,:), 0.2, 1);
+              
+    ax(3,v) = subplot(5,n_cond,subI(3)); hold on
+        yline(0, '--', 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
+        [h.patch(3,v,1),h.line(3,v,1)] = PlotPatch(rad2deg(squeeze(test.PhaseDiff(:,pI,:))),...
+                  rad2deg(squeeze(test.Gain(:,pI,:)))*0, Fv, 1, 1, cc(pI,:), 0.7*cc(pI,:), 0.2, 1);
+              
+    ax(4,v) = subplot(5,n_cond,subI(4)); hold on
+        yline(1, '--', 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
+        [h.patch(4,v,1),h.line(4,v,1)] = PlotPatch(squeeze(test.FRF_error(:,pI,:)),...
+                  squeeze(test.FRF_error(:,pI,:))*0, Fv, 1, 1, cc(pI,:), 0.7*cc(pI,:), 0.2, 1);
+              
+    ax(5,v) = subplot(5,n_cond,subI(5)); hold on
+        [h.patch(5,v,1),h.line(5,v,1)] = PlotPatch(squeeze(test.Cohr(:,pI,:)),...
+                  squeeze(test.Cohr(:,pI,:))*0, Fv, 1, 1, cc(pI,:), 0.7*cc(pI,:), 0.2, 1);
 end
 linkaxes(ax, 'x')
 

@@ -22,25 +22,16 @@ C_head = minreal(MODEL.HeadFree.C_norm.head);
 % [sys.fly, data.fly, ~] = switch_system_v3(P_body, P_head, C_body, C_head, delay, delay, false);
 [sys.fly, data.fly, ~] = plant_power(P_body, P_head, false);
 
-%% Animal #1: human head-eye
-close all
-clc
-
-zeta = 0.5;
-wn = 2*pi*0.3;
-% P_head = tf(wn^(2), [1 2*zeta*wn wn^(2)]);
-P_head = tf([wn^(2) 0], [1 2*zeta*wn wn^(2)]);
-
-P_eye = tf(1, [0.13 1]);
-
-[sys.human, data.human, ~] = plant_power(P_head, P_eye, true);
-
 %% Time constants
-tau_norm = 0.1554;
-P_norm = tf(1, [tau_norm 1]);
+tau_body = 1 ./ P_body.Denominator{1}(2);
+tau_head = 1 ./ P_head.Denominator{1}(2);
+P_norm = tf(1, [tau_body 1]);
 
-tau_all = linspace(0.01, 0.1554, 200)';
-tau_ratio = round(tau_norm./tau_all,3,'significant');
+tau_all = linspace(0.01, tau_body, 200)';
+[~,hI] = min(abs(tau_all - tau_head));
+tau_all(hI) = tau_body;
+tau_ratio = tau_body ./ tau_all;
+% tau_ratio = round(tau_body./tau_all,5,'significant');
 tau_leg = "tau = " + tau_ratio;
 n_tau = length(tau_all);
 for t = 1:n_tau
@@ -61,7 +52,7 @@ fv = data_tau.tau_1.fv;
 
 fig = figure (201); clf
 set(fig, 'Color', 'w', 'Units', 'inches', 'Name', 'power')
-fig.Position(3:4) = [5 4];
+fig.Position(3:4) = [4 3];
 set(fig, 'Visible', 'on')
 clear ax h
 ax = subplot(1,1,1); hold on ; cla
@@ -75,28 +66,46 @@ cb.Label.String = 'tau scale';
 view(0,90)
 rotate3d on
 
-h.power(1) = plot(data.fly.fv, 100*data.fly.power.ratio_1, 'Color', [0.5 0.5 0.5], 'LineWidth', 2);
-% h.power(2) = plot(data.human.fv, 100*data.human.power.ratio_1, 'Color', [0.5 0.5 0.5], 'LineWidth', 2);
-
-uistack(h.power, 'top')
-
 xlabel('Frequency (hz')
-ylabel('Power factor (%)')
+ylabel('Power increase (%)')
 zlabel('tau scaled')
-set(ax, 'Color', 'none', 'LineWidth', 1)
+set(ax, 'Color', 'none', 'LineWidth', 0.75)
 set(ax, 'XScale', 'log', 'YScale', 'linear')
 xlim([0.1 20])
-ylim([-50 1200])
+ylim([-50 1500])
 % ax.YLim(1) = -50;
 
-% for n = 1:n_tau
-%     plot(fv, 100*power_ratio_struct.(['tau_' num2str(n)]), 'k', 'LineWidth', 2);
-% end
+tau_dispI = round(logspace(0.1,2.3,7));
+% tau_dispI(5) = hI;
+tau_ratio_disp = round(tau_ratio(tau_dispI));
+for n = tau_dispI
+    h.tau(n) = plot(fv, 100*power_ratio_struct.(['tau_' num2str(n)]), 'Color', [0.3 0.3 0.3], 'LineWidth', 1);
+end
 
+h.power(1) = plot(data.fly.fv, 100*data.fly.power.ratio_1, 'Color', [1 0 0], 'LineWidth', 2);
+h.power(2) = plot(data.human.fv, 100*data.human.power.ratio_1, 'Color', 'g', 'LineWidth', 2);
+uistack(h.power, 'top')
 
 % leg_name = string(animal_names);
-leg = legend(h.power(1), 'fly');
+% leg = legend(h.power(1), 'fly');
+leg = legend(h.power, 'fly', 'human');
 set(leg, 'Box', 'off')
 
+% freezeColors
+% delete(S)
+% delete(h.power)
+% delete(h.tau)
+% set(ax, 'YColor', 'w')
+
+%% Animal #1: human head-eye
+close all
+clc
+
+zeta = 0.5;
+wn = 2*pi*0.3;
+P_head = tf(wn^(2), [1 2*zeta*wn wn^(2)]);
+% P_head = tf([wn^(2) 0], [1 2*zeta*wn wn^(2)]);
+P_eye = tf(1, [0.13 1]);
+[sys.human, data.human, ~] = plant_power(P_head, P_eye, true);
 
 end
