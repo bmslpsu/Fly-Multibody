@@ -8,7 +8,7 @@ load(fullfile(PATH,FILE),'ALL');
 %% Set initialization parameters
 clearvars -except PATH FILE ALL
 clc
-vI = 2;
+vI = 1;
 IOFv = ALL.HeadFree.FRF_data.IOFv{vI};
 frange = 0:0.02:20;
 
