@@ -81,7 +81,7 @@ clear ax h
 ax = gobjects(N.vel,1);
 cc = [0.5 0.3 1];
 for v = 1:N.vel
-    ax(v,1) = subplot(N.vel,1,v); hold on ; title([ num2str(U.vel{1}(v)) 'Â°/s'])
+    ax(v,1) = subplot(N.vel,1,v); hold on ; title([ num2str(U.vel{1}(v)) '°/s'])
         plot(FUNC{v}.All.time, FUNC{v}.All.X, 'k', 'LineWidth', 1)
         %[h.patch(1,v),h.line(1,v)] = PlotPatch(GRAND.all_trial(v).State.median(:,2),...
                   %GRAND.all_trial(v).State.std(:,2), time, 0, 1, cc(1,:), 0.7*cc(1,:), 0.2, 1);
@@ -92,7 +92,7 @@ end
 set(ax, 'Color', 'none', 'LineWidth', 1.5, 'FontSize', 10, 'XLim', [-0.2 20], 'XTick', 0:2:20)
 
 YLabelHC = get(ax(:,1), 'YLabel');
-set([YLabelHC{:}], 'String', 'Angular position (Â°)')
+set([YLabelHC{:}], 'String', 'Angular position (°)')
 
 YLabelHC = get(ax(end,1), 'XLabel');
 set([YLabelHC], 'String', 'Time (s)')
@@ -112,7 +112,7 @@ clear ax h
 ax = gobjects(N.vel,1);
 cc = [0 0.6 0.3];
 for v = 1:N.vel
-    ax(v,1) = subplot(N.vel,1,v); hold on ; title([ num2str(U.vel{1}(v)) 'Â°/s'])
+    ax(v,1) = subplot(N.vel,1,v); hold on ; title([ num2str(U.vel{1}(v)) '°/s'])
         %plot(FUNC{v}.All.time, FUNC{v}.All.X, 'k', 'LineWidth', 1)
         %[h.patch(1,v),h.line(1,v)] = PlotPatch(GRAND.all_trial(v).State.median(:,2),...
                   %GRAND.all_trial(v).State.std(:,2), time, 0, 1, cc(1,:), 0.7*cc(1,:), 0.2, 1);
@@ -123,7 +123,7 @@ end
 set(ax, 'Color', 'none', 'LineWidth', 1.5, 'FontSize', 10, 'XLim', [-0.2 20], 'XTick', 0:2:20)
 
 YLabelHC = get(ax(:,1), 'YLabel');
-set([YLabelHC{:}], 'String', 'Angular position (Â°)')
+set([YLabelHC{:}], 'String', 'Angular position (°)')
 
 YLabelHC = get(ax(end,1), 'XLabel');
 set([YLabelHC], 'String', 'Time (s)')
@@ -146,7 +146,7 @@ movegui(fig, 'center')
 clear ax h
 
 tI = [1 2 3 5];
-yL = ["Body", "Head", "Gaze", "\DeltaWBA"] + " (Â°)";
+yL = ["Body", "Head", "Gaze", "\DeltaWBA"] + " (°)";
 cc = [0.9 0 0 ; 0 0.4 1 ; 0.5 0.3 1 ; 0 0.6 0.4];
 n_plot = length(tI);
 ax = gobjects(n_plot,N.vel);
@@ -159,7 +159,7 @@ for n = 1:n_plot
             end
 
             if n == 1
-                title([ num2str(U.vel{1}(v)) 'Â°s^{-1}'])
+                title([ num2str(U.vel{1}(v)) '°s^{-1}'])
                 plot(FUNC{v}.All.time, FUNC{v}.All.X, 'k', 'LineWidth', 1)
             end
 
@@ -187,16 +187,17 @@ clc
 
 time = GRAND.all(1).Time(:,:,1);
 
-sI = 3;
+sI = 1;
 
 fig = figure (1) ; clf
 set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 5 5])
 movegui(fig, 'center')
 clear ax h
 ax = gobjects(N.vel,1);
-cc = [0.9 0 0 ; 1 0.6 0.1; 0.5 0.3 1 ; 0 0.4 1 ; 0 0.8 0.2];
+cc = [0.9 0 0 ; 0 0.4 1 ; 0.5 0.3 1 ; 0 0.6 0.4];
+cc = [0 0.8 0.2];
 for v = 1:N.vel
-    ax(v,1) = subplot(N.vel,1,v); hold on ; title([ num2str(U.vel{1}(v)) 'Â°/s'])
+    ax(v,1) = subplot(N.vel,1,v); hold on ; title([ num2str(U.vel{1}(v)) '°/s'])
         %plot(FUNC{v}.All.time, FUNC{v}.All.X, 'k', 'LineWidth', 1)
         plot(squeeze(GRAND.all(v).Time(:,1,:)), squeeze(GRAND.all(v).State(:,sI,:)), ...
                         'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.25)
@@ -207,7 +208,7 @@ end
 set(ax, 'Color', 'none', 'LineWidth', 1.5, 'FontSize', 10, 'XLim', [-0.5 20], 'XTick', 0:2:20)
 delete(h.patch)
 YLabelHC = get(ax(:,1), 'YLabel');
-set([YLabelHC{:}], 'String', 'Angular position (Â°)')
+set([YLabelHC{:}], 'String', 'Angular position (°)')
 
 YLabelHC = get(ax(end,1), 'XLabel');
 set([YLabelHC], 'String', 'Time (s)')

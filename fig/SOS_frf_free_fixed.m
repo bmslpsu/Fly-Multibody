@@ -14,7 +14,7 @@ n_cond = ALL.HeadFree.N{1,3};
 %% Virtual gaze (head-fixed body + body-fixed head)
 ALL.VirtualGaze = [];
 ALL.VirtualGaze.FRF_data.IOFv = ALL.HeadFree.FRF_data.IOFv;
-body_class = 'HeadFixed';
+body_class = 'HeadFree';
 for v = 1:n_cond
     ALL.VirtualGaze.FRF_data.ref2gaze.grand_mean(v).complex = ...
         ALL.(body_class).FRF_data.ref2body.grand_mean(v).complex + ...
@@ -49,6 +49,8 @@ end
 %% Compare head free, head-fixed, body-fixed
 clc
 clearvars -except ALL FILE PATH
+
+n_cond = ALL.HeadFree.N{1,3};
 
 set_names = ["HeadFree", "HeadFixed", "HeadFree", "HeadFree", "BodyFixed"];
 trf_names = ["ref2body", "ref2body", "ref2gaze", "ref2head", "ref2head"];
@@ -236,7 +238,7 @@ for v = 1:n_cond
     for p = 1:n_plot
         ax(p,v) = subplot(n_plot,n_cond,subI(p)); hold on
         if p == 1
-            title([num2str(cond(v)) 'Â°/s'], 'interpreter', 'none')
+            title([num2str(cond(v)) '°/s'], 'interpreter', 'none')
         end
         for n = 1:n_set
             if ~isnan(yLines(p))
@@ -268,9 +270,9 @@ XLabelHC = get(ax(end,:), 'XLabel');
 set([XLabelHC{:}], 'String', 'Frequency (Hz)')
 
 YLabelHC = get(ax(1,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 YLabelHC = get(ax(3,1), 'YLabel');
 set([YLabelHC], 'String', 'Error')
 
@@ -330,7 +332,7 @@ leg_label = string(cond);
 leg = legend(squeeze(h.line(1,:,1)), leg_label, ...
     'Box', 'off', 'interpreter', 'none', 'Orientation', 'vertical');
 leg.Position  = [0.005 0.91 0.07 0.08];
-leg.Title.String = 'Speed (Â°/s)';
+leg.Title.String = 'Speed (°/s)';
 
 linkaxes(ax, 'x')
 for a = 2:size(ax,1)
@@ -346,9 +348,9 @@ XLabelHC = get(ax(end,:), 'XLabel');
 set([XLabelHC{:}], 'String', 'Frequency (Hz)')
 
 YLabelHC = get(ax(1,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 YLabelHC = get(ax(3,1), 'YLabel');
 set([YLabelHC], 'String', 'Coherence')
 
@@ -436,11 +438,7 @@ speedI = 2;
 time_const_keep = time_const_group(:,2);
 r2_keep = r2_group(:,2);
 G_keep = G(:);
-<<<<<<< Updated upstream
 r2_check = r2_keep < 0;
-=======
-r2_check = r2_keep < 0.1;
->>>>>>> Stashed changes
 disp(['Removing ' num2str(sum(r2_check,'all')) ' of ' num2str(numel(r2_check)) ' flies'])
 
 time_const_keep = time_const_keep(~r2_check);
@@ -467,11 +465,8 @@ ax(1,1) = subplot(2,1,1); hold on
     set(findobj(ax(1),'tag','Lower Whisker'), 'Color', 'k','LineStyle','-');
     ax(1).Children = ax(1).Children([end 1:end-1]);
     
-<<<<<<< Updated upstream
     plot(G_keep + jitter, time_const_keep, '.', 'Color', [0.5 0.5 0.5 0.2], 'MarkerSize', 5)
-=======
     plot(G_keep + jitter, time_const_keep, '.', 'Color', [0.5 0.5 0.5 0.2], 'MarkerSize', 6)
->>>>>>> Stashed changes
 
 ax(2,1) = subplot(2,1,2); hold on
     %b = boxchart(r2_const_keep,'GroupByColor', G_keep, 'MarkerStyle', '.');

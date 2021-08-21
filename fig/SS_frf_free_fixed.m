@@ -67,11 +67,11 @@ XLabelHC = get(ax(end,:), 'XLabel');
 set([XLabelHC], 'String', 'Frequency (Hz)')
 
 YLabelHC = get(ax(1,1), 'YLabel');
-set([YLabelHC], 'String', 'Magnitude (Â°/s)')
+set([YLabelHC], 'String', 'Magnitude (°/s)')
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Error')
 YLabelHC = get(ax(5,1), 'YLabel');
@@ -95,6 +95,7 @@ align_Ylabels(fig)
 % delete(h.patch)
 
 %% Virtual gaze (head-free body + body-fixed head)
+n_freq = ALL.HeadFree.N.freq;
 ALL.VirtualGaze = [];
 ALL.VirtualGaze.FRF_data.IOFv = ALL.HeadFree.FRF_data.IOFv;
 body_class = 'HeadFree';
@@ -116,7 +117,7 @@ for v = 1:n_cond
     
     ALL.VirtualGaze.FRF_data.ref2gaze.grand_mean(v).phase = ...
         rad2deg(angle(ALL.VirtualGaze.FRF_data.ref2gaze.grand_mean(v).complex));
-    phsCheck = (ALL.VirtualGaze.FRF_data.ref2gaze.grand_mean(v).phase > 0) & ((1:8)==8)';
+    phsCheck = (ALL.VirtualGaze.FRF_data.ref2gaze.grand_mean(v).phase > 0) & ((1:n_freq)==n_freq)';
     ALL.VirtualGaze.FRF_data.ref2gaze.grand_mean(v).phase(phsCheck) = ...
         ALL.VirtualGaze.FRF_data.ref2gaze.grand_mean(v).phase(phsCheck) - 360;
     
@@ -190,9 +191,9 @@ XLabelHC = get(ax(end,:), 'XLabel');
 set([XLabelHC], 'String', 'Frequency (Hz)')
 
 YLabelHC = get(ax(1,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 YLabelHC = get(ax(3,1), 'YLabel');
 set([YLabelHC], 'String', 'Error')
 YLabelHC = get(ax(4,1), 'YLabel');
@@ -218,16 +219,16 @@ set(ax,'XScale','log')
 clc
 clearvars -except ALL FILE PATH
 
-set_names = ["HeadFree", "HeadFree"];
+set_names = ["HeadFree", "BodyFixed"];
 trf_names = ["err2body", "err2head"];
 plot_names = ["gain", "phase", "IO_coherence"];
 yLines = [nan 0 nan];
 n_set = length(trf_names);
 n_plot = length(plot_names);
-n_cond = ALL.HeadFree.N{1,3};
+n_cond = 1;
 cond = ALL.HeadFree.U{1,3}{1};
 % cc = [0.9 0 0 ; 1 0.6 0.1; 0.5 0.3 1 ; 0 0.4 1 ; 0 0.8 0.2];
-cc = flipud(distinguishable_colors(n_cond+6));
+cc = flipud(distinguishable_colors(n_cond));
 
 fig = figure (2) ; clf
 set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 n_set*2 n_plot*1.8])
@@ -246,9 +247,9 @@ for n = 1:n_set
         end
         for v = 1:n_cond
             [h.patch(p,v,n),h.line(p,v,n)] = PlotPatch(...
-                    ALL.(set_names(n)).FRF_data.(trf_names(n)).grand_mean(v).(plot_names(p)),...
-                  	ALL.(set_names(n)).FRF_data.(trf_names(n)).grand_std(v).(plot_names(p)), ...
-                    ALL.(set_names(n)).FRF_data.IOFv{v}, 1, 1, cc(v,:), 0.7*cc(v,:), 0.2, 1);
+                    ALL.(set_names(n)).FRF_data.(trf_names(n)).grand_mean.(plot_names(p)),...
+                  	ALL.(set_names(n)).FRF_data.(trf_names(n)).grand_std.(plot_names(p)), ...
+                    ALL.(set_names(n)).FRF_data.IOFv, 1, 1, cc(v,:), 0.7*cc(v,:), 0.2, 1);
         end
     end
 end
@@ -256,7 +257,7 @@ leg_label = string(cond);
 leg = legend(squeeze(h.line(1,:,1)), leg_label, ...
     'Box', 'off', 'interpreter', 'none', 'Orientation', 'vertical');
 leg.Position  = [0.005 0.91 0.07 0.08];
-leg.Title.String = 'Speed (Â°/s)';
+leg.Title.String = 'Speed (°/s)';
 
 linkaxes(ax, 'x')
 for a = 2:size(ax,1)
@@ -272,9 +273,9 @@ XLabelHC = get(ax(end,:), 'XLabel');
 set([XLabelHC{:}], 'String', 'Frequency (Hz)')
 
 YLabelHC = get(ax(1,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 YLabelHC = get(ax(3,1), 'YLabel');
 set([YLabelHC], 'String', 'Coherence')
 
@@ -327,10 +328,10 @@ clear ax h
 ax = gobjects(2,n_cond);
 for v = 1:n_cond
     ax(1,v) = subplot(2,n_cond,v); hold on
-        b = boxchart(time_const_group(:,v),'GroupByColor', G(:,v), 'MarkerStyle', '.');
+        %b = boxchart(time_const_group(:,v),'GroupByColor', G(:,v), 'MarkerStyle', '.');
         
     ax(2,v) = subplot(2,n_cond,v + n_cond); hold on
-        b = boxchart(r2_group(:,v),'GroupByColor', G(:,v), 'MarkerStyle', '.');
+        %b = boxchart(r2_group(:,v),'GroupByColor', G(:,v), 'MarkerStyle', '.');
 end
 fnames = fieldnames(time_const);
 leg = legend(fnames, 'Box', 'off', 'interpreter', 'none', 'Orientation', 'horizontal');

@@ -1,8 +1,8 @@
 function [] = SS_wing2body_bode()
-%% SS_frf:
+%% SS_wing2body_bode:
 root = 'E:\DATA\Magno_Data\Multibody';
-[FILE,PATH] = uigetfile({'*.mat', 'DAQ-files'}, ...
-    'Select head angle trials', root, 'MultiSelect','off');
+[FILE,PATH] = uigetfile({'*.mat'}, ...
+    'Select data file', root, 'MultiSelect','off');
 
 load(fullfile(PATH,FILE),'DATA','FUNC','GRAND','FLY','D','I','U','N')
 
@@ -119,11 +119,11 @@ set(ax(4), 'YLim', [0 1])
 set(ax,'XScale','log')
 
 YLabelHC = get(ax(1,1), 'YLabel');
-set([YLabelHC], 'String', 'Magnitude (Â°/s)')
+set([YLabelHC], 'String', 'Magnitude (°/s)')
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Coherence')
 
@@ -134,7 +134,7 @@ set(ax(1:end-1,:), 'XColor', 'none')
 
 
 
-%% ref2wing
+%% wing2body
 FRF_data = [];
 for v = 1:N.freq
     for f = 1:N.fly
@@ -152,8 +152,8 @@ for v = 1:N.freq
             FRF_data.fly(v).wing2body_phase(f) = nan;
         end
         
-        if FRF_data.fly(v).wing2body_phase(f) < -20
-            FRF_data.fly(v).wing2body_phase(f) = FRF_data.fly(v).wing2body_phase(f) + 360;
+        if FRF_data.fly(v).wing2body_phase(f) > 150
+            FRF_data.fly(v).wing2body_phase(f) = FRF_data.fly(v).wing2body_phase(f) - 360;
         end
     end
     
@@ -170,8 +170,8 @@ for v = 1:N.freq
     FRF_data.wing2body_cohr(v) = FRF_data.grand_mean(v).wing2body.IOCohr;
     FRF_data.wing2body_phase(v) = rad2deg(FRF_data.grand_mean(v).wing2body.IOPhaseDiff);
     
-    if FRF_data.wing2body_phase(v) < -20
-        FRF_data.wing2body_phase(v) = FRF_data.wing2body_phase(v) + 360;
+    if FRF_data.wing2body_phase(v) > 150
+        FRF_data.wing2body_phase(v) = FRF_data.wing2body_phase(v) - 360;
     end
 end
 
@@ -218,11 +218,11 @@ set(ax(4), 'YLim', [0 1])
 set(ax,'XScale','log')
 
 YLabelHC = get(ax(1,1), 'YLabel');
-set([YLabelHC], 'String', 'Magnitude (Â°/s)')
+set([YLabelHC], 'String', 'Magnitude (°/s)')
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Coherence')
 

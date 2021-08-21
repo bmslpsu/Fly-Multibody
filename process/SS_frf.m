@@ -11,15 +11,15 @@ clc
 clearvars -except FILE DATA ALL GRAND FLY FUNC D I U N root
 
 % pI = [1 2 3 4 5 6 7 8];
-% T = ["ref2body", "ref2head", "ref2gaze", "body2head", "ref2wing", "wing2body", "error2body", "error2head"];
+% T = ["ref2body", "ref2head", "ref2gaze", "body2head", "ref2wing", "wing2body", "err2body", "err2head"];
 % shift_I = {5:8, 7:8, 5:8, 5:8, 1:8, 1:8, 5:8, 7:8};
 % phase_lim = {[0 0 -50 -220], [0 0 0 0], [0 0 0 0], [nan nan nan nan],  ...
 %     [20 0 0 0 0 0 0 0], [0 0 0 0 0 0 0 0], [0 0 0 0], [nan nan]};
 
-% pI = [1 2 3];
-% T = ["ref2head", "ref2wing", "head2wing"];
-% shift_I = {5:8, 5:8, 5:8};
-% phase_lim = {[0 0 0 -120], [0 0 0 0], [0 0 0 0]};
+pI = [1 2 3 4];
+T = ["ref2head", "ref2wing", "head2wing", "err2head"];
+shift_I = {5:8, 5:8, 5:8, 5:8};
+phase_lim = {[0 0 0 -120], [0 0 0 0], [0 0 0 0], [0 0 0 0]};
 
 % pI = [1 2 3 4];
 % T = ["ref2body", "ref2head", "ref2gaze", "head2body"];
@@ -32,10 +32,6 @@ clearvars -except FILE DATA ALL GRAND FLY FUNC D I U N root
 % phase_lim = {[0 0 -50 -300], [0 0 0 0], [0 0 0 0], [nan nan nan 0],  ...
 %     [20 0 0 0 0 0 0 0], [0 0 0 0 0 0 0 0], [0 0 0 0], [nan nan]};
 
-pI = [1 2 3];
-T = ["ref2head", "ref2wing", "head2wing"];
-shift_I = {5:8, 5:8, 5:8};
-phase_lim = {[0 0 0 -120], [0 0 0 0], [0 0 0 0]};
 
 n_plot = length(pI);
 for n = 1:n_plot
@@ -207,11 +203,11 @@ else
 end
 
 YLabelHC = get(ax(1,1), 'YLabel');
-set([YLabelHC], 'String', 'Magnitude (Â°)')
+set([YLabelHC], 'String', 'Magnitude (°)')
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Time difference (ms)')
 YLabelHC = get(ax(5,1), 'YLabel');
@@ -306,11 +302,11 @@ XLabelHC = get(ax(end,:), 'XLabel');
 set([XLabelHC], 'String', 'Frequency (Hz)')
 
 YLabelHC = get(ax(1,1), 'YLabel');
-set([YLabelHC], 'String', 'Magnitude (Â°/s)')
+set([YLabelHC], 'String', 'Magnitude (°/s)')
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Error')
 YLabelHC = get(ax(5,1), 'YLabel');

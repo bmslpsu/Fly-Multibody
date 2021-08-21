@@ -24,7 +24,7 @@ n_plot = length(trf_names);
 cc = hsv(n_plot);
 
 fig = figure (1) ; clf
-set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2.5*n_cond 5*2])
+set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2.5*1 5*2])
 movegui(fig, 'center')
 clear ax h
 ax = gobjects(5,1);
@@ -130,7 +130,7 @@ end
 % delete(h.patch)
 
 set(h.line, 'Marker', '.','MarkerFaceColor', 'none', 'MarkerSize', 11, 'LineWidth', 1.5)
-set(ax, 'Color', 'none', 'LineWidth', 1.2, 'FontSize', 10, 'XLim', [0.8 25],...
+set(ax, 'Color', 'none', 'LineWidth', 1.2, 'FontSize', 10, 'XLim', [0.5 12],...
     'XGrid', 'on', 'YGrid', 'off', 'Box', 'on')
 set(ax, 'XTick', [0.1, 1 10])
 set(ax,'XScale','log')

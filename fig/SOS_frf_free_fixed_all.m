@@ -17,7 +17,7 @@ clearvars -except ALL FILE PATH n_cond
 
 ALL.VirtualGaze = [];
 ALL.VirtualGaze.FRF_data.IOFv = ALL.HeadFree.FRF_data.IOFv;
-body_class = 'HeadFixed';
+body_class = 'HeadFree';
 for v = 1:n_cond
     ALL.VirtualGaze.FRF_data.ref2gaze.grand_mean(v).complex = ...
         ALL.(body_class).FRF_data.ref2body.grand_mean(v).complex + ...

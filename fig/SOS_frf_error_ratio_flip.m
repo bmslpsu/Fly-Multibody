@@ -63,7 +63,7 @@ for n = 1:n_field
         IOFv = HeadFree.FRF_data.IOFv{v};
         ax(n,v) = subplot(n_field,n_cond,pp); hold on
             if n == 1
-                title([num2str(HeadFree.U{1,3}{1}(v)) 'Â°/s'], 'interpreter', 'none')
+                title([num2str(HeadFree.U{1,3}{1}(v)) '°/s'], 'interpreter', 'none')
             end
             yline(0, '--', 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
             %plot(IOFv, ErrorRatio.fly(v).(T(n)), 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
@@ -116,7 +116,7 @@ for n = 1:n_field
         IOFv = HeadFree.FRF_data.IOFv{v};
         ax(n,v) = subplot(n_field,n_cond,pp); hold on
         if n == 1
-            title([num2str(HeadFree.U{1,3}{1}(v)) 'Â°/s'], 'interpreter', 'none')
+            title([num2str(HeadFree.U{1,3}{1}(v)) '°/s'], 'interpreter', 'none')
         end
             yline(0, '--', 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
             plot(IOFv, ErrorRatio.fly(v).(T(n)), '-', 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
@@ -166,7 +166,7 @@ for n = 1:n_field
     for v = 1:n_cond
         IOFv = HeadFree.FRF_data.IOFv{v};
         ax(1,v) = subplot(1,n_cond,v); hold on
-            %title([num2str(HeadFree.U{1,3}{1}(v)) 'Â°/s'], 'interpreter', 'none')
+            %title([num2str(HeadFree.U{1,3}{1}(v)) '°/s'], 'interpreter', 'none')
             yline(0, '--', 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
             %plot(IOFv, ErrorRatio.fly(v).(T(n)), 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
             [h.patch(n,v),h.line(n,v)] = PlotPatch(ErrorRatio.mean(v).(T(n)),...
@@ -213,7 +213,7 @@ for n = 1:n_field
     for v = 1:n_cond
         IOFv = HeadFree.FRF_data.IOFv{v};
         ax(1,v) = subplot(1,n_cond,v); hold on
-            %title([num2str(HeadFree.U{1,3}{1}(v)) 'Â°/s'], 'interpreter', 'none')
+            %title([num2str(HeadFree.U{1,3}{1}(v)) '°/s'], 'interpreter', 'none')
             yline(0, '--', 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
             %plot(IOFv, ErrorRatio.fly(v).(T(n)), 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
             [h.patch(n,v),h.line(n,v)] = PlotPatch(ErrorRatio.mean(v).(T(n)),...

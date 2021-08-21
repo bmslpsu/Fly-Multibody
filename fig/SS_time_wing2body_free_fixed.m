@@ -1,4 +1,4 @@
-function [] = SS_time_wing2body()
+function [] = SS_time_wing2body_free_fixed()
 %% SS_time:
 root = 'E:\DATA\Magno_Data\Multibody';
 [FILE,PATH] = uigetfile({'*.mat', 'DAQ-files'}, ...

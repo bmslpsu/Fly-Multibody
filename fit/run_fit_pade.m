@@ -1,5 +1,5 @@
-function [] = run_fit()
-%% run_fit:
+function [] = run_fit_pade()
+%% run_fit_pade:
 %
 root = 'E:\DATA\Magno_Data\Multibody\Processed';
 [FILE,PATH] = uigetfile({'*.mat'}, 'Select data file', root, 'MultiSelect','off');

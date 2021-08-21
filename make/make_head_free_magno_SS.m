@@ -9,17 +9,17 @@ function [] = make_head_free_magno_SS(rootdir)
 %
 warning('off', 'signal:findpeaks:largeMinPeakHeight')
 
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250';
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_amp_3.75';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250';
+% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_amp_3.75';
 exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-1}; % type of stimuli (vel or pos)
 exp_ver = exp_name{1}{end}; % version of experiment (v1, v2, ...)
 
-% clss = 'position';
-clss = 'velocity';
+clss = 'position';
+% clss = 'velocity';
 filename = ['SS_HeadFree_' exp_typ '_' exp_ver '_' num2str(clss)];
 
-%% Setup Directories %%
+%% Setup Directories
 root.base = rootdir;
 root.body = fullfile(root.base,'tracked_body');
 root.reg = fullfile(root.base,'registered');
@@ -47,7 +47,7 @@ FUNC = FUNC(forder,1);
 [D,I,N,U,T,~,~,basename] = GetFileData(root.head,'*.mat',false);
 % [D,I,N,U,T,~,~,basename] = GetFileData(root.benifly,'*.csv',false);
 
-%% Get Data %%
+%% Get Data
 close all
 clc
 
@@ -97,8 +97,8 @@ for n = 1:N.file
     trig_time   = TRIG.time_sync;
     
   	% Filter wing angles
-    lwing = rad2deg(data.benifly.RWing);
-    rwing = rad2deg(data.benifly.LWing);
+    lwing = rad2deg(data.benifly.LWing);
+    rwing = rad2deg(data.benifly.RWing);
     lwing = hampel(data.benifly.Time, lwing);
     rwing = hampel(data.benifly.Time, rwing);
 	lwing = filtfilt(b,a,lwing);
@@ -132,10 +132,6 @@ for n = 1:N.file
                             scd.Fc_ss, scd.amp_cut, scd.dur_cut , scd.direction, scd.pks, ...
                             scd.sacd_length, scd.min_pkdist, scd.min_pkwidth, scd.min_pkprom, ...
                             scd.min_pkthresh, scd.boundThresh, false);
-%     figure (1)
-%     pause
-%     close all
-    
     % Store signals
     fc_wing = 1.5 * D.freq(n);
     n_detrend = 5;
@@ -233,6 +229,17 @@ for v = 1:N.freq
         end
     end
     GRAND.all_trial(v) = structfun(@(x) system_stats(x,3), GRAND.all(v), 'UniformOutput', false);
+end
+
+%%
+
+close all
+for f = 1:7
+   subplot(4,2,f) ; hold on
+   plot(tintrp, squeeze(GRAND.all(f).State(:,5,:)), 'Color', [0.5 0.5 0.5 0.5])
+   plot(tintrp, squeeze(GRAND.fly_all(f).mean.State(:,5,:)), 'Color', 'r')
+   plot(tintrp, GRAND.fly_stats(f).mean.State.mean(:,5), 'k', 'LineWidth', 2)
+   plot(tintrp, GRAND.fly_stats(f).mean.State.mean(:,1) ./ 5, 'b', 'LineWidth', 2)
 end
 
 %%

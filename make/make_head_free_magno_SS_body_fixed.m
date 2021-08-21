@@ -9,14 +9,14 @@ function [] = make_head_free_magno_SS_body_fixed(rootdir)
 %
 warning('off', 'signal:findpeaks:largeMinPeakHeight')
 
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_amp_3.75_body_fixed';
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250_body_fixed';
+% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_amp_3.75_body_fixed';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250_body_fixed';
 exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
 exp_typ = exp_name{1}{end-3}; % type of stimuli (vel or pos)
 exp_ver = exp_name{1}{end-2}; % version of experiment (v1, v2, ...)
 
-clss = 'position';
-% clss = 'velocity';
+% clss = 'position';
+clss = 'velocity';
 filename = ['SS_BodyFixed_' exp_typ '_' exp_ver '_' num2str(clss)];
 
 %% Setup Directories %%
@@ -45,7 +45,7 @@ FUNC = FUNC(forder,1);
 [D,I,N,U,T,~,~,basename] = GetFileData(root.head,'*.mat',false);
 % [D,I,N,U,T,~,~,basename] = GetFileData(root.benifly,'*.csv',false);
 
-%% Get Data %%
+%% Get Data
 close all
 clc
 
@@ -144,9 +144,11 @@ for n = 1:N.file
     SYS_ref2_head = frf(tintrp, REF , IOFreq, false, HEAD);
     SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, dWBA);
     SYS_head2wing = frf(tintrp, HEAD, IOFreq, false, dWBA);
+    SYS_error2_head = frf(tintrp, ERROR , IOFreq, false, HEAD);
     SYS_ref2_left_right = frf(tintrp, REF, IOFreq, false, LWING, RWING);
     
-    SYS_all = CatStructFields(2, SYS_ref2_head, SYS_ref2_wing, SYS_head2wing, SYS_ref2_left_right);
+    SYS_all = CatStructFields(2, SYS_ref2_head, SYS_ref2_wing, SYS_head2wing, ...
+        SYS_error2_head, SYS_ref2_left_right);
     
     ALL{I.fly(n),I.freq(n)}(end+1,1) = SYS_all;
 end
