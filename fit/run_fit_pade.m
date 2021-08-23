@@ -13,7 +13,7 @@ IOFv = ALL.HeadFree.FRF_data.IOFv{vI};
 frange = 0:0.02:20;
 
 opt = tfestOptions('EnforceStability', true, 'InitializeMethod', 'all');
-showplot = false;
+showplot = true;
 
 %% HeadFree: err2body
 close all
@@ -30,9 +30,19 @@ tffit{end+1} = tfest(data, 1, 1, 0.02, opt);
 
 % [model, h] = fit_complex(Cn, IOFv, 1, [1 1], 0.02, 'GP', 'lsqcurvefit', true);
 
+[model, h] = fit_tf(Cn, IOFv, [1], [1 1], 0.02, 'GP', 'lsqnonlin', true);
+
 % delay = 0:0.001:0.05;
 % [tffit{end+1}, sys_list, fitpercent, delay_sort] = tfest_delay(data, 1, 0, opt, delay);
 
+%%
+
+% fun = @(x) 
+% 
+% x = lsqcurvefit(fun,x0,xdata,ydata)
+
+
+%%
 [MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, showplot);
 
 if showplot
@@ -62,6 +72,7 @@ tffit = [];
 
 tffit{end+1} = tfest(data, 1, 1, 0.02, opt);
 tffit{end+1} = tfest(data, 1, 0, 0.02, opt);
+tffit{end+1} = tfest(data, 2, 1, 0.02, opt);
 % tffit{1} = tf([tffit{1}.Numerator(1) 0], tffit{1}.Denominator, 'IODelay', 0.02);
 tffit{1}.Numerator = [tffit{1}.Numerator(1) 0];
 % tffit{end+1} = tfest(data, 2, 1, 0.02, opt);
@@ -116,7 +127,7 @@ data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUni
 
 tffit = [];
 tffit{end+1} = tfest(data, 1, 1, 0.02, opt);
-tffit{1}.Numerator = [tffit{1}.Numerator(1) 0];
+% tffit{1}.Numerator = [tffit{1}.Numerator(1) 0];
 % tffit{end+1} = tfest(data, 1, 2, [], opt);
 % tffit{end+1} = tfest(data, 2, 1, [], opt);
 
@@ -187,16 +198,19 @@ tffit = [];
 % delay = 0:0.001:0.05;
 % [best_fit, sys_list, fitpercent, delay_sort] = tfest_delay(data, 1, 1, opt, delay);
 
-% tffit{end+1} = tfest(data, 2, 2, 0, opt);
 tffit{end+1} = tfest(data, 1, 1, 0.029, opt);
-tffit{1}.Numerator = [tffit{1}.Numerator(1) 0];
+% tffit{end+1} = tfest(data, 2, 1, 0.032, opt);
+% tffit{1}.Numerator = [tffit{1}.Numerator(1) 0];
 % tffit{end+1} = tfest(sys, 1, 1, NaN, opt);
+
+% delay = 0:0.001:0.05;
+% [tffit{end+1}, sys_list, fitpercent, delay_sort] = tfest_delay(data, 2, 1, opt, delay);
 
 [MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, showplot);
 
 if showplot
     % set(h.ax(1), 'YLim', [-1 1], 'XLim', [-1 1])
-    set(h.ax(2), 'YLim', [0 1])
+    set(h.ax(2), 'YLim', [0 2])
     set(h.ax(3), 'YLim', [-250 150])
 end
 
@@ -210,7 +224,7 @@ Cn = {ALL.(clss).FRF_data.(trf).fly(vI).gain , ALL.(clss).FRF_data.(trf).fly(vI)
 data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUnit', 'hz');
 
 tffit = [];
-tffit{end+1} = tfest(data, 1, 0, 0.028, opt);
+tffit{end+1} = tfest(data, 1, 0, 0.02, opt);
 
 [MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, showplot);
 
@@ -230,7 +244,10 @@ Cn = {ALL.(clss).FRF_data.(trf).fly(vI).gain , ALL.(clss).FRF_data.(trf).fly(vI)
 data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUnit', 'hz');
 
 tffit = [];
-tffit{end+1} = tfest(data, 1, 2, 0.029, opt);
+tffit{end+1} = tfest(data, 1, 1, 0.02, opt);
+
+% delay = 0:0.001:0.05;
+% [tffit{end+1}, sys_list, fitpercent, delay_sort] = tfest_delay(data, 1, 1, opt, delay);
 
 [MODEL.(clss).fit.(trf), MODEL.(clss).data.(trf), h] = plotFit(Cn, IOFv, tffit, frange, showplot);
 
@@ -402,7 +419,7 @@ end
 % plot(fout, phase, 'c')
 
 %% Save TF fit data
-fname = ['MODEL_' FILE]; 
+fname = ['MODEL_v2_' FILE]; 
 root = 'E:\DATA\Magno_Data\Multibody';
 savedir = fullfile(root,'processed');
 mkdir(savedir)
