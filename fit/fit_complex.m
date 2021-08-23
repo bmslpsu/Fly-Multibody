@@ -132,13 +132,12 @@ switch data_method
         fcn_str = ...
             sprintf('fnc = @(x,w) [model.Gain(%s w) , model.Phase(%s w)];', x_str, x_str);
         objfcn_str = ...
-            sprintf('objfcn = @(x) [model.Gain(%s model.rad) - abs(Cn), model.Phase(%s model.rad) - angle(Cn)];', x_str, x_str);
+            sprintf('objfcn = @(x) [model.Gain(%s model.rad) - abs(Cn), (model.Phase(%s model.rad) - angle(Cn))];', x_str, x_str);
     otherwise
        error('method must be "RI" or "GP"') 
 end
 eval(fcn_str) % construct anonymous function
 eval(objfcn_str) % construct anonymous function
-
 
 % Fit with positive intitial conditions but try negative if it doesn't work
 % lb = -inf*ones(n_param,1)';
@@ -149,7 +148,7 @@ x0_sign = [-1 1];
 k = 1;
 while (model.fitpercent.combined < 0.05) && (k <= 2)
     if k > 1
-       warning('Trying new negative initial conditions') 
+       warning('Trying new negative initial conditions')
     end
     
     % Set initial conditions and lower & upper bounds

@@ -13,7 +13,7 @@ IOFv = ALL.HeadFree.FRF_data.IOFv{vI};
 frange = 0:0.02:20;
 
 opt = tfestOptions('EnforceStability', true, 'InitializeMethod', 'all');
-showplot = true;
+showplot = false;
 
 %% HeadFree: err2body
 close all
@@ -27,6 +27,8 @@ data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUni
 tffit = [];
 tffit{end+1} = tfest(data, 1, 0, 0.02, opt);
 tffit{end+1} = tfest(data, 1, 1, 0.02, opt);
+
+% [model, h] = fit_complex(Cn, IOFv, 1, [1 1], 0.02, 'GP', 'lsqcurvefit', true);
 
 % delay = 0:0.001:0.05;
 % [tffit{end+1}, sys_list, fitpercent, delay_sort] = tfest_delay(data, 1, 0, opt, delay);
@@ -114,7 +116,7 @@ data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUni
 
 tffit = [];
 tffit{end+1} = tfest(data, 1, 1, 0.02, opt);
-% tffit{1}.Numerator = [tffit{1}.Numerator(1) 0];
+tffit{1}.Numerator = [tffit{1}.Numerator(1) 0];
 % tffit{end+1} = tfest(data, 1, 2, [], opt);
 % tffit{end+1} = tfest(data, 2, 1, [], opt);
 
@@ -239,6 +241,7 @@ if showplot
 end
 
 %% Create closed-loop transforms from open-loop fits
+pN = 1;
 clss = 'HeadFree';
 MODEL.morph.body.M = 0.84185066; % [mg] body mass
 MODEL.morph.head.M = 0.08957730; % [mg] head mass
@@ -255,6 +258,9 @@ MODEL.(clss).G.body_bad = MODEL.(clss).fit.err2body(2).models;
 MODEL.(clss).G.head = MODEL.(clss).fit.err2head(1).models;
 MODEL.(clss).G.head_bad = MODEL.(clss).fit.err2head(2).models;
 MODEL.(clss).G.gaze = MODEL.(clss).G.body + MODEL.(clss).G.head;
+
+MODEL.(clss).G.pade.body = pade(MODEL.(clss).G.body, pN);
+MODEL.(clss).G.pade.head = pade(MODEL.(clss).G.head, pN);
 
 [MODEL.(clss).C.body, MODEL.(clss).P.body] = get_controller(MODEL.(clss).G.body, nan);
 [MODEL.(clss).C.head, MODEL.(clss).P.head] = get_controller(MODEL.(clss).G.head, nan);
@@ -273,8 +279,16 @@ MODEL.(clss).H.body = minreal( MODEL.(clss).G.body / (1 + MODEL.(clss).G.body + 
 MODEL.(clss).H.head = minreal( MODEL.(clss).G.head / (1 + MODEL.(clss).G.body + MODEL.(clss).G.head) );
 MODEL.(clss).H.gaze = minreal( (MODEL.(clss).G.body + MODEL.(clss).G.head) / (1 + MODEL.(clss).G.body + MODEL.(clss).G.head) );
 
+MODEL.(clss).H.pade.body = minreal( MODEL.(clss).G.pade.body / (1 + MODEL.(clss).G.pade.body + MODEL.(clss).G.pade.head) );
+MODEL.(clss).H.pade.head = minreal( MODEL.(clss).G.pade.head / (1 + MODEL.(clss).G.pade.body + MODEL.(clss).G.pade.head) );
+MODEL.(clss).H.pade.gaze = minreal( (MODEL.(clss).G.pade.body + MODEL.(clss).G.pade.head) ...
+                                    / (1 + MODEL.(clss).G.pade.body + MODEL.(clss).G.pade.head) );
+
 MODEL.(clss).H.body_no_head = minreal( MODEL.(clss).G.body / (1 + MODEL.(clss).G.body));
 MODEL.(clss).H.head_no_body = minreal( MODEL.(clss).G.head / (1 + MODEL.(clss).G.head));
+
+MODEL.(clss).H.pade.body_no_head = minreal( MODEL.(clss).G.pade.body / (1 + MODEL.(clss).G.pade.body));
+MODEL.(clss).H.pade.head_no_body = minreal( MODEL.(clss).G.pade.head / (1 + MODEL.(clss).G.pade.head));
 
 MODEL.(clss).W.body = minreal( MODEL.(clss).C.body / (1 + MODEL.(clss).G.body + MODEL.(clss).G.head) );
 MODEL.(clss).W.head = ( MODEL.(clss).C.head / (1 + MODEL.(clss).G.body + MODEL.(clss).G.head) );
@@ -282,6 +296,9 @@ MODEL.(clss).W.head = ( MODEL.(clss).C.head / (1 + MODEL.(clss).G.body + MODEL.(
 clss = 'HeadFixed';
 MODEL.(clss).G.body = MODEL.(clss).fit.err2body(1).models;
 MODEL.(clss).H.body = minreal( MODEL.(clss).G.body / (1 + MODEL.(clss).G.body));
+
+MODEL.(clss).G.pade.body = pade(MODEL.(clss).G.body, pN);
+MODEL.(clss).H.pade.body = minreal( MODEL.(clss).G.pade.body / (1 + MODEL.(clss).G.pade.body));
 
 [MODEL.(clss).C.body, MODEL.(clss).P.body] = get_controller(MODEL.(clss).G.body, MODEL.morph.body.Jzz);
 
@@ -293,6 +310,9 @@ MODEL.(clss).P_norm.body = tf(MODEL.(clss).G.body.denominator(end), MODEL.(clss)
 clss = 'BodyFixed';
 MODEL.(clss).G.head = MODEL.(clss).fit.err2head(1).models;
 MODEL.(clss).H.head = minreal( MODEL.(clss).G.head / (1 + MODEL.(clss).G.head));
+
+MODEL.(clss).G.pade.head = pade(MODEL.(clss).G.head, pN);
+MODEL.(clss).H.pade.head = minreal( MODEL.(clss).G.pade.head / (1 + MODEL.(clss).G.pade.head));
 
 [MODEL.(clss).C.head, MODEL.(clss).P.head] = get_controller(MODEL.(clss).G.head, MODEL.morph.head.Jzz);
 
@@ -332,8 +352,10 @@ clc
 trf = 'ref2head';
 % models = {MODEL.HeadFree.fit.(trf)(1).models, MODEL.HeadFree.H.head};
 % models = {MODEL.HeadFree.H.head, MODEL.HeadFree.H.head_no_body};
-models = {MODEL.HeadFree.H.head, MODEL.HeadFree.H.head_no_body, MODEL.BodyFixed.H.head};
-[sys,~,h] = plotFit(MODEL.BodyFixed.data.(trf).input, IOFv, models, frange, showplot);
+% models = {MODEL.HeadFree.H.head, MODEL.HeadFree.H.head_no_body, MODEL.BodyFixed.H.head};
+
+models = {MODEL.HeadFree.H.pade.head, MODEL.HeadFree.H.pade.head_no_body, MODEL.BodyFixed.H.head};
+[sys,~,h] = plotFit(MODEL.BodyFixed.data.(trf).input, IOFv, models, frange, true);
 
 fitpercent = [sys.fitpercent];
 disp('Fit percent:')
