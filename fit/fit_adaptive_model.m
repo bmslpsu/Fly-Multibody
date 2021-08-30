@@ -16,6 +16,9 @@ frange = 0:0.02:20;
 G_free = tf(MODEL.HeadFree.G.head);
 G_free_sym = vpa( tf2sym(G_free) ,3);
 
+% H_free = tf(MODEL.HeadFree.H.head);
+% H_free_sym = vpa( tf2sym(G_free) ,3);
+
 % syms s
 % G_free_sym_freq = subs(G_free_sym, s, 2*pi*IOFv*1i);
 % G_gain = abs(G_free_sym_freq);
@@ -37,13 +40,14 @@ D = D ./ nD(2);
 N = N ./ nD(2);
 
 G_mod = exp(-s*G_free.IODelay) * (N + A) / D;
-G_mod_gain_func = abs(G_mod);
-G_mod_phase_func = rad2deg(angle(G_mod));
+H_mod = G_mod / (1 + G_mod);
+H_mod_gain_func = abs(H_mod);
+H_mod_phase_func = rad2deg(angle(H_mod));
 
-data_gain = ALL.BodyFixed.FRF_data.err2head.grand_mean(vI).gain;
-data_phase = ALL.BodyFixed.FRF_data.err2head.grand_mean(vI).phase;
+data_gain = ALL.BodyFixed.FRF_data.ref2head.grand_mean(vI).gain;
+data_phase = ALL.BodyFixed.FRF_data.ref2head.grand_mean(vI).phase;
 % F = [(G_mod_gain_func - data_gain).^(2) , 100*(G_mod_phase_func - data_phase).^(2)];
-F = [G_mod_gain_func , G_mod_phase_func];
+F = [H_mod_gain_func , H_mod_phase_func];
 F = matlabFunction(F);
 
 % fcn = @(a) sum(F(wj,a(1),a(2),a(3)));
@@ -52,22 +56,24 @@ fcn = @(a,x) F(x,a(1));
 n_param = 1;
 lb = -inf*ones(n_param,1)';
 ub = inf*ones(n_param,1)';
-x0 = -1*ones(n_param,1)';
+x0 = ones(n_param,1)';
 
 % opts = optimoptions(@lsqnonlin, 'Algorithm', 'trust-region-reflective', 'Display', 'iter');
 %[x, resnorm, residuals, exitflag, output] = lsqnonlin(objfcn, x0, lb, ub, opts);
 % [Aout, resnorm, residuals, exitflag, output]  = lsqnonlin(fcn, x0, lb, ub, opts);
 
-opts = optimoptions('lsqcurvefit', 'Algorithm', 'trust-region-reflective', 'Display', 'iter');
+opts = optimoptions('lsqcurvefit', 'Display', 'iter');
 X = [data_gain , data_phase];
 freq_temp = repmat(2*pi*IOFv, [1, 1]);
 Aout = lsqcurvefit(fcn, x0, freq_temp, X, lb, ub, opts);
 
-G_mod_fit = minreal(sym2tf((N + Aout(1)) / D));
+% G_mod_fit = exp(-s*G_free.IODelay) * (N + Aout(1)) / D;
+G_mod_fit = (N + Aout(1)) / D;
+G_mod_fit = minreal(sym2tf(G_mod_fit));
 G_mod_fit.IODelay = G_free.IODelay;
-G_mod_fit
+H_mod_fit = pade(G_mod_fit) / (1 + pade(G_mod_fit));
 
-[gain_fit,phase_fit] = bode(G_mod_fit, 2*pi*IOFv);
+[gain_fit,phase_fit] = bode(H_mod_fit, 2*pi*IOFv);
 gain_fit_fmin = squeeze(gain_fit);
 phase_fit_fmin  = squeeze(phase_fit);
 
@@ -93,14 +99,14 @@ end
 fig = figure (1); clf
 set(fig, 'Color', 'w', 'Units', 'inches')
 ax(1) = subplot(2,1,1) ; cla; hold on
-    plot(IOFv, ALL.BodyFixed.FRF_data.err2head.fly(vI).gain, '.-', 'Color', [0.5 0.5 0.5 0.5])
-    plot(IOFv, ALL.BodyFixed.FRF_data.err2head.grand_mean(vI).gain, '.k-', 'LineWidth', 1)
+    plot(IOFv, ALL.BodyFixed.FRF_data.ref2head.fly(vI).gain, '.-', 'Color', [0.5 0.5 0.5 0.5])
+    plot(IOFv, ALL.BodyFixed.FRF_data.ref2head.grand_mean(vI).gain, '.k-', 'LineWidth', 1)
     plot(IOFv, gain_fit_fmin, 'r', 'LineWidth', 1)
     %plot(IOFv, Gain_fit,'b')
 ax(2) = subplot(2,1,2) ; cla; hold on
     yline(0, '--', 'Color', [0.5 0.5 0.5]);
-    plot(IOFv, ALL.BodyFixed.FRF_data.err2head.fly(vI).phase, '.-', 'Color', [0.5 0.5 0.5 0.5])
-    plot(IOFv, ALL.BodyFixed.FRF_data.err2head.grand_mean(vI).phase, '.k-', 'LineWidth', 1)
+    plot(IOFv, ALL.BodyFixed.FRF_data.ref2head.fly(vI).phase, '.-', 'Color', [0.5 0.5 0.5 0.5])
+    plot(IOFv, ALL.BodyFixed.FRF_data.ref2head.grand_mean(vI).phase, '.k-', 'LineWidth', 1)
     plot(IOFv, phase_fit_fmin, 'r', 'LineWidth', 1)
     %plot(IOFv, Phase_fit,'b')
    
@@ -110,8 +116,6 @@ set(ax(1), 'YScale', 'log')
 
 set(ax(1)', 'YLim', [0 1.2])
 set(ax(2)', 'YLim', [-200 100])
-
-
 
 
 %% Save TF fit data
