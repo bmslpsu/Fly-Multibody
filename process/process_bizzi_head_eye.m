@@ -9,6 +9,7 @@ image_file = fullfile(root, 'Bizzi_1973.PNG');
 config_file = 'bizzi_config.mat';
 config_path = fullfile(root, config_file);
 config_check = exist(config_path, 'file');
+data_path = fullfile(root, 'bizzi_data.mat');
 
 % Read image
 G = imread(image_file);
@@ -115,11 +116,14 @@ head_free_norm = Data.head_free.y(~nanI,:);
 head_free_time = Data.head_free.x(~nanI);
 norm_yx = n_y - median(head_free_norm(1:10,:), 'all');
 
+Data.head_free.input = ones(size(Data.head_free.time));
 Data.head_free.time = (head_free_time - head_free_time(1)) * Data.x_norm;
-Data.head_free.head = (n_y - head_free_norm(:,1) - norm_yx) * Data.y_norm;
+Data.head_free.head = (n_y - head_free_norm(:,3) - norm_yx) * Data.y_norm;
 Data.head_free.eyes = (n_y - head_free_norm(:,2) - norm_yx) * Data.y_norm;
-Data.head_free.gaze = (n_y - head_free_norm(:,3) - norm_yx) * Data.y_norm;
+Data.head_free.gaze = (n_y - head_free_norm(:,1) - norm_yx) * Data.y_norm;
+Data.head_free.input = Data.head_free.gaze(end)*ones(size(Data.head_free.time));
 %Data.head_fixed.eyes = (n_y - head_free_norm(:,1) - norm_yx) * Data.y_norm;
+save(data_path, 'Data')
 
 %% Plot
 fig = figure (1) ; clf
@@ -132,6 +136,7 @@ ax = subplot(1,1,1); cla ; hold on
     h(1) = plot(Data.head_free.time, Data.head_free.head, 'Color', cc.head);
     h(2) = plot(Data.head_free.time, Data.head_free.eyes, 'Color', cc.eyes);
     h(3) = plot(Data.head_free.time, Data.head_free.gaze, 'Color', cc.gaze);
+    h(4) = plot(Data.head_free.time, Data.head_free.input, 'Color', 'k');
 
 set(h, 'LineWidth', 1)
 set(ax, 'Color', 'w', 'LineWidth', 0.75, 'Box', 'on')
