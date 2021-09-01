@@ -114,14 +114,16 @@ Data.head_fixed.y = y_med_sort;
 nanI = all(isnan(Data.head_free.y),2);
 head_free_norm = Data.head_free.y(~nanI,:);
 head_free_time = Data.head_free.x(~nanI);
+head_free_time = head_free_time - head_free_time(1);
 norm_yx = n_y - median(head_free_norm(1:10,:), 'all');
 
-Data.head_free.input = ones(size(Data.head_free.time));
-Data.head_free.time = (head_free_time - head_free_time(1)) * Data.x_norm;
+Data.head_free.ts = (head_free_time - head_free_time(1)) * Data.x_norm;
+Data.head_free.ts = mean(diff(Data.head_free.time));
 Data.head_free.head = (n_y - head_free_norm(:,3) - norm_yx) * Data.y_norm;
 Data.head_free.eyes = (n_y - head_free_norm(:,2) - norm_yx) * Data.y_norm;
 Data.head_free.gaze = (n_y - head_free_norm(:,1) - norm_yx) * Data.y_norm;
 Data.head_free.input = Data.head_free.gaze(end)*ones(size(Data.head_free.time));
+Data.head_free.error = Data.head_free.input - Data.head_free.gaze;
 %Data.head_fixed.eyes = (n_y - head_free_norm(:,1) - norm_yx) * Data.y_norm;
 save(data_path, 'Data')
 
@@ -137,6 +139,7 @@ ax = subplot(1,1,1); cla ; hold on
     h(2) = plot(Data.head_free.time, Data.head_free.eyes, 'Color', cc.eyes);
     h(3) = plot(Data.head_free.time, Data.head_free.gaze, 'Color', cc.gaze);
     h(4) = plot(Data.head_free.time, Data.head_free.input, 'Color', 'k');
+    h(5) = plot(Data.head_free.time, Data.head_free.error, 'Color', 'g');
 
 set(h, 'LineWidth', 1)
 set(ax, 'Color', 'w', 'LineWidth', 0.75, 'Box', 'on')
@@ -146,6 +149,16 @@ set(ax, 'XLim', [-0.01 0.4])
 
 xlabel('time (s)')
 ylabel('(°)')
+
+%% System ID
+u = Data.head_free.input;
+y = Data.head_free.eyes;
+ts = Data.head_free.ts;
+data = iddata(y, u, ts);
+% d = delayest(data, 1, 1, 0, 0.1)
+sys = tfest(data, 2, 2, nan);
+
+step(sys)
 
 %% Debug
 close all
