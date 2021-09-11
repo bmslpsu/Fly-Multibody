@@ -1,4 +1,4 @@
-function [] = SOS_power_ratio()
+function [] = SOS_power_ratio_v4()
 %% SOS_power_ratio:
 %
 root = 'E:\DATA\Magno_Data\Multibody\Processed';
@@ -12,10 +12,10 @@ close all
 syms s
 
 
-P_body = minreal(MODEL.HeadFree.P_norm.body);
+P_body = minreal(MODEL.HeadFree.P.body);
 C_body = minreal(MODEL.HeadFree.C_norm.body);
 
-P_head = minreal(MODEL.HeadFree.P_norm.head);
+P_head = minreal(MODEL.HeadFree.P.head);
 C_head = minreal(MODEL.HeadFree.C_norm.head);
 
 % delay = 0.02;
@@ -40,6 +40,23 @@ for t = 1:n_tau
     P_new.denominator{1}(1) = tau_all(t);
     [sys_tau.(name), data_tau.(name)] = plant_power(P_norm, P_new, false); 
 end
+
+%% Animal #1: human head-eye
+close all
+clc
+
+zeta = 0.5;
+wn = 2*pi*0.3;
+P_head = tf(wn^(2), [1 2*zeta*wn wn^(2)]);
+% P_head = tf(1, [2.2*0.13 1]);
+P_eye = tf(1, [0.13 1]);
+% P_eye = P_head;
+% P_head = P_body;
+
+bopt = bodeoptions; bopt.FreqUnits = 'Hz'; bopt.MagUnits = 'abs'; bopt.XLim = [0.1 20];
+h = bodeplot(P_eye, P_head, bopt, 2*pi*(0:0.01:20));
+
+[sys.human, data.human, ~] = plant_power(P_head, P_eye, true);
 
 %% Time constant contour
 clc

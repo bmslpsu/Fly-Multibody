@@ -73,7 +73,7 @@ ax(1,1) = subplot(2,4,1); cla ; hold on ; title('Plant')
     ylabel('gain (°/°)')
     
 ax(2,1) = subplot(2,4,5); cla ; hold on
-    yline(0, '--k')
+    yline(0, '--k');
     h.plant(:,2) = plot(fv, Phs(:,1:2));
     ylabel('phase (°)')
     xlabel('frequency (hz)')
@@ -82,7 +82,7 @@ ax(1,2) = subplot(2,4,2); cla ; hold on ; title('Controller')
     h.cntrl(:,1) = plot(fv, Mag(:,3:5));
     
 ax(2,2) = subplot(2,4,6); cla ; hold on
-    yline(0, '--k')
+    yline(0, '--k');
     h.cntrl(:,2) = plot(fv, Phs(:,3:5));
     xlabel('frequency (hz)')
     
@@ -90,7 +90,7 @@ ax(1,3) = subplot(2,4,3); cla ; hold on ; title('Closed-loop')
     h.cl(:,1) = plot(fv, Mag(:,6:9));
     
 ax(2,3) = subplot(2,4,7); cla ; hold on
-    yline(0, '--k')
+    yline(0, '--k');
     h.cl(:,2) = plot(fv, Phs(:,6:9));
     xlabel('frequency (hz)')
     
@@ -99,7 +99,7 @@ ax(1,4) = subplot(2,4,4); cla ; hold on ; title('Control input')
 	h.u_sum(:,1) = plot(fv, Mag(:,10) + Mag(:,11));
     
 ax(2,4) = subplot(2,4,8); cla ; hold on
-    yline(0, '--k')
+    yline(0, '--k');
     h.u(:,2) = plot(fv, Phs(:,10:12));
     xlabel('frequency (hz)')
 

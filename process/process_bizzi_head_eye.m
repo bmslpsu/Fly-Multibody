@@ -117,7 +117,7 @@ head_free_time = Data.head_free.x(~nanI);
 head_free_time = head_free_time - head_free_time(1);
 norm_yx = n_y - median(head_free_norm(1:10,:), 'all');
 
-Data.head_free.ts = (head_free_time - head_free_time(1)) * Data.x_norm;
+Data.head_free.time = (head_free_time - head_free_time(1)) * Data.x_norm;
 Data.head_free.ts = mean(diff(Data.head_free.time));
 Data.head_free.head = (n_y - head_free_norm(:,3) - norm_yx) * Data.y_norm;
 Data.head_free.eyes = (n_y - head_free_norm(:,2) - norm_yx) * Data.y_norm;
@@ -152,7 +152,8 @@ ylabel('(°)')
 
 %% System ID
 u = Data.head_free.input;
-y = Data.head_free.eyes;
+e = Data.head_free.error;
+y = Data.head_free.head;
 ts = Data.head_free.ts;
 data = iddata(y, u, ts);
 % d = delayest(data, 1, 1, 0, 0.1)

@@ -118,7 +118,7 @@ data = frd(ALL.(clss).FRF_data.(trf).grand_mean(vI).complex, IOFv, 'FrequencyUni
 
 tffit = [];
 tffit{end+1} = tfest(data, 1, 1, 0.02, opt);
-tffit{1}.Numerator = [tffit{1}.Numerator(1) 0];
+% tffit{1}.Numerator = [tffit{1}.Numerator(1) 0];
 % tffit{end+1} = tfest(data, 1, 2, [], opt);
 % tffit{end+1} = tfest(data, 2, 1, [], opt);
 

@@ -69,13 +69,13 @@ negI = structfun(@(x) sign(x), power_ratio, 'UniformOutput', false);
 animal_names = fieldnames(power_ratio);
 tau_names = animal_names(3:end);
 na = length(animal_names);
-power_ratio_log = structfun(@(x,y) log10(abs(x)), power_ratio, 'UniformOutput', false);
-for n = 1:na
-    uz = power_ratio.(animal_names{n}) < 1;
-    temp = power_ratio_log.(animal_names{n}) .* negI.(animal_names{n});
-    temp(uz) = temp(uz) * -1;
-    power_ratio_log.(animal_names{n}) = temp;
-end
+% power_ratio_log = structfun(@(x,y) log10(abs(x)), power_ratio, 'UniformOutput', false);
+% for n = 1:na
+%     uz = power_ratio.(animal_names{n}) < 1;
+%     temp = power_ratio_log.(animal_names{n}) .* negI.(animal_names{n});
+%     temp(uz) = temp(uz) * -1;
+%     power_ratio_log.(animal_names{n}) = temp;
+% end
 
 fig = figure (200);
 set(fig, 'Color', 'w', 'Units', 'inches', 'Name', 'power')
@@ -87,7 +87,7 @@ cc = hsv(na-2);
 cc = [0 0 0 ; 0.5 0.5 0.5 ; cc];
 ax = subplot(1,1,1); hold on ; cla
 for n = na:-1:1
-    h.power(n) = plot(data.fly.fv, 100*power_ratio.(animal_names{n}), ...
+    h.power(n) = plot(data.(animal_names{n}).fv, 100*power_ratio.(animal_names{n}), ...
         'Color', cc(n,:), 'LineWidth', 2);
 end
 xlabel('Frequency (hz')

@@ -51,7 +51,7 @@ for n = 1:n_plot
     
     if n == n_plot
         y_final = y(end);
-        yline(y_final, '--', 'Color', 'g')
+        yline(y_final, '--', 'Color', 'g');
     end
 end
 uistack(h(end), 'top')
