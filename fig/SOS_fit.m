@@ -515,10 +515,10 @@ XLabelHC = get(ax(1,1), 'XLabel');
 set([XLabelHC], 'String', 'Imaginary')
 
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (°/°)')
+set([YLabelHC], 'String', 'Gain')
 
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (°)')
+set([YLabelHC], 'String', 'Phase (°)')
 
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Tracking error')
@@ -594,10 +594,10 @@ XLabelHC = get(ax(1,1), 'XLabel');
 set([XLabelHC], 'String', 'Imaginary')
 
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (°/°)')
+set([YLabelHC], 'String', 'Gain')
 
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (°)')
+set([YLabelHC], 'String', 'Phase (°)')
 
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Tracking error')
@@ -626,7 +626,7 @@ temp = [];
 for m = 1:n_curve
     sI = 1:4;
   	D = MODEL.(clss(m)).data.(trf(m));
-    P = MODEL.(clss(m)).P.(cl(m));
+    P = MODEL.(clss(m)).P_norm.(cl(m));
     f_cut = (1 / P.denominator{1}(1)) / (2*pi);
 	M = plotFit(D.input, IOFv, P, 0:0.02:20, false);
     %temp(:,m) = M(n).gain;
@@ -665,7 +665,7 @@ set(ax(2:end,:), 'XLim', [0.1 20])
 set(ax(2:end,:), 'XScale', 'log')
 set(ax(2:end,:), 'XTick', [0.1 1 10])
 set(ax(1,:), 'YLim', [-1 1], 'XLim', [-1 1])
-set(ax(2,:), 'YLim', [0 1.2])
+% set(ax(2,:), 'YLim', [0 1.2])
 set(ax(3,:), 'YLim', [-100 100])
 set(ax(4,:), 'YLim', [0 1.5])
 linkaxes(ax(2:end,:), 'x')
@@ -679,10 +679,10 @@ XLabelHC = get(ax(1,1), 'XLabel');
 set([XLabelHC], 'String', 'Imaginary')
 
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (°/°)')
+set([YLabelHC], 'String', 'Gain')
 
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (°)')
+set([YLabelHC], 'String', 'Phase (°)')
 
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Tracking error')

@@ -13,7 +13,7 @@ IOFv = ALL.HeadFree.FRF_data.IOFv{vI};
 frange = 0:0.02:20;
 
 opt = tfestOptions('EnforceStability', true, 'InitializeMethod', 'all');
-showplot = true;
+showplot = false;
 
 %% HeadFree: err2body
 close all
@@ -259,12 +259,19 @@ pN = 1;
 clss = 'HeadFree';
 MODEL.morph.body.M = 0.84185066; % [mg] body mass
 MODEL.morph.head.M = 0.08957730; % [mg] head mass
-MODEL.morph.body.R = 2.22; % [mm] body radius
-MODEL.morph.head.R = 0.42; % [mm] head radius
-% MODEL.morph.body.Jzz = 0.01834078; % [mg*mm^2] body inertia
-% MODEL.morph.head.Jzz = 0.00431881; % [mg*mm^2] head inertia
-MODEL.morph.body.Jzz = 0.56650720; % [mg*mm^2] body inertia
-MODEL.morph.head.Jzz = 0.00619410; % [mg*mm^2] head inertia
+MODEL.morph.body.L = 2.22; % [mm] body length
+MODEL.morph.head.L = 0.42; % [mm] head length
+MODEL.morph.body.R = 0.8; % [mm] body radius
+MODEL.morph.head.R = 0.65; % [mm] head radius
+MODEL.morph.body.Jzz = 0.56650720*(1e-3)^(3); % [kg*m^2] body inertia
+MODEL.morph.head.Jzz = 0.00619410*(1e-3)^(3); % [kg*m^2] head inertia
+
+MODEL.morph.body.Jzz_fromMass = MODEL.morph.body.M*( (1/12)*(MODEL.morph.body.L)^(2) + ...
+                                    (MODEL.morph.body.L/3)^(2) + (1/4)*MODEL.morph.body.R^(2)) * (1e-3)^(3); % [kg*m^2] body inertia
+                                
+MODEL.morph.head.Jzz_fromMass = MODEL.morph.head.M*( (1/12)*(MODEL.morph.head.L)^(2) + ...
+                                    0.2*(MODEL.morph.body.L)^(2) + (1/4)*MODEL.morph.head.R^(2)) * (1e-3)^(3); % [kg*m^2] head inertia
+
 MODEL.morph.J_ratio = MODEL.morph.head.Jzz / MODEL.morph.body.Jzz; % head/body inertia ratio
 
 MODEL.(clss).G.body = MODEL.(clss).fit.err2body(1).models;
@@ -280,13 +287,9 @@ MODEL.(clss).G.pade.head = pade(MODEL.(clss).G.head, pN);
 [MODEL.(clss).C.body, MODEL.(clss).P.body] = get_controller(MODEL.(clss).G.body, nan);
 [MODEL.(clss).C.head, MODEL.(clss).P.head] = get_controller(MODEL.(clss).G.head, nan);
 
-% MODEL.(clss).P.body = tf(1, MODEL.(clss).G.body.denominator);
-% MODEL.(clss).P.head = tf(1, MODEL.(clss).G.head.denominator);
-MODEL.(clss).P_norm.body = tf(MODEL.(clss).G.body.denominator(end), MODEL.(clss).G.body.denominator);
-MODEL.(clss).P_norm.head = tf(MODEL.(clss).G.head.denominator(end), MODEL.(clss).G.head.denominator);
+[MODEL.(clss).C_norm.head, MODEL.(clss).P_norm.head] = get_controller(MODEL.(clss).G.head, MODEL.morph.head.Jzz);
+[MODEL.(clss).C_norm.body, MODEL.(clss).P_norm.body] = get_controller(MODEL.(clss).G.body, MODEL.morph.body.Jzz);
 
-% MODEL.(clss).C.body = tf(MODEL.(clss).G.body.numerator, 1);
-% MODEL.(clss).C.head = tf(MODEL.(clss).G.head.numerator, 1);
 MODEL.(clss).C_norm.body = tf(MODEL.(clss).G.body.numerator / MODEL.(clss).G.body.denominator(end), 1);
 MODEL.(clss).C_norm.head = tf(MODEL.(clss).G.head.numerator / MODEL.(clss).G.head.denominator(end), 1);
 
@@ -321,10 +324,9 @@ MODEL.(clss).H.pade.body = minreal( MODEL.(clss).G.pade.body / (1 + MODEL.(clss)
 
 [MODEL.(clss).C.body, MODEL.(clss).P.body] = get_controller(MODEL.(clss).G.body, MODEL.morph.body.Jzz);
 
-% MODEL.(clss).P.body = tf(1, MODEL.(clss).G.body.denominator);
-MODEL.(clss).P_norm.body = tf(MODEL.(clss).G.body.denominator(end), MODEL.(clss).G.body.denominator);
+[MODEL.(clss).C.body, MODEL.(clss).P.body] = get_controller(MODEL.(clss).G.body, nan);
 
-% MODEL.(clss).C.body = tf(MODEL.(clss).G.body.numerator, 1);
+[MODEL.(clss).C_norm.body, MODEL.(clss).P_norm.body] = get_controller(MODEL.(clss).G.body, MODEL.morph.body.Jzz);
 
 MODEL.(clss).H.direct.body = MODEL.(clss).fit.ref2body(1).models;
 
@@ -337,10 +339,9 @@ MODEL.(clss).H.pade.head = minreal( MODEL.(clss).G.pade.head / (1 + MODEL.(clss)
 
 [MODEL.(clss).C.head, MODEL.(clss).P.head] = get_controller(MODEL.(clss).G.head, MODEL.morph.head.Jzz);
 
-% MODEL.(clss).P.head = tf(1, MODEL.(clss).G.head.denominator);
-MODEL.(clss).P_norm.head = tf(MODEL.(clss).G.head.denominator(end), MODEL.(clss).G.head.denominator);
+[MODEL.(clss).C.head, MODEL.(clss).P.head] = get_controller(MODEL.(clss).G.head, nan);
 
-% MODEL.(clss).C.head = tf(MODEL.(clss).G.head.numerator, 1);
+[MODEL.(clss).C_norm.head, MODEL.(clss).P_norm.head] = get_controller(MODEL.(clss).G.head, MODEL.morph.head.Jzz);
 
 MODEL.(clss).H.direct.head = MODEL.(clss).fit.ref2head(1).models;
 
@@ -414,18 +415,8 @@ if showplot
     set(h.ax(3), 'YLim', [-250 150])
 end
 
-%%
-% set(h.fig, 'CurrentAxes', h.ax(1))
-% plot(R, I, 'c')
-% 
-% set(h.fig, 'CurrentAxes', h.ax(2))
-% plot(fout, gain, 'c')
-% 
-% set(h.fig, 'CurrentAxes', h.ax(3))
-% plot(fout, phase, 'c')
-
 %% Save TF fit data
-fname = ['MODEL_v2_' FILE]; 
+fname = ['MODEL_v3_' FILE]; 
 root = 'E:\DATA\Magno_Data\Multibody';
 savedir = fullfile(root,'processed');
 mkdir(savedir)

@@ -9,13 +9,13 @@ load(fullfile(PATH,FILE),'DATA','FUNC','GRAND','U','N')
 clc
 clearvars -except FILE DATA ALL GRAND FLY FUNC D I U N root
 
-% Head-free
-pI = [1 2 3 4 5 6 7 8];
-T = ["ref2body", "ref2head", "ref2gaze", "body2head", "ref2wing", "wing2body", ...
-    "err2body", "err2head"];
-shift_I = {7:10, 9, 9, 9, 7:9, 9, 9  9};
-phase_lim = [0 nan nan nan 0 nan 20 nan];
-fI = (1:9)';
+% % Head-free
+% pI = [1 2 3 4 5 6 7 8];
+% T = ["ref2body", "ref2head", "ref2gaze", "body2head", "ref2wing", "wing2body", ...
+%     "err2body", "err2head"];
+% shift_I = {7:10, 9, 9, 9, 7:9, 9, 9  9};
+% phase_lim = [0 nan nan nan 0 nan 20 nan];
+% fI = (1:9)';
 
 % Head-fixed
 % pI = [1 2 3 4];
@@ -30,6 +30,20 @@ fI = (1:9)';
 % shift_I = {7:10, 1:9};
 % phase_lim = [nan nan];
 % fI = (1:9)';
+
+% % Body-fixed replay
+% pI = [1 2 3];
+% T = ["ref2head", "err2head", "fref2head"];
+% shift_I = {7:9, 1:9, 1:9};
+% phase_lim = [nan nan nan];
+% fI = (1:9)';
+
+% Body-free haltere cut
+pI = [1 2 3 4 5 6];
+T = ["ref2body", "ref2head", "ref2gaze", "body2head", "err2body", "err2head"];
+shift_I = {7:10, 9, 9, 9, 7:9, 9, 9  9};
+phase_lim = [0 nan nan nan 0 nan 20 nan];
+fI = (1:9)';
 
 % pI = [1 2 3];
 % T = ["ref2body", "ref2head", "ref2gaze"];
@@ -196,11 +210,11 @@ else
 end
 
 YLabelHC = get(ax(1,1), 'YLabel');
-set([YLabelHC], 'String', 'Magnitude (Â°)')
+set([YLabelHC], 'String', 'Magnitude (°)')
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Tracking error')
 YLabelHC = get(ax(5,1), 'YLabel');
@@ -264,7 +278,7 @@ end
 if N{1,3} > 1
     leg = legend(squeeze(h.line(5,end,:)), string(U{1,3}{1}), ...
         'Orientation', 'horizontal', 'Box', 'off');
-    leg.Title.String = 'Stimulus speed (Â°/s)';
+    leg.Title.String = 'Stimulus speed (°/s)';
     leg.Position = [0.39 0.96 0.18 0.04];
 end
 
@@ -295,11 +309,11 @@ else
 end
 
 YLabelHC = get(ax(1,1), 'YLabel');
-set([YLabelHC], 'String', 'Magnitude (Â°/s)')
+set([YLabelHC], 'String', 'Magnitude (°/s)')
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (Â°/Â°)')
+set([YLabelHC], 'String', 'Gain (°/°)')
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (Â°)')
+set([YLabelHC], 'String', 'Phase difference (°)')
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Tracking error')
 YLabelHC = get(ax(5,1), 'YLabel');

@@ -181,6 +181,40 @@ set(ax(1:end-1,:), 'XColor', 'none')
 align_Ylabels(ax(:,1))
 
 
+%% Head replay
+clearvars -except FUNC DATA ALL GRAND FLY D I U N root
+clc
+
+time = GRAND.all(1).Time(:,:,1);
+
+fig = figure (1) ; clf
+set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 5 5/3])
+movegui(fig, 'center')
+clear ax h
+ax = gobjects(N.vel,1);
+cc = [0.1 0.5 0.7];
+for v = 1
+    ax(v,1) = subplot(N.vel,1,v); hold on ; title([ num2str(U.vel) '°/s'])
+        %plot(FUNC{v}.All.time, FUNC{v}.All.X, 'k', 'LineWidth', 1)
+        %[h.patch(1,v),h.line(1,v)] = PlotPatch(GRAND.all_trial(v).State.median(:,2),...
+                  %GRAND.all_trial(v).State.std(:,2), time, 0, 1, cc(1,:), 0.7*cc(1,:), 0.2, 1);
+        [h.patch(1,v),h.line(1,v)] = PlotPatch(GRAND.fly_stats(v).mean.State.mean(:,1),...
+                  GRAND.fly_stats(v).mean.State.std(:,1), time, 1, 1, cc(1,:), 0.7*cc(1,:), 0.2, 1);
+    set(ax(v), 'YLim', (1 + max(abs(ax(v).YLim)))*[-1 1])
+    ylim(50*[-1 1])
+end
+set(ax, 'Color', 'none', 'LineWidth', 1.5, 'FontSize', 10, 'XLim', [-0.2 20], 'XTick', 0:2:20)
+
+YLabelHC = get(ax(:,1), 'YLabel');
+set([YLabelHC], 'String', 'Angular position (°)')
+
+YLabelHC = get(ax(end,1), 'XLabel');
+set([YLabelHC], 'String', 'Time (s)')
+
+align_Ylabels(fig)
+
+
+
 %% Custom
 clearvars -except FUNC DATA ALL GRAND FLY D I U N root
 clc
