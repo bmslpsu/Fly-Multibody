@@ -191,9 +191,18 @@ G_head_no_delay.IODelay = 0;
 MODEL.BodyFixed.C_adaptive = G_head_fixed_no_delay / G_head_no_delay;
 MODEL.BodyFixed.C_adaptive.IODelay = delay_diff;
 
+% MODEL.BodyFixed.C_adaptive = G_head_no_delay / G_head_fixed_no_delay;
+% MODEL.BodyFixed.C_adaptive.IODelay = -delay_diff;
+
+% MODEL.BodyFixed.C_adaptive = MODEL.BodyFixed.G.pade.head * MODEL.HeadFree.G.pade.head^(-1);
+MODEL.BodyFixed.C_adaptive = MODEL.HeadFree.G.pade.head * MODEL.BodyFixed.G.pade.head^(-1);
+
 for v = 1:3
-    ALL.BodyFixed.FRF_data.C_adaptive(v).complex = ALL.BodyFixed.FRF_data.err2head.grand_mean(v).complex ./ ...
-                                                    ALL.HeadFree.FRF_data.err2head.grand_mean(v).complex;
+%     ALL.BodyFixed.FRF_data.C_adaptive(v).complex = ALL.BodyFixed.FRF_data.err2head.grand_mean(v).complex ./ ...
+%                                                     ALL.HeadFree.FRF_data.err2head.grand_mean(v).complex;
+                                                
+    ALL.BodyFixed.FRF_data.C_adaptive(v).complex = ALL.HeadFree.FRF_data.err2head.grand_mean(v).complex  ./ ...
+                                                    ALL.BodyFixed.FRF_data.err2head.grand_mean(v).complex;                                           
                                                 
 	ALL.BodyFixed.FRF_data.C_adaptive(v).gain = abs(ALL.BodyFixed.FRF_data.C_adaptive(v).complex);
     ALL.BodyFixed.FRF_data.C_adaptive(v).phase = rad2deg( angle(ALL.BodyFixed.FRF_data.C_adaptive(v).complex) );
@@ -252,8 +261,8 @@ set(ax, 'XGrid', 'on', 'YGrid', 'on')
 set(ax(1:end,:), 'XLim', [0.1 20])
 set(ax(1:end,:), 'XScale', 'log')
 set(ax(1:end,:), 'XTick', [0.1 1 10])
-set(ax(1,1), 'YLim', [0 3])
-set(ax(2,:), 'YLim', [-100 50])
+set(ax(1,1), 'YLim', [0 1])
+set(ax(2,:), 'YLim', [-10 50])
 linkaxes(ax(2:end,:), 'x')
 set(h.data, 'MarkerSize', 6)
 % set(h.sys_freq, 'MarkerSize', 6, 'LineWidth', 0.75)
@@ -342,5 +351,260 @@ set([YLabelHC], 'String', 'Phase difference (°)')
 
 XLabelHC = get(ax(3,:), 'XLabel');
 set([XLabelHC], 'String', 'Frequency (Hz)')
+
+%% Multisensory head control
+clc
+IOFv = MODEL.HeadFree.data.err2body.freq;
+for v = 1:3
+    ALL.HeadFree.FRF_data.G_mechano(v).complex = (ALL.HeadFree.FRF_data.err2head.grand_mean(v).complex ...
+                                                - ALL.BodyFixed.FRF_data.err2head.grand_mean(v).complex) ./ ... 
+                                                  ALL.HeadFree.FRF_data.err2body.grand_mean(v).complex;
+                                                
+	ALL.HeadFree.FRF_data.G_mechano(v).gain = abs(ALL.HeadFree.FRF_data.G_mechano(v).complex);
+    
+    phs = rad2deg( angle(ALL.HeadFree.FRF_data.G_mechano(v).complex) );
+    phs(phs > 10) = phs(phs > 10) - 360;
+    ALL.HeadFree.FRF_data.G_mechano(v).phase = phs;
+    
+    ALL.HeadFree.FRF_data.G_mechano(v).error = abs( (1 + 0*1i) - ALL.HeadFree.FRF_data.G_mechano(v).complex);
+end
+
+data = frd(ALL.HeadFree.FRF_data.G_mechano(vI).complex, IOFv, 'FrequencyUnit', 'hz');
+opt = tfestOptions('EnforceStability', true, 'InitializeMethod', 'all');
+tffit = [];
+tffit{end+1} = tfest(data, 3, 2, 0, opt);
+tffit{1}
+M = plotFit(D, IOFv, tffit{1}, 0:0.02:20, true);
+
+MODEL.BodyFree.G_mechano = M.models(1);
+
+vI = 2;
+D = {ALL.HeadFree.FRF_data.G_mechano(vI).gain, ALL.HeadFree.FRF_data.G_mechano(vI).phase};
+M = plotFit(D, IOFv, MODEL.BodyFree.G_mechano, 0:0.02:20, false);
+
+% tffit = [];
+% [tffit{end+1}, sys_list, fitpercent, delay_sort] = tfest_delay(data, 3, 2, opt, 0:0.005:0.05);
+
+
+% MODEL.BodyFree.G_mechano = minreal((MODEL.HeadFree.G.pade.head - MODEL.BodyFixed.G.pade.head) .* ...
+%     (MODEL.HeadFree.G.pade.body^(-1)));
+
+clear ax h
+
+cc_fit = 'c';
+cc_data = 'k';
+n_plot = 1;
+
+fig = figure (3); clf
+set(fig, 'Color', 'w', 'Units', 'inches', 'Visible', 'on')
+fig.Position(3:4) = 1*[n_plot*2.28 2*1.67];
+movegui(fig, 'center')
+ax = gobjects(2,n_plot);
+n = 1;
+for m = 1:n_plot
+    sI = m + (0:1)*n_plot;        
+    ax(1,m) = subplot(2,n_plot,sI(1)); cla ; hold on ; box on
+        h.sys(1,m) = plot(M(n).fv_bode, M(n).gain, 'Color', cc_fit);
+        h.data(1,m,:) = plot(IOFv, D{1}, '.-', 'Color', cc_data, 'MarkerSize', 15);
+        
+    ax(2,m) = subplot(2,n_plot,sI(2)); cla ; hold on ; box on
+        yline(0, '--k');
+        h.sys(2,m) = plot(M(n).fv_bode, M(n).phase, 'Color', cc_fit);
+    	h.data(2,m,:) = plot(IOFv, D{2}, '.-', 'Color', cc_data, 'MarkerSize', 15);
+end
+set(ax, 'Color', 'none', 'LineWidth', 0.75)
+set(ax, 'XGrid', 'on', 'YGrid', 'on')
+set(ax(1:end,:), 'XLim', [0.1 20])
+set(ax(1:end,:), 'XScale', 'log')
+set(ax(1:end,:), 'XTick', [0.1 1 10])
+set(ax(1,1), 'YLim', [0 3])
+set(ax(2,:), 'YLim', [-200 0])
+linkaxes(ax(2:end,:), 'x')
+set(h.data, 'MarkerSize', 10, 'LineWidth', 1)
+set(h.sys, 'MarkerSize', 6, 'LineWidth', 0.75)
+% set(h.sys_freq, 'MarkerSize', 6, 'LineWidth', 0.75)
+% set(h.sys_freq, 'Marker', 'none')
+
+set(ax(1:end-1,:), 'XTickLabel', [])
+% set(ax(2:end,2:end), 'YTickLabel', [])
+
+YLabelHC = get(ax(1,1), 'YLabel');
+set([YLabelHC], 'String', 'Gain')
+
+YLabelHC = get(ax(2,1), 'YLabel');
+set([YLabelHC], 'String', 'Phase (°)')
+
+XLabelHC = get(ax(2,:), 'XLabel');
+set([XLabelHC], 'String', 'Frequency (Hz)')
+
+%% Multisensory time domain
+clc
+
+% MODEL.BodyFree.G_mechano.Numerator{1} = MODEL.BodyFree.G_mechano.Numerator{1}(2:end);
+
+f = 2;
+T = 4*(1 / f);
+t = (0:0.001:T)';
+R = 20*sin(2*pi*f*t);
+B = lsim(MODEL.HeadFree.H.body, R, t);
+E = R - B;
+H_v = lsim(MODEL.BodyFixed.G.head, E, t);
+H_m = 1.5*lsim(MODEL.BodyFree.G_mechano, B, t);
+H_vm = H_v + H_m;
+H_vm_sim = lsim(MODEL.HeadFree.H.head, R, t);
+
+fig = figure (400); clf
+set(fig, 'Color', 'w', 'Units', 'inches', 'Visible', 'on')
+fig.Position(3:4) = [5 3];
+movegui(fig, 'center')
+clear ax h
+ax = subplot(1,1,1) ; cla ; hold on
+
+h(1) = plot(t, R, 'k');
+h(2) = plot(t, B, 'r');
+h(3) = plot(t, H_v, 'g');
+h(4) = plot(t, H_m, 'm');
+h(5) = plot(t, H_vm_sim, 'b');
+h(6) = plot(t, H_vm, 'c');
+
+set(h, 'LineWidth', 1)
+set(ax, 'Color', 'none', 'LineWidth', 0.75)
+
+
+
+%% Multisensory time domain fit main
+clc
+
+% MODEL.BodyFree.G_mechano.Numerator{1} = MODEL.BodyFree.G_mechano.Numerator{1}(2:end);
+
+f = 2;
+T = 4*(1 / f);
+t = (0:0.001:T)';
+A = 20;
+R = A*sin(2*pi*f*t);
+B = lsim(MODEL.HeadFree.H.body, R, t);
+E = R - B;
+H_v = lsim(MODEL.BodyFixed.G.head, E, t);
+H_vm = lsim(MODEL.HeadFree.H.head, R, t);
+% H_m = 1.5*lsim(MODEL.BodyFree.G_mechano, B, t);
+% H_vm = H_v + H_m;
+
+% objfun = @(a,b) ( a*sin(2*pi*f + b) - H_vm + H_v );
+% cost = @(x) objfun(x(1), x(2));
+objfun = @(x) ( x(1)*sin(2*pi*f*t + x(2)) - H_vm + H_v );
+
+x = lsqnonlin(objfun, [A 0], [0 -pi], [inf pi]);
+H_m = x(1)*sin(2*pi*f.*t + x(2));
+H_vm_fit = H_v + H_m;
+
+fig = figure (400); clf
+set(fig, 'Color', 'w', 'Units', 'inches', 'Visible', 'on')
+fig.Position(3:4) = [5 3];
+movegui(fig, 'center')
+clear ax h
+ax = subplot(1,1,1) ; cla ; hold on
+
+h(1) = plot(t, R, 'k');
+h(2) = plot(t, B, 'r');
+h(3) = plot(t, H_v, 'g');
+h(4) = plot(t, H_m, 'm');
+h(5) = plot(t, H_vm, 'b');
+h(6) = plot(t, H_vm_fit, '--c');
+
+set(h, 'LineWidth', 1)
+set(ax, 'Color', 'none', 'LineWidth', 0.75)
+
+%% Multisensory time domain fit
+clc
+f = (0.1:0.1:20);
+
+
+[body_gain, body_phase] = bode(MODEL.HeadFree.H.body, 2*pi*f);
+body_gain = squeeze(body_gain);
+body_phase = deg2rad(squeeze(body_phase));
+
+n_freq = length(f);
+n_cycle = 10;
+A = 20;
+H_m_gain = nan(n_freq,1);
+H_m_phase = nan(n_freq,1);
+showplot = true;
+opt = optimoptions('lsqnonlin', 'Display', 'off');
+for n = 1:n_freq
+    T = n_cycle*(1 / f(n));
+    t = (0:0.001:T)';
+    start_time = T / n_cycle;
+    start_time = 0.1*round(start_time/0.1);
+    startI = find(t == start_time);
+    R = A*sin(2*pi*f(n)*t);
+    B = lsim(MODEL.HeadFree.H.body, R, t);
+    E = R - B;
+    H_v = lsim(MODEL.BodyFixed.G.head, E, t);
+    H_vm = lsim(MODEL.HeadFree.H.head, R, t);
+    
+    objfun = @(x) ( x(1)*sin(2*pi*f(n)*t + x(2)) - H_vm + H_v );
+    x = lsqnonlin(objfun, [A eps], [0 -pi], [inf pi], opt);
+    H_m = x(1)*sin(2*pi*f(n).*t + x(2));
+    H_vm_fit = H_v + H_m;
+    
+    if showplot
+        fig = figure (400); clf
+        set(fig, 'Color', 'w', 'Units', 'inches', 'Visible', 'on')
+        %fig.Position(3:4) = [5 3];
+        %movegui(fig, 'center')
+        clear ax h
+        ax = subplot(1,1,1) ; cla ; hold on
+
+        h(1) = plot(t, R, 'k');
+        h(2) = plot(t, B, 'r');
+        h(3) = plot(t, H_v, 'g');
+        h(4) = plot(t, H_m, 'm');
+        h(5) = plot(t, H_vm, 'b');
+        h(6) = plot(t, H_vm_fit, '--c');
+
+        set(h, 'LineWidth', 1)
+        set(ax, 'Color', 'none', 'LineWidth', 0.75)
+        xlim([0 T])
+        drawnow
+        pause
+    end
+    H_m_gain(n) = x(1) / (A*body_gain(n));
+    H_m_phase(n) = x(2) - body_phase(n);
+end
+
+%%
+
+D = {ALL.HeadFree.FRF_data.G_mechano(vI).gain, ALL.HeadFree.FRF_data.G_mechano(vI).phase};
+
+fig = figure (500); clf
+set(fig, 'Color', 'w', 'Units', 'inches', 'Visible', 'on')
+fig.Position(3:4) = 2*[2 3];
+movegui(fig, 'center')
+clear ax h
+cc = [0.4 0.1 0.6];
+ax(1) = subplot(2,1,1) ; cla ; hold on ; ylabel('Gain')
+    h.m(1) = plot(f, H_m_gain, 'Color', cc);
+    %h.b(1) = plot(f, body_gain, 'Color', 'r');
+    %h.data(1,m,:) = plot(IOFv, D{1}, '.-', 'Color', 'r', 'MarkerSize', 15);
+ax(2) = subplot(2,1,2) ; cla ; hold on ; ylabel('Phase (°)') ; xlabel('Frequency')
+    %H_m_phase(H_m_phase > 0) = H_m_phase(H_m_phase > 0) - 2*pi;
+    H_m_phase = unwrap(H_m_phase);
+    h.m(2) = plot(f, rad2deg(H_m_phase) + 0, 'Color', cc);
+  	%h.b(2) = plot(f, rad2deg(body_phase), 'Color', 'r');
+    %h.data(2,m,:) = plot(IOFv, D{2}, '.-', 'Color', 'r', 'MarkerSize', 15);
+    
+set(h.m, 'LineWidth', 1)
+%set(h.b, 'LineWidth', 1)
+
+linkaxes(ax, 'x')
+set(ax, 'Color', 'none', 'LineWidth', 0.75, 'XLim', [0.1 20])
+set(ax, 'XScale', 'log', 'XGrid', 'on', 'YGrid', 'on', 'Box', 'on')
+
+set(ax(1), 'YLim', [0 8])
+set(ax(2), 'YLim', [-250 0])
+
+%% Save
+fname = [FILE 'add'];
+save(fullfile(PATH, fname), 'MODEL', 'ALL')
 
 end

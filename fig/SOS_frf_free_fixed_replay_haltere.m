@@ -150,6 +150,9 @@ set(ax,'XScale','log')
 
 uistack(h.line(5,1,end), 'top')
 
+% delete(h.patch(:,:,4:7))
+% delete(h.line(:,:,4:7))
+
 %% Compare head free, head-fixed, body-fixed speeds
 clc
 clearvars -except ALL FILE PATH

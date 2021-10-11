@@ -105,7 +105,7 @@ set(h.line, 'Marker', 'none','MarkerFaceColor', 'none', 'MarkerSize', 10, 'LineW
 set(ax(1:end-1,:), 'XColor', 'none')
 set(ax(end,:), 'XTick', [])
 
-set(ax, 'YLim', 8*[-1 1])
+% set(ax, 'YLim', 50*[-1 1])
 
 %% Wings
 clc
@@ -157,7 +157,7 @@ for v = 1:n_cond
     axis tight
   	set(ax(v,1), 'YTick', ALL.HeadFree.FUNC{v}.All.Amp*[0 1])
     set(ax(v,1), 'YLim', ALL.HeadFree.FUNC{v}.All.Amp*[-1.3 1.3])
-    plot(func_time_span, ALL.HeadFree.FUNC{v}.All.X(func_span), 'k', 'LineWidth', 0.5)
+    %plot(func_time_span, ALL.HeadFree.FUNC{v}.All.X(func_span), 'k', 'LineWidth', 0.5)
     
     for n = 1:n_set
         if plot_fly
@@ -186,5 +186,7 @@ set(h.line, 'Marker', 'none','MarkerFaceColor', 'none', 'MarkerSize', 10, 'LineW
 
 set(ax(1:end-1,:), 'XColor', 'none')
 set(ax(end,:), 'XTick', [])
+
+set(ax, 'YLim', 15*[-1 1])
 
 end

@@ -3,11 +3,11 @@ function [] = SOS_frf_free_fixed_error()
 %
 root = 'E:\DATA\Magno_Data\Multibody\Processed';
 [FILE,PATH] = uigetfile({'*.mat'}, 'Select data file', root, 'MultiSelect','off');
-load(fullfile(PATH,FILE),'ALL');
+load(fullfile(PATH,FILE),'ALL', 'MODEL');
 
 %% Error transforms
 clc
-clearvars -except ALL FILE PATH
+clearvars -except ALL MODEL FILE PATH
 
 set_names = ["HeadFree", "BodyFixed"];
 trf_names = [ "err2head", "err2head"];
@@ -88,7 +88,7 @@ set(ax,'XScale','log')
 
 %% Format
 clc
-clearvars -except ALL FILE PATH
+clearvars -except ALL MODEL FILE PATH
 
 set_names = ["HeadFree", "BodyFixed"];
 trf_names = [ "err2head", "err2head"];
@@ -113,13 +113,21 @@ for v = 1:n_cond
             title([num2str(cond(v)) '°/s'], 'interpreter', 'none')
         end
         for n = 1:n_set
+            IOFv = ALL.(set_names(n)).FRF_data.IOFv{v};
+            D = MODEL.(set_names(n)).data.(trf_names(n));
+            M = plotFit(D.input, IOFv, MODEL.(set_names(n)).G.head, 0:0.02:20, false);
             if ~isnan(yLines(p))
                 yline(yLines(p), '--', 'Color', [0.5 0.5 0.5], 'LineWidth', 1);
             end
+            
+            if strcmp(plot_names(p), 'gain') || strcmp(plot_names(p), 'phase') && (v == 2)
+                h.sys = plot(M.fv_bode, M.(plot_names(p)), 'Color', 0.7*cc(n,:));
+            end
+            
             [h.patch(p,v,n),h.line(p,v,n)] = PlotPatch(...
                     ALL.(set_names(n)).FRF_data.(trf_names(n)).grand_mean(v).(plot_names(p)),...
                   	ALL.(set_names(n)).FRF_data.(trf_names(n)).grand_std(v).(plot_names(p)), ...
-                    ALL.(set_names(n)).FRF_data.IOFv{v}, 1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
+                    IOFv, 1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
         end
     end
 end
@@ -134,7 +142,7 @@ for a = 1:size(ax,1)
 end
 
 set(h.line, 'Marker', '.','MarkerFaceColor', 'none', 'MarkerSize', 10, 'LineWidth', 1)
-set(ax, 'Color', 'none', 'LineWidth', 0.75, 'FontSize', 10, 'XLim', [0.2 20],...
+set(ax, 'Color', 'none', 'LineWidth', 0.75, 'FontSize', 10, 'XLim', [0.1 20],...
     'XGrid', 'off', 'YGrid', 'off', 'Box', 'off')
 set(ax, 'XTick', [0.1, 1 10])
 

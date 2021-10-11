@@ -49,11 +49,10 @@ if showplot
         ylabel('Gain')
 
     ax(2) = subplot(2,1,2); hold on ; cla
-        yline(1, 'k--');
-        h.power(1) = plot(data.fv, data.power.ratio_1, 'Color', 'm', 'LineWidth', 2);
+        h.power(1) = plot(data.fv, 1 * data.power.ratio_1, 'Color', 'm', 'LineWidth', 2);
         xlabel('Frequency (hz')
         ylabel('Power factor')
-        ax(2).YLim(1) = -0.05;
+        %ax(2).YLim(1) = -0.05;
     
     set(ax, 'Color', 'none', 'LineWidth', 1)
     set(ax, 'XScale', 'log', 'XLim', [0.1 20])

@@ -54,7 +54,7 @@ f0 = fv(fI);
 power_ratio_f0 = power_ratio(fI, :);
 
 %% Animal metric
-size_ratio = (tau_ratio).^(1/2);
+size_ratio = (tau_ratio).^(1);
 
 animal = [];
 % animal.mass_ratio.human = 4.35 / (7.18e-3); % Heymsfield / Heymsfield
