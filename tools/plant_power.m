@@ -1,4 +1,4 @@
-function [sys, data, h] = plant_power(P1, P2, showplot)
+function [sys, data, h] = plant_power(P1, P2, showplot, fv)
 %% plant_power: takes in transfer functions and compares there gains
 %
 %  INPUTS:
@@ -11,8 +11,11 @@ function [sys, data, h] = plant_power(P1, P2, showplot)
 %       h           : graphics handles
 %
 
-if nargin < 3
-    showplot = true;
+if nargin < 4
+    fv = (0:0.05:30)';
+    if nargin < 3
+        showplot = true;
+    end
 end
 
 % Plants
@@ -24,7 +27,7 @@ plot_tf = string(fieldnames(sys));
 n_tf = length(plot_tf);
 
 data = [];
-data.fv = (0:0.5:10)';
+data.fv = fv;
 data.win = data.fv * 2*pi;
 for n = 1:n_tf
     [gain,phase,~] = bode(sys.(plot_tf(n)), data.win);
@@ -55,7 +58,7 @@ if showplot
         %ax(2).YLim(1) = -0.05;
     
     set(ax, 'Color', 'none', 'LineWidth', 1)
-    set(ax, 'XScale', 'log', 'XLim', [0.1 20])
+    set(ax, 'XScale', 'log', 'XLim', [0.1 data.fv(end)])
 else
     h = [];    
 end
