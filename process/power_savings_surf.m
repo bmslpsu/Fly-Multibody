@@ -12,7 +12,7 @@ clearvars -except PATH FILE ALL MODEL
 clc
 close all
 
-y = 3; % tau mapping
+y = 4; % tau mapping
 
 P_body = minreal(MODEL.HeadFree.P.body);
 P_head = minreal(MODEL.HeadFree.P.head);
@@ -109,7 +109,7 @@ h.surf = surf(fv_grid, size_ratio_grid, 100*power_ratio');
 % h.surf = waterfall(fv_grid, size_ratio_grid, power_ratio');
 
 % h.surf.EdgeColor = 'none';
-h.surf.FaceAlpha = 0.6;
+h.surf.FaceAlpha = 0.1;
 h.surf.FaceColor = 'none';
 
 xlabel('Frequency (hz)')
@@ -125,6 +125,7 @@ ax.YLim(1) = 1;
 
 % view(-34, 37)
 view(-23, 30)
+view(-48, 35)
 
 colormap(parula)
 colorbar
