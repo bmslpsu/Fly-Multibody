@@ -19,7 +19,7 @@ void setup() {
 
 void loop() {
   daq_signal = analogRead(daq_pin);
-  deg_val = map(daq_signal, 0, 1023, 0, 180);
+  deg_val = map(daq_signal, 0, 1023, 0, 92.2904);
   myservo.write(deg_val);
   delay(1);
 }
