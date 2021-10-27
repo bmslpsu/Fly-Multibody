@@ -29,7 +29,7 @@ tau_body = 1 ./ P_body.Denominator{1}(2); % nominal time constant ratio (body)
 P_norm = tf(1, [tau_body 1]); % nominal plant (body)
 
 % tau_all = flipud(linspace(0.00001, tau_body, 1000)'); % make array of time constants up to nominal value
-tau_start = tau_body/(12^y);
+tau_start = tau_body/(20^y);
 tau_all = flipud(logspace(log10(tau_start), log10(tau_body), 100)'); % make array of time constants up to nominal value
 tau_ratio = tau_body ./ tau_all; % time constant ratio
 
@@ -78,16 +78,17 @@ size_ratio = (tau_ratio).^(1/y);
 
 %% Find the time constant ratio correspondng to the morphology of a few animals
 animal = [];
-% animal.size_ratio.robot = (2.8) / (248e-3); % Iyer
-animal.size_ratio.robot = (2e-2) / (2.3e-3); % Iyer
+% animal.size_ratio.robot = (2.8) / (248e-3); % Iyer / Iyer
+animal.size_ratio.robot = (2e-2) / (2.3e-3); % Iyer / Iyer
 animal.size_ratio.human = (19e-2) / (23e-3); % Lee or Heymsfield / Bekerman
 animal.size_ratio.marmoset = (3.5e-2) / (11e-3); % Pandey / Solomon
 animal.size_ratio.mouse = ((21.9e-3) / (5.281 * 1e-3)) + 0.2 ; % Islam / Howland (Mus musculus)
 animal.size_ratio.fruit_fly_theo = fly_size_ratio;
 animal.size_ratio.blowfly = (12.23e-3) / (3e-3) ; % Bunchu / Stoffolano
 animal.size_ratio.wasp = ((10^(1.1)) * 1e-3) / (((10^(0.7))^(1/3)) * 1e-3) ; % O’Donnell / O’Donnell
-animal.size_ratio.bird = 2.5;
-animal.size_ratio.fish = 3.5;
+% animal.size_ratio.crow = (100e-3 - 58e-3) / (15.157e-3); % Ludwig / Howland
+animal.size_ratio.crow = ((18*2.54)*1e-2) / (100e-3 - 58e-3); % / Ludwig
+animal.size_ratio.zebrafish = (30e-3) / (2e-3); % Collery / Collery
 animal.size_ratio.critical = 3;
 % animal.size_ratio.fruit_fly_theo = fly_size_ratio;
 % animal.size_ratio.fruit_fly_exp = sys.fly.size_ratio;
@@ -116,8 +117,9 @@ set(fig, 'Visible', 'on')
 clear ax h
 ax = subplot(1,1,1); cla
 
+norm = max(power_ratio, [], 'all');
 % h.surf = surfl(fv_grid, size_ratio_grid, 100*power_ratio');
-h.surf = surf(fv_grid, size_ratio_grid, 100*power_ratio');
+h.surf = surf(fv_grid, size_ratio_grid, power_ratio' ./ norm);
 % h.surf = waterfall(fv_grid, size_ratio_grid, power_ratio');
 
 % h.light = light;
@@ -151,7 +153,9 @@ ax.YLim(1) = 1;
 view(-23, 30)
 view(-48, 35)
 
-colormap(copper)
+cmap = copper(1000);
+cmap = cmap(150:end,:);
+colormap(cmap)
 colorbar
 
 hold on
@@ -160,7 +164,7 @@ bg = [0.3 0.2 0];
 animal.color = distinguishable_colors(n_animal, bg);
 for n = 1:n_animal
     animal_size_ratio_grid = repmat(animal.size_ratio.(fnames{n}), [length(fv), 1]);
-    h.animal(n) = plot3(fv, animal_size_ratio_grid, 100*animal.power_ratio_all.(fnames{n}), ...
+    h.animal(n) = plot3(fv, animal_size_ratio_grid, animal.power_ratio_all.(fnames{n}) ./ norm, ...
         'Color', animal.color(n,:));
 end
 set(h.animal, 'Marker', 'none', 'MarkerFaceColor', 'none', 'MarkerSize', 15, 'LineWidth', 2)

@@ -70,15 +70,42 @@ Vreader = VideoReader(FILE.vid);
 disp('DONE')
 
 %% Get trigger times
-daq_time = all_data.t_p;
-daq_pattern = all_data.data(:,1);
-trigger = all_data.data(:,3);
-func_length = 60;
-start_idx = nan;
+% daq_time = all_data.t_p;
+% daq_pattern = all_data.data(:,1);
+% trigger = all_data.data(:,3);
+% func_length = 60;
+% start_idx = nan;
+% n_frame = length(all_data.bAngles);
+% showplot = false;
+% [TRIG,PAT] = sync_pattern_trigger_realtime(daq_time, daq_pattern, func_length, ...
+%     trigger, start_idx, n_frame, true);
+
+trig = all_data.data(:,3);
+trig = 0.1*round(trig ./ 0.1);
+dxtrig = diff(trig);
+dxtrig = [dxtrig(1) ; dxtrig];
+[~,pks] = findpeaks(dxtrig, 'MinPeakHeight', 0.1);
+pks_time = all_data.t_p(pks);
+time_sync = all_data.t_p - pks_time(1);
+
+body = all_data.bAngles;
 n_frame = length(all_data.bAngles);
-showplot = false;
-[TRIG,PAT] = sync_pattern_trigger_realtime(daq_time, daq_pattern, func_length, ...
-    trigger, start_idx, n_frame, true);
+pat_norm = linspace(pks_time(1), pks_time(end), n_frame)' - pks_time(1);
+pat = all_data.data(:,1);
+pat = 3.75*round(96*(pat ./ 10));
+pat = rad2deg(unwrap(deg2rad(pat)));
+pat_norm = interp1(time_sync, pat, trig_time , 'nearest');
+
+FLY.frames = (1:10000)';
+FLY.n_frame = length(FLY.frames);
+FLY.time = trig_time(FLY.frames);
+FLY.body = body(FLY.frames);
+FLY.pat = pat_norm(FLY.frames);
+
+close all
+hold on
+plot(FLY.time, FLY.body, 'r')
+plot(FLY.time, FLY.pat, 'b')
 
 %% Get body angles offline
 % [norm_ang,imgstats] = bodytracker(FLY.raw, 0, true, true, false);
