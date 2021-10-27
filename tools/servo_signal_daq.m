@@ -1,15 +1,15 @@
 function [daq_signal, daq_time] = servo_signal_daq(daq_fs, servo_signal, servo_time, showplot)
-%% servo_signal_daq: 
+%% servo_signal_daq: generates analog output signal for DAW, to send to arduino to control servo motor
 %
 %   INPUT:
-%     	daq_fs           	: DAQ sampling frequency [hz]
-%       servo_signal        : desired servo trajectory [deg]
-%       servo_time          : desired servo time [s]
-%       servo_delay_range  	: [min max] delay range for mapping angles to PWM pulse width [ms]
-%       servo_update_rate  	: how often to send PWM pulses (default is 50 hz)
+%     	daq_fs        	: DAQ sampling frequency [hz]
+%       servo_signal	: desired servo trajectory [deg]
+%       servo_time   	: desired servo time [s]
+%       showplot        : show plot (boolean)
 %       
 %   OUTPUT:
-%       daq_signal       	: PWM signal to output from DAQ
+%       daq_signal    	: signal to output from DAQ
+%       daq_time    	: DAQ time
 %
 
 if nargin < 4
