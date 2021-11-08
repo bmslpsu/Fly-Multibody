@@ -1,4 +1,4 @@
-function [daq_signal, daq_time] = servo_signal_daq(daq_fs, servo_signal, servo_time, showplot)
+function [daq_signal, daq_time, deg_range] = servo_signal_daq(daq_fs, servo_signal, servo_time, showplot)
 %% servo_signal_daq: generates analog output signal for DAW, to send to arduino to control servo motor
 %
 %   INPUT:
