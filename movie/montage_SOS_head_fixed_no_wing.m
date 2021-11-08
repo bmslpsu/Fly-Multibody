@@ -180,11 +180,12 @@ MOV(1:FLY.nframe) = struct('cdata', [], 'colormap',[]);
 if export
     VID = VideoWriter(fullfile(PATH.mov,FILE.montage),'MPEG-4');
     VID.FrameRate = vidFs;
+    VID.Quality = 100;
     open(VID)
 end
 
 FIG = figure (1); clf % main figure window for display & export
-set(FIG, 'Color', 'k', 'Renderer', 'OpenGL','Position', 0.8*[100, 100, 1.75*16*40, 1.4*16*50]);
+set(FIG, 'Color', 'k', 'Renderer', 'OpenGL','Position', 0.7*[100, 100, 1.75*16*40, 1.4*16*50]);
 % set(FIG, 'Visible','off');
 linewidth = 1.25; % displayed line width
 fontsize = 12;
@@ -213,7 +214,7 @@ ax(2) = subplot(ph,2,2:2:ph) ; cla; hold on; axis image % for registered fly & p
         ax_pat(2) = axes; axis image
         set(ax_pat(2), 'Position', ax(2).Position, 'XLim', ax(2).XLim, 'YLim', ax(2).XLim, 'Color', 'none')
 ax(3) = subplot(ph,2,(ph+1):(ph+4))  ; cla ; hold on
-        ylabel('Perturbation (°)','Color','w','FontSize',fontsize)
+        ylabel('Stimulus (°)','Color','w','FontSize',fontsize)
      	h.pat = animatedline('Color','g','LineWidth',linewidth); % for pattern angle
 ax(4) = subplot(ph,2,(ph+4+1):(ph+2*4)) ; cla; hold on
         ylabel('Body (°)','Color','w','FontSize',fontsize)

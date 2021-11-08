@@ -18,11 +18,11 @@ P_body = minreal(MODEL.HeadFree.P.body);
 P_head = minreal(MODEL.HeadFree.P.head);
 
 % fv_all = (0:0.5:20)';
-fv_all = [0.1 , 1:1:20]';
-fv_all = (0.1:0.05:20)';
-[sys.fly, data.fly, ~] = plant_power(P_body, P_head, true, fv_all); % simulate power savings for head in place of body
-sys.fly.tau_ratio = (1 / P_body.Denominator{1}(2)) / (1 / P_head.Denominator{1}(2));
-sys.fly.size_ratio = sys.fly.tau_ratio^(1/y);
+fv_all = [0.0 , 1:1:20]';
+fv_all = (0.1:0.05:50)';
+[sys_data.fly, data.fly, ~] = plant_power(P_body, P_head, true, fv_all); % simulate power savings for head in place of body
+sys_data.fly.tau_ratio = (1 / P_body.Denominator{1}(2)) / (1 / P_head.Denominator{1}(2));
+sys_data.fly.size_ratio = sys_data.fly.tau_ratio^(1/y);
 
 %% Simulate power savings for distinct time constant ratios
 tau_body = 1 ./ P_body.Denominator{1}(2); % nominal time constant ratio (body)
@@ -69,11 +69,12 @@ power_ratio_f0_fly = power_ratio_fly(fI_fly); % power savings for fly
 fly_size_ratio = mean(MODEL.morph.body.L + MODEL.morph.body.R) / mean(MODEL.morph.head.L + MODEL.morph.head.R);
 fly_size_ratio = (MODEL.morph.body.M / MODEL.morph.head.M)^(1/3);
 fly_size_ratio = MODEL.morph.body.L / MODEL.morph.head.L;
+% fly_size_ratio = (MODEL.morph.body.L+MODEL.morph.head.L) / MODEL.morph.head.L
 
 %% Map time constant ratio to size ratio
 % Jean, this is the most critical part, it determines if fly morophology
 % can predict power savings
-dS = fly_size_ratio - sys.fly.size_ratio;
+dS = fly_size_ratio - sys_data.fly.size_ratio;
 size_ratio = (tau_ratio).^(1/y);
 
 %% Find the time constant ratio correspondng to the morphology of a few animals
@@ -194,5 +195,38 @@ end
 ylim([0 n_animal+1])
 % set(gca, 'Color', 'none')
 % set(gcf, 'Color', 'none')
+
+%% Example plants
+sz_ratio_disp = 1.3;
+[~,I] = min(abs(size_ratio - sz_ratio_disp));
+all_data = struct2cell(data_tau);
+sys_data = all_data{I};
+% all_sys = struct2cell(sys_tau);
+% sys = all_sys{I};
+
+fig = figure (800); clf
+set(fig, 'Color', 'w', 'Units', 'inches', 'Name', 'power savings')
+fig.Position(3:4) = [3 2];
+movegui(fig, 'center')
+set(fig, 'Visible', 'on')
+clear ax h
+ax = subplot(1,1,1); cla ; hold on
+
+h.gain(1) = plot(sys_data.fv, sys_data.gain.P1, 'k');
+h.gain(2) = plot(sys_data.fv, sys_data.gain.P2, 'b');
+
+h.fcut(1) = xline(sys_data.fcut.P1, 'k--');
+h.fcut(2) = xline(sys_data.fcut.P2, 'b--');
+
+h.marker(1) = plot(min(sys_data.fv), max(sys_data.gain.P2));
+h.marker(2) = plot(1, min(sys_data.gain.P2));
+h.marker(3) = plot(max(sys_data.fv), min(sys_data.gain.P2));
+
+set(h.marker, 'Marker', '.', 'MarkerSize', 15, 'MarkerFaceColor', 'none', 'MarkerEdgeColor', 'r')
+
+set(h.gain, 'LineWidth', 1)
+set(ax, 'Color', 'none', 'LineWidth', 1, 'XScale', 'log', 'XLim', [0.08 50], 'YLim', [-0.05 1.05])
+
+
 
 end

@@ -12,7 +12,7 @@ function [TRIG,PAT] = sync_pattern_trigger(daq_time, daq_pattern, function_lengt
 %                           trigger for each frame)
 %       trig_center    	:   ratio of trigger width to use for frame times (0-1)
 %       reg             :   BOOLEAN to set interpolated times for pattern (optional)
-%       start_first     :   make pattern start at this index no matter what (optional)
+%       start_idx       :   make pattern start at this index no matter what (optional)
 %       add1          	:   BOOLEAN add 1st frame becuase missed the rising edge in the trigger signal
 %       debug         	:   BOOLEAN show debug plot (optional)
 %
