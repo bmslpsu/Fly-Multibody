@@ -36,6 +36,9 @@ for n = 1:n_tf
     end
     data.gain.(plot_tf(n)) = squeeze(gain);
     data.phase.(plot_tf(n)) = squeeze(phase);
+    
+    mPlant = minreal(sys.(plot_tf(n)));
+    data.fcut.(plot_tf(n)) = mPlant.Denominator{1}(2) / (2*pi);
 end
 data.power.ratio_1 = (data.gain.P2 - data.gain.P1) ./ data.gain.P1;
 

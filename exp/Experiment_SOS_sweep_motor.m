@@ -1,15 +1,12 @@
-function [] = Experiment_SOS_sweep(Fn)
-%% Experiment_SOS_sweep: runs a experiment using the LED arena and fly panel
+function [] = Experiment_SOS_sweep_motor(Fn)
+%% Experiment_SOS_sweep_motor: runs a experiment using the LED arena and fly panel
 % Fn is the fly number
+clc
 daqreset
 imaqreset
 % Fn = 0;
 %% Set directories & experimental parameters
-% root = 'C:\BC\Experiment_SOS_amp_v3_head_fixed';
-% root = 'C:\BC\Experiment_SOS_vel_v2_body_fixed';
-root = 'C:\BC\Experiment_SOS_vel_v2_haltere_cut';
-% root = 'C:\BC\Experiment_SOS_vel_v2_body_fixed_replay';
-% val = [1 2 3]'; % amplitude of each SOS function in order in PControl
+root = 'C:\BC\Experiment_SOS_vel_v2_motor';
 % val = [42 70 95]'; % amplitude of each SOS function in order in PControl
 val = [70]'; % amplitude of each SOS function in order in PControl
 name = 'vel'; % name of identifier at end of file name
@@ -25,7 +22,7 @@ FPS = 100;                  % camera frame rate
 nFrame = FPS*n_tracktime;   % # of frames to log
 Fs = 5000;                  % DAQ sampling rate [Hz]
 AI = 0:2;                	% Analog input channels
-AO = 1;                     % Analog output channels
+AO = 0:1;                 	% Analog output channels
 
 %% Set up data acquisition on MCC (session mode)
 % DAQ Setup
@@ -39,20 +36,10 @@ TRIG(TRIG==-1) = 4;
 end_off = round(Fs*off);
 TRIG(end-end_off:end) = 0;
 
-% subplot(1,2,1)
-% plot(t,TRIG)
-% ylim([-0.1 4.1])
-% xlim([-0.01 0.1])
-% 
-% subplot(1,2,2)
-% plot(t,TRIG)
-% ylim([-0.1 4.1])
-% xlim([t(end) - 0.1 , t(end)])
-
 %% Camera Setup
 [vid,src] = Basler_acA640_750um(nFrame);
 
-%% Set variable to control positionn function
+%% Set variable to control position function
 n_func = length(val); % # of functions
 func = (1:n_func)'; % position function indicies
 
@@ -67,6 +54,25 @@ end
 val_all = val(func(func_all)); % true values (amplitude, velocity, etc.)
 n_trial = n_rep * n_func;
 
+%% Set servo motor control signal
+% servo_time = (0:(1/100):(n_tracktime + off))';
+% servo_signal = 40*sin(2*pi*pi*3*servo_time);
+% [motor_signal, daq_time, max_range] = servo_signal_daq(Fs, servo_signal, servo_time, false);
+
+replay_path = fullfile(root, 'replay', 'replay_SOS_HeadFree_vel_v2_position_02-12-2021.mat');
+replay = load(replay_path);
+replay_body = replay.replay.pos.body(:,2);
+replay_time = replay.replay.time;
+
+replay_ts = mean(diff(replay_time));
+replay_fs = 1 / replay_ts;
+replay_time_new = (0:replay_ts:(n_tracktime + off))';
+start_pad = replay_body(1)*ones(round(0.5*replay_fs),1);
+replay_body_new = [start_pad ; replay_body];
+replay_body_new(end:length(replay_time_new)) = replay_body_new(1);
+
+[motor_signal, daq_time, max_range] = servo_signal_daq(Fs, replay_body_new, replay_time_new, true);
+
 %% EXPERIMENT LOOP
 disp('Start Experiment:')
 for ii = 1:n_trial
@@ -76,7 +82,7 @@ for ii = 1:n_trial
     Panel_com('stop')
     
     % Set AO trigger to 0
- 	queueOutputData(s,zeros(5000,1))
+ 	queueOutputData(s,zeros(5000,2))
     [~,~] = s.startForeground;
     
     pause(1) % pause between buffer & experiment
@@ -99,9 +105,10 @@ for ii = 1:n_trial
 	
     % START EXPERIMENT & DATA COLLECTION
     start(vid) % start video buffer
-    queueOutputData(s,TRIG) % set trigger AO signal
-    T = timer('StartDelay',0.5,'TimerFcn',@(src,evt) Panel_com('start'));
-    start(T)
+    AO = [motor_signal, TRIG];
+    queueOutputData(s, AO) % set trigger AO signal
+    %T = timer('StartDelay',0.5,'TimerFcn',@(src,evt) Panel_com('start'));
+    %start(T)
     tic
         [data, t_p ] = s.startForeground; % data collection
         stop(vid) % stop video buffer
