@@ -1,4 +1,4 @@
-function [daq_signal, daq_time] = stepper_signal_daq(daq_fs, signal, time, step_size, showplot)
+function [diff_signal, daq_time] = stepper_signal_daq(daq_fs, signal, time, step_size, showplot)
 %% stepper_signal_daq: generates analog output signal for DAQ, to send to arduino to control stepper motor
 %
 %   INPUT:
@@ -17,6 +17,8 @@ if nargin < 5
     showplot = true;
 end
 
+medV = 2.5;
+
 % Convert to DAQ sampling rate time
 daq_ts = 1/ daq_fs;
 daq_time = (0:daq_ts:time(end))';
@@ -31,10 +33,12 @@ diff_signal = [diff_signal ; diff_signal(end)];
 
 % Make sure every step can be set by the DAQ
 check_range = unique(round(diff_signal,5));
-assert(length(check_range) == 3, 'DAQ sampling rate to low to achieve desired trajectory')
+assert(length(check_range) <= 3, 'DAQ sampling rate to low to achieve desired trajectory')
 
 % Map signal to 0-5V
-diff_signal = 2.5*diff_signal./max(diff_signal) + 2.5;
+diff_signal = medV*diff_signal./max(diff_signal) + medV;
+
+% [pks, locs] = findpeaks(diff_signal, 'MinPeakHeight', medV*1.2)
 
 if showplot
     close all
