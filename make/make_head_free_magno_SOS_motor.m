@@ -12,18 +12,23 @@ warning('off', 'signal:findpeaks:largeMinPeakHeight')
 clss = 'position';
 clss = 'velocity';
 
-rootdir = 'S:\Restricted\BC\Backup\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2_motor';
-exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
-exp_typ = exp_name{1}{end-1}; % type of stimuli (vel or pos)
-exp_ver = exp_name{1}{end}; % version of experiment (v1, v2, ...)
-filename = ['SOS_motor_HeadFree_' exp_typ '_' exp_ver '_' num2str(clss)];
+% rootdir = 'S:\Restricted\BC\Backup\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2_motor';
+% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2_motor_passive';
+% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2_motor_dark';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2_motor_bright';
 
-%% Setup Directories %%
+[~,exp_name,~] = fileparts(rootdir);
+exp_name = textscan(char(exp_name), '%s', 'delimiter', '_');
+exp_name = string(exp_name{1});
+exp_name = char(strjoin(exp_name(2:end), '_'));
+filename = [exp_name '_' num2str(clss)];
+
+%% Setup Directories
 root.base = rootdir;
 root.body = fullfile(root.base,'tracked_body');
 root.reg = fullfile(root.base,'registered');
 root.benifly = fullfile(root.reg ,'tracked_head_wing');
-root.head = fullfile(root.reg ,'tracked_head');
+root.head = fullfile(root.reg ,'tracked_head_tip');
 root.func = fullfile(root.base ,'function');
 root.replay = fullfile(root.base ,'replay');
 
@@ -58,7 +63,6 @@ close all
 clc
 
 Fs = 100;
-Fc = 40;
 func_length = 20;
 tintrp = (0:(1/Fs):func_length)';
 debug = false;
@@ -66,20 +70,21 @@ ALL = cell(N.fly,N{1,3});
 DATA = [D , splitvars(table(num2cell(zeros(N.file,8))))];
 DATA.Properties.VariableNames(4:end) = {'reference','body','head','error',...
     'dwba','lwing','rwing','body_saccade'};
-Body_All = [];
-Body_Freq = [];
+Extra = [];
 for n = 1:N.file
     %disp(kk)
     disp(basename{n})
     % Load DAQ, body, head, & wing data
 	data.daq = load(fullfile(root.base,  [basename{n} '.mat']),'data','t_p'); % load camera trigger & pattern x-position
     data.body = load(fullfile(root.body, [basename{n} '.mat']),'bAngles','t_v'); % load body angles
-    data.head = load(fullfile(root.head, [basename{n} '.mat']),'hAngles'); % load head angles
+    % data.head = load(fullfile(root.head, [basename{n} '.mat']),'hAngles'); % load head angles
+    data.head = load(fullfile(root.head, [basename{n} '.mat']),'head_data'); % load head angles
     % data.benifly = ImportBenifly(fullfile(root.benifly, ...  % load head & wing angles from Benifly
     %                         [basename{n} '.csv']));
     
     % Get start point
-    head = data.head.hAngles;
+    % head = data.head.hAngles;
+    head = data.head.head_data.angle;
     body = data.body.bAngles;
     [first_peak] = find_first_peak(body, data.body.t_v, 20, 20, false);
     
@@ -93,7 +98,7 @@ for n = 1:N.file
     % Get synced frame times and pattern data
     daq_pattern = data.daq.data(:,2);
     [TRIG,PAT]  = sync_pattern_trigger(daq_time, daq_pattern, func_length, ...
-                        trigger, true, first_peak_daq - 900, false, false);
+                        trigger, true, first_peak_daq - 800, false, false);
 
     trig_time = TRIG.time_sync(1:end);
     
@@ -124,7 +129,7 @@ for n = 1:N.file
     % Store signals
     % DATA.reference{n}       = singal_attributes(Reference, tintrp);
     DATA.body{n}            = singal_attributes(Body, tintrp, 20, 0);
-    DATA.head{n}            = singal_attributes(Head, tintrp, 20, 2);
+    DATA.head{n}            = singal_attributes(Head, tintrp, 20, 0);
     % DATA.dwba{n}            = singal_attributes(dWBA, tintrp, 20, 0);
     % DATA.lwing{n}           = singal_attributes(LWing, tintrp, 20);
     % DATA.rwing{n}           = singal_attributes(RWing, tintrp, 20);
@@ -170,8 +175,8 @@ for n = 1:N.file
 	%SYS_all = CatStructFields(2, SYS_body2_head, SYS_wing2_body);
     
     ALL{I.fly(n),I{n,3}}(end+1,1) = SYS_body2_head;
-    Body_All(:,n) = BODY - BODY(1);
-    Body_Freq(:,n) = DATA.body{n}.mag.velocity;
+    Extra.Body_Freq(:,n) = DATA.body{n}.mag.velocity;
+    Extra.Head_Freq(:,n) = DATA.head{n}.mag.velocity;
 end
 
 %% Group Data
@@ -209,22 +214,44 @@ for v = 1:N{1,3}
     GRAND.all_trial(v) = structfun(@(x) system_stats(x,3), GRAND.all(v), 'UniformOutput', false);
 end
 
-%%
+%% Check
 close all
-subplot(2,1,1) ; cla ; hold on
-    plot(tintrp, Body_All, 'r', 'Color', [1 0 0 0.4], 'LineWidth', 0.75)
+subplot(4,1,1) ; cla ; hold on
+    body_all = squeeze(GRAND.all(1).refState(:,1,:));
+    plot(tintrp, body_all - mean(body_all(1,:)), 'r', 'Color', [1 0 0 0.4], 'LineWidth', 0.75)
     plot(Replay{1}.time, Replay{1}.pos.body(:,2) - Replay{1}.pos.body(1,2), 'k', 'LineWidth', 0.5)
-    plot(squeeze(GRAND.all(1).Time(:,1,:)), squeeze(GRAND.all(1).State(:,1,:)), 'b', 'LineWidth', 0.5)
     
-subplot(2,1,2) ; cla ; hold on
-    plot(DATA.body{n}.Fv, Body_Freq, 'r', 'Color', [1 0 0 0.4], 'LineWidth', 0.75)
+subplot(4,1,2) ; cla ; hold on
+    plot(DATA.body{n}.Fv, Extra.Body_Freq, 'r', 'Color', [1 0 0 0.4], 'LineWidth', 0.75)
     plot(Replay{1}.Fv, Replay{1}.freq.vel.body.mag(:,2), 'k', 'LineWidth', 0.5)
-    xlim([0 15])
+    xlim([0.25 15])
     set(gca, 'XScale', 'log')
 
+subplot(4,1,3) ; cla ; hold on
+    plot(squeeze(GRAND.all(1).Time(:,1,:)), squeeze(GRAND.all(1).State(:,1,:)), ...
+        'Color', [0.5 0.5 0.5 0.2], 'LineWidth', 0.25)
+    plot(GRAND.all_trial(1).Time.mean(:,1), GRAND.all_trial(1).State.mean(:,1), ...
+        'Color', [0 0 1 1], 'LineWidth', 0.75)
+    ylim(10*[-1 1])
+    
+subplot(4,1,4) ; cla ; hold on
+
+%     plot(DATA.head{n}.Fv, Extra.Head_Freq, 'Color', [0.5 0.5 0.5 0.2], 'LineWidth', 0.25)
+%     plot(GRAND.all_trial(1).Fv.mean(:,1), GRAND.all_trial(1).Mag.mean(:,1), ...
+%         'Color', [0 0 1 1], 'LineWidth', 0.75)
 
 
-
+    plot(squeeze(GRAND.all(1).Fv(:,1,:)), squeeze(GRAND.all(1).Mag(:,1,:)), ...
+        'Color', [0.5 0.5 0.5 0.2], 'LineWidth', 0.25)
+    plot(GRAND.all_trial(1).Fv.mean(:,1), GRAND.all_trial(1).Mag.mean(:,1), ...
+        'Color', [0 0 1 1], 'LineWidth', 0.75)
+    xlim([0.25 15])
+    set(gca, 'XScale', 'log')
+    
+    
+%%
+frf(tintrp, GRAND.fly_stats(1).mean.refState.mean(:,1), IOFreq, true, GRAND.fly_stats(1).mean.State.mean(:,1))
+    
 %% Figure
 close all ; clc
 fig = figure (1) ; clf
@@ -236,16 +263,16 @@ clear ax h
 ax(1) = subplot(4,1,1); cla ; hold on ; ylim([0 1])
     plot(squeeze(GRAND.all.IOFv(:,1,:)), squeeze(GRAND.all.IOGain(:,pI,:)), ...
         '.-', 'MarkerSize', 10, 'Color', [0.5 0.5 0.5 0.3], 'LineWidth', 0.25)
-    plot(GRAND.fly_stats(1).mean.IOFv.mean(:,1), GRAND.fly_stats(1).mean.IOGain.mean(:,pI), ...
+    plot(GRAND.all_trial(1).IOFv.mean(:,1), GRAND.fly_stats(1).mean.IOGain.mean(:,pI), ...
         '.-k', 'MarkerSize', 17, 'LineWidth', 2)
     
 ax(2) = subplot(4,1,2); cla ; hold on ; %ylim([-200 100])
     yline(0, '--');
     phs_lim = -50;
     phase_trial = rad2deg(squeeze(GRAND.all.IOPhaseDiff(:,pI,:)));
-    %phase_trial(phase_trial > phs_lim) = phase_trial(phase_trial > phs_lim) - 180;
-    phase_mean = rad2deg(GRAND.fly_stats(1).circ_mean.IOPhaseDiff.circ_mean(:,pI));
-    %phase_mean(phase_mean > phs_lim) = phase_mean(phase_mean > phs_lim) - 360;
+    phase_trial(phase_trial > phs_lim) = phase_trial(phase_trial > phs_lim) - 180;
+    phase_mean = rad2deg(GRAND.all_trial(1).IOPhaseDiff.circ_mean(:,pI));
+    phase_mean(phase_mean > phs_lim) = phase_mean(phase_mean > phs_lim) - 360;
     
     plot(squeeze(GRAND.all.IOFv(:,1,:)), phase_trial, ...
         '.-', 'MarkerSize', 10, 'Color', [0.5 0.5 0.5 0.3], 'LineWidth', 0.25)
@@ -256,13 +283,13 @@ ax(3) = subplot(4,1,3); cla ; hold on ; %ylim([0 1.5])
     yline(1, '--');
     plot(squeeze(GRAND.all.IOFv(:,1,:)), squeeze(GRAND.all.IOFRF_error(:,pI,:)), ...
         '.-', 'MarkerSize', 10, 'Color', [0.5 0.5 0.5 0.3], 'LineWidth', 0.25)
-    plot(GRAND.fly_stats(1).mean.IOFv.mean(:,1), GRAND.fly_stats(1).mean.IOFRF_error.mean(:,pI), ...
+    plot(GRAND.all_trial(1).IOFv.mean(:,1), GRAND.fly_stats(1).mean.IOFRF_error.mean(:,pI), ...
         '.-k', 'MarkerSize', 17, 'LineWidth', 2)
     
 ax(4) = subplot(4,1,4); cla ; hold on ; ylim([0 1])
     plot(squeeze(GRAND.all.Fv(:,1,:)), squeeze(GRAND.all.Cohr(:,pI,:)), ...
         '-', 'MarkerSize', 10, 'Color', [0.5 0.5 0.5 0.3], 'LineWidth', 0.25)
-    plot(GRAND.fly_stats(1).mean.Fv.mean(:,1), GRAND.fly_stats(1).mean.Cohr.mean(:,pI), ...
+    plot(GRAND.all_trial(1).Fv.mean(:,1), GRAND.fly_stats(1).mean.Cohr.mean(:,pI), ...
         '-k', 'MarkerSize', 17, 'LineWidth', 2)
     xlabel('Frequency (hz)')
     
@@ -273,6 +300,6 @@ linkaxes(ax, 'x')
 disp('Saving...')
 savedir = 'E:\DATA\Magno_Data\Multibody';
 save(fullfile(savedir, [filename '_' datestr(now,'mm-dd-yyyy') '.mat']), ...
-    'FUNC', 'DATA', 'GRAND', 'FLY', 'Replay', 'D', 'I', 'U', 'N', 'T', '-v7.3')
+    'FUNC', 'DATA', 'GRAND', 'FLY', 'Replay', 'Extra', 'D', 'I', 'U', 'N', 'T', '-v7.3')
 disp('SAVING DONE')
 end

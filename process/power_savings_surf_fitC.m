@@ -19,7 +19,7 @@ P_head = minreal(MODEL.HeadFree.P.head);
 
 % fv_all = (0:0.5:20)';
 fv_all = [0.0 , 1:1:20]';
-fv_all = (0.1:0.05:50)';
+fv_all = (0.1:0.05:20)';
 [sys_data.fly, data.fly, ~] = plant_power(P_body, P_head, true, fv_all); % simulate power savings for head in place of body
 sys_data.fly.tau_ratio = (1 / P_body.Denominator{1}(2)) / (1 / P_head.Denominator{1}(2));
 sys_data.fly.size_ratio = sys_data.fly.tau_ratio^(1/y);
@@ -179,10 +179,10 @@ leg = legend([h.animal], [fnames ; {'fly'}], 'Interpreter', 'none');
 leg.Location = 'north';
 leg.Position = [0.2001    0.5552    0.1823    0.2240];
 
-% delete(leg)
-% delete(h.animal)
-% delete(h.surf)
-% 
+delete(leg)
+delete(h.animal)
+delete(h.surf)
+
 % set(ax, 'XColor', 'none', 'YColor', 'none', 'ZColor', 'none', 'XGrid', 'off', 'YGrid', 'off', 'ZGrid', 'off')
 % delete(leg)
 

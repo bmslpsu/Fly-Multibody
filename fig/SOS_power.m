@@ -5,7 +5,7 @@ root = 'E:\DATA\Magno_Data\Multibody\Processed';
 [FILE,PATH] = uigetfile({'*.mat'}, 'Select data file', root, 'MultiSelect','off');
 load(fullfile(PATH,FILE),'ALL','MODEL');
 
-load('E:\DATA\Magno_Data\Multibody\sym\Symbolic_expressions.mat')
+% load('E:\DATA\Magno_Data\Multibody\sym\Symbolic_expressions.mat')
 
 %% Set initialization parameters
 clearvars -except PATH FILE ALL MODEL equations

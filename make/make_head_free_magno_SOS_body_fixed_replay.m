@@ -195,7 +195,7 @@ fig = figure (1) ; clf
 set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 3 8])
 movegui(fig, 'center')
 
-pI = 3;
+pI = 2;
 clear ax h
 ax(1) = subplot(4,1,1); cla ; hold on ; ylim([0 1])
     plot(squeeze(GRAND.all.IOFv(:,1,:)), squeeze(GRAND.all.IOGain(:,pI,:)), ...

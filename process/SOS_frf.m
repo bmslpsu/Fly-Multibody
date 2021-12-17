@@ -38,12 +38,12 @@ clearvars -except FILE DATA ALL GRAND FLY FUNC D I U N root
 % phase_lim = [nan nan nan];
 % fI = (1:9)';
 
-% Body-free haltere cut
-pI = [1 2 3 4 5 6];
-T = ["ref2body", "ref2head", "ref2gaze", "body2head", "err2body", "err2head"];
-shift_I = {7:10, 9, 9, 9, 7:9, 9, 9  9};
-phase_lim = [0 nan nan nan 0 nan 20 nan];
-fI = (1:9)';
+% % Body-free haltere cut
+% pI = [1 2 3 4 5 6];
+% T = ["ref2body", "ref2head", "ref2gaze", "body2head", "err2body", "err2head"];
+% shift_I = {7:10, 9, 9, 9, 7:9, 9, 9  9};
+% phase_lim = [0 nan nan nan 0 nan 20 nan];
+% fI = (1:9)';
 
 % pI = [1 2 3];
 % T = ["ref2body", "ref2head", "ref2gaze"];
@@ -341,7 +341,7 @@ dataset_name = [];
 for n = 1:6
     dataset_name = [dataset_name '_' char(filedata{1}(n))];
 end
-fname = ['FRF' dataset_name];
+fname = ['FRF_mod' dataset_name];
 savedir = fullfile(root,'processed');
 mkdir(savedir)
 save(fullfile(savedir, [fname '.mat']), 'FRF_data', 'FUNC', 'U', 'N');
