@@ -106,7 +106,7 @@ PAT.pos_exp             = PAT.pos_interp(TRIG.start_idx:TRIG.end_idx); % frames 
 if reg
     TRIG.time_intrp_exp = (0:(1/TRIG.Fs):PAT.total_time)'; % interpolated time
     PAT.pos_intrp_exp = interp1(PAT.time_sync, PAT.pos, ... % interpolate pattern to match regularized time
-                               	TRIG.time_intrp_exp, 'nearest');       
+                               	TRIG.time_intrp_exp, 'nearest');
 end
 
 % Debug sync
