@@ -221,8 +221,8 @@ while (model.fitpercent.combined < 0.05) && (k <= 2)
     phase_freq_all = repmat(model.phase_freq, [n_rep 1]);
     gain_nmse = goodnessOfFit(model.data.gain(:), gain_freq_all, 'NMSE');
     phase_nmse = goodnessOfFit(model.data.phase(:), phase_freq_all, 'NMSE');
-    model.fitpercent.gain = 1 - gain_nmse;
-    model.fitpercent.phase = 1 - phase_nmse;
+    model.fitpercent.gain = gain_nmse;
+    model.fitpercent.phase = phase_nmse;
     model.fitpercent.combined = mean([model.fitpercent.gain model.fitpercent.phase]);
 
     k = k + 1;

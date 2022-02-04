@@ -30,8 +30,9 @@ else
 end
 
 % Find first peak location
-[~, locs] = findpeaks(signal_vel, 'MinPeakHeight', thresh);
-first_peak = locs(1);
+% [~, locs] = findpeaks(signal_vel, 'MinPeakHeight', thresh);
+% first_peak = locs(1);
+first_peak = find(signal_vel > thresh, 1, 'first');
 
 % Find where efirst peak starts
 start_thresh = 0.10*signal_vel(first_peak);

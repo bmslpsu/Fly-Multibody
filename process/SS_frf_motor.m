@@ -1,5 +1,5 @@
-function [] = SS_frf()
-%% SS_frf:
+function [] = SS_frf_motor()
+%% SS_frf_motor:
 root = 'E:\DATA\Magno_Data\Multibody';
 [FILE,PATH] = uigetfile({'*.mat', 'DAQ-files'}, ...
     'Select head angle trials', root, 'MultiSelect','off');
@@ -12,31 +12,8 @@ clearvars -except FILE DATA ALL GRAND FLY FUNC D I U N root
 
 pI = [1];
 T = ["body2head"];
-shift_I = {5:8};
-phase_lim = {[nan nan nan nan]};
-
-% pI = [1 2 3 4 5 6 7 8];
-% T = ["ref2body", "ref2head", "ref2gaze", "body2head", "ref2wing", "wing2body", "err2body", "err2head"];
-% shift_I = {5:8, 7:8, 5:8, 5:8, 1:8, 1:8, 5:8, 7:8};
-% phase_lim = {[0 0 -50 -220], [0 0 0 0], [0 0 0 0], [nan nan nan nan],  ...
-%     [20 0 0 0 0 0 0 0], [0 0 0 0 0 0 0 0], [0 0 0 0], [nan nan]};
-
-% pI = [1 2 3 4];
-% T = ["ref2head", "ref2wing", "head2wing", "err2head"];
-% shift_I = {5:8, 5:8, 5:8, 5:8};
-% phase_lim = {[0 0 0 -120], [0 0 0 0], [0 0 0 0], [0 0 0 0]};
-
-% pI = [1 2 3 4];
-% T = ["ref2body", "ref2head", "ref2gaze", "head2body"];
-% shift_I = {5:8, 7:8, 5:8, 5:8};
-% phase_lim = {[0 0 0 0], nan*[0 0 0 0], nan*[0 0 0 0], [0 0 0 0]};
-
-% pI = [1 2 3 4 5 6 7 8];
-% T = ["ref2body", "ref2head", "ref2gaze", "body2head", "ref2wing", "wing2body", "error2body", "error2head"];
-% shift_I = {5:8, 7:8, 5:8, 5:8, 1:8, 1:8, 5:8, 7:8};
-% phase_lim = {[0 0 -50 -300], [0 0 0 0], [0 0 0 0], [nan nan nan 0],  ...
-%     [20 0 0 0 0 0 0 0], [0 0 0 0 0 0 0 0], [0 0 0 0], [nan nan]};
-
+shift_I = {1:3};
+phase_lim = {[0 0 0]};
 
 n_plot = length(pI);
 for n = 1:n_plot
@@ -59,32 +36,23 @@ for n = 1:n_plot
 
         phase_all = rad2deg(squeeze(GRAND.fly_all(v).circ_mean.IOPhaseDiff(:,pI(n),:)));
         for r = 1:2
-            if any(strcmp(T(n),["wing2body","body2head"]))
-                shift_all = any(v == shift_I{n}, 2) & (phase_all < phase_lim{n}(v == shift_I{n}));
-                phase_all(shift_all) = phase_all(shift_all) + 360;
-            else
-                shift_all = any(v == shift_I{n}, 2) & (phase_all > phase_lim{n}(v == shift_I{n}));
-                phase_all(shift_all) = phase_all(shift_all) - 360; 
-            end
+            shift_all = any(v == shift_I{n}, 2) & (phase_all > phase_lim{n}(v == shift_I{n}));
+            phase_all(shift_all) = phase_all(shift_all) - 360; 
         end
         
-        phase_med = rad2deg(GRAND.fly_stats(v).circ_mean.IOPhaseDiff.circ_mean(:,pI(n)));
-        phase_std = rad2deg(GRAND.fly_stats(v).circ_mean.IOPhaseDiff.circ_std(:,pI(n)));
+        %phase_med = rad2deg(GRAND.fly_stats(v).circ_mean.IOPhaseDiff.circ_mean(:,pI(n)));
+        %phase_std = rad2deg(GRAND.fly_stats(v).circ_mean.IOPhaseDiff.circ_std(:,pI(n)));
         
         phase_med = mean(phase_all);
         phase_std = std(phase_all);
         for r = 1:2
-            if any(strcmp(T(n),["wing2body","body2head"]))
-                shift_all = any(v == shift_I{n}, 2) & (phase_med < phase_lim{n}(v == shift_I{n}));
-                phase_med(shift_all) = phase_med(shift_all) + 360;
-            else
-                shift_all = any(v == shift_I{n}, 2) & (phase_med > phase_lim{n}(v == shift_I{n}));
-                phase_med(shift_all) = phase_med(shift_all) - 360;
-            end
+            shift_all = any(v == shift_I{n}, 2) & (phase_med > phase_lim{n}(v == shift_I{n}));
+            phase_med(shift_all) = phase_med(shift_all) - 360; 
         end
+        
 
-        time_diff_all = 1000 * (phase_all ./360) .* (1 ./FRF_data.IOFv(v));
-        time_diff_med = 1000 * (phase_med ./360) .* (1 ./FRF_data.IOFv(v));
+        time_diff_all = 1000 * ((phase_all+180) ./360) .* (1 ./FRF_data.IOFv(v));
+        time_diff_med = 1000 * ((phase_med+180) ./360) .* (1 ./FRF_data.IOFv(v));
         time_diff_std = 1000 * (phase_std ./360) .* (1 ./FRF_data.IOFv(v));
 
         cohr_all = squeeze(GRAND.fly_all(v).mean.Cohr(:,pI(n),:));
@@ -151,7 +119,7 @@ ax = gobjects(6,n_plot);
 for n = 1:n_plot
     subI = n + (0:5)*n_plot;
     ax(1,n) = subplot(6,n_plot,subI(1)); hold on ; title(T(n), 'interpreter', 'none')
-        plot(FRF_data.IOFv, FRF_data.ref_mag, '*-', 'Color', 'k', 'LineWidth', 0.5)
+        %plot(FRF_data.IOFv, FRF_data.ref_mag, '*-', 'Color', 'k', 'LineWidth', 0.5)
         plot(FRF_data.IOFv, FRF_data.(T(n)).fly.mag, 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
         [h.patch(1,n),h.line(1,n)] = PlotPatch(FRF_data.(T(n)).grand_mean.mag,...
                   FRF_data.(T(n)).grand_std.mag, FRF_data.IOFv, 1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
@@ -187,7 +155,7 @@ for n = 1:n_plot
                   %FRF_data.(T(n)).grand_std.coherence(2:end), FRF_data.Fv(2:end), 1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
 end
 
-set(h.line(1:6,:), 'Marker', '.','MarkerFaceColor', 'none', 'MarkerSize', 15')
+set(h.line(1:6,:), 'Marker', '.','MarkerFaceColor', 'none', 'MarkerSize', 10')
 set(ax, 'LineWidth', 1.2, 'FontSize', 10, 'XLim', [0.5 25],...
     'XGrid', 'on', 'YGrid', 'on', 'Box', 'on')
 set(ax, 'XTick', [0.1, 1 10])
@@ -223,7 +191,7 @@ set([YLabelHC], 'String', 'Coherence')
 % set(ax(1,1:end),'YLim',[0 3.2])
 % set(ax(2,1:end),'YLim',[0 1])
 % set(ax(3,1:end),'YLim',[-500 200])
-set(ax(3,1:end),'YLim',[-600 200])
+set(ax(3,1:end),'YLim',[-200 50])
 % set(ax(4,1:end),'YLim',400*[-1 1])
 set(ax(5,1:end),'YLim',[0 1.5])
 set(ax(6,1:end),'YLim',[0 1])
@@ -233,112 +201,12 @@ set(ax,'XScale','log')
 % set(ax,'XScale','linear')
 align_Ylabels(fig)
 
-%% FRF: compare
-clc
-
-trf_names = ["ref2body", "ref2gaze", "ref2head",];
-n_plot = length(trf_names);
-% cc = hsv(n_plot);
-cc = [0.9 0 0 ; 0.5 0.3 1 ; 0 0.4 1 ; 0 0.8 0.2];
-
-
-fig = figure (2) ; clf
-set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 2*1 5*1.5])
-movegui(fig, 'center')
-clear ax h
-ax = gobjects(5,1);
-ax(1,1) = subplot(5,1,1); hold on
-    for n = 1:n_plot
-        [h.patch(1,n),h.line(1,n)] = PlotPatch(FRF_data.(trf_names(n)).grand_mean.mag,...
-                  FRF_data.(trf_names(n)).grand_std.mag, FRF_data.IOFv, ...
-                  1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
-    end
-
-ax(2,1) = subplot(5,1,2); hold on
-    for n = 1:n_plot
-        [h.patch(2,n),h.line(2,n)] = PlotPatch(FRF_data.(trf_names(n)).grand_mean.gain,...
-                  FRF_data.(trf_names(n)).grand_std.gain, FRF_data.IOFv, ...
-                  1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
-    end
-    
-ax(3,1) = subplot(5,1,3); hold on
-    yline(0, '--k', 'LineWidth', 1)
-    for n = 1:n_plot
-        [h.patch(3,n),h.line(3,n)] = PlotPatch(FRF_data.(trf_names(n)).grand_mean.phase,...
-                  FRF_data.(trf_names(n)).grand_std.phase, FRF_data.IOFv, ...
-                  1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
-    end
-    
-ax(4,1) = subplot(5,1,4); hold on
-%     ylabel('Error')
-    yline(1, '--k', 'LineWidth', 1)
-    for n = 1:n_plot
-        [h.patch(4,n),h.line(4,n)] = PlotPatch(FRF_data.(trf_names(n)).grand_mean.error,...
-                  FRF_data.(trf_names(n)).grand_std.error, FRF_data.IOFv, ...
-                  1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
-    end
-
-ax(5,1) = subplot(5,1,5); hold on
-    for n = 1:n_plot
-        [h.patch(5,n),h.line(5,n)] = PlotPatch(FRF_data.(trf_names(n)).grand_mean.IO_coherence,...
-                  FRF_data.(trf_names(n)).grand_std.IO_coherence, FRF_data.IOFv, ...
-                  1, 1, cc(n,:), 0.7*cc(n,:), 0.2, 1);
-    end
-    
-leg_label = trf_names;
-leg = legend(squeeze(h.line(1,:)), leg_label, ...
-    'Box', 'off', 'interpreter', 'none', 'Orientation', 'vertical');
-leg.Position  = [0.35 0.93 0.51 0.055];
-
-linkaxes(ax, 'x')
-for a = 1:size(ax,1)
-    linkaxes(ax(a,:), 'y')
-end
-
-delete(h.patch)
-
-set(h.line, 'Marker', '.','MarkerFaceColor', 'none', 'MarkerSize', 11, 'LineWidth', 1.5)
-set(ax, 'Color', 'none', 'LineWidth', 1.2, 'FontSize', 10, 'XLim', [0.5 20],...
-    'XGrid', 'off', 'YGrid', 'off', 'Box', 'off')
-set(ax, 'XTick', [0.1, 1 10])
-set(ax,'XScale','log')
-
-XLabelHC = get(ax(end,:), 'XLabel');
-set([XLabelHC], 'String', 'Frequency (Hz)')
-
-YLabelHC = get(ax(1,1), 'YLabel');
-set([YLabelHC], 'String', 'Magnitude (°/s)')
-YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (°/°)')
-YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (°)')
-YLabelHC = get(ax(4,1), 'YLabel');
-set([YLabelHC], 'String', 'Error')
-YLabelHC = get(ax(5,1), 'YLabel');
-set([YLabelHC], 'String', 'Coherence')
-
-% set(ax(1,1:end),'YLim',[0 65])
-set(ax(2,1:end),'YLim',[0 1])
-set(ax(3,1:end),'YLim',[-200 200])
-set(ax(4,1:end),'YLim',[0 1.5])
-set(ax(5,1:end),'YLim',[0 1])
-set(ax(1:end-1,:), 'XTickLabel', [])
-set(ax(:,2:end), 'YTickLabels', [])
-
-set(ax(1:end-1,:), 'XColor', 'none')
-
-% align_Ylabels(fig)
-
 %% Complex
 clc
 
-T = ["ref2body", "ref2head","ref2gaze"];
-pI = [1 2 3];
-yL = [1 1 1];
-
-T = ["ref2head", "ref2wing"];
-pI = [1 2];
-yL = [1 1];
+T = ["body2head"];
+pI = [1];
+yL = [1];
 
 n_plot = length(pI);
 
@@ -397,47 +265,6 @@ end
 
 %set(h.line(1:2,:),'Marker','.','MarkerFaceColor','none','MarkerSize', 20')
 set(ax, 'Color', 'none', 'LineWidth', 1.5)
-
-%% Time constant
-time_const = [];
-r2 = [];
-time_const.body_head_free = 1000*FRF_data.(T(1)).fly.time_constant';
-time_const.gaze_head_free = 1000*FRF_data.(T(3)).fly.time_constant';
-
-r2.body_head_free = FRF_data.(T(1)).fly.time_constant_r2';
-r2.gaze_head_free = FRF_data.(T(3)).fly.time_constant_r2';
-
-time_const_all = [time_const.body_head_free ; time_const.gaze_head_free ];
-r2_all = [r2.body_head_free ; r2.gaze_head_free ];
-G = [1*ones(size(time_const.body_head_free)) ; 2*ones(size(time_const.gaze_head_free))];
-
-fig = figure (2) ; clf
-set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 4 2*2])
-movegui(fig, 'center')
-clear ax h
-ax = gobjects(2,1);
-ax(1) = subplot(2,1,1); hold on
-    b = boxchart(time_const_all,'GroupByColor', G, 'MarkerStyle', '.');
-
-ax(2) = subplot(2,1,2); hold on
-    b = boxchart(r2_all,'GroupByColor', G, 'MarkerStyle', '.');
-fnames = fieldnames(time_const);
-leg = legend(fnames, 'Box', 'off', 'interpreter', 'none', 'Orientation', 'horizontal');
-leg.Position = [0.23 0.95 0.58 0.05];
-
-linkaxes(ax, 'x')
-for a = 1:size(ax,1)
-    linkaxes(ax(a,:), 'y')
-end
-set(ax(1,:), 'YLim', [-80 0])
-set(ax(2,:), 'YLim', [0 1])
-
-set(ax, 'Color', 'none', 'LineWidth', 1.2, 'FontSize', 10, 'Box', 'off', 'XColor', 'none')
-
-YLabelHC = get(ax(1,1), 'YLabel');
-set([YLabelHC], 'String', 'Time constant (ms)')
-YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'R^{2}')
 
 %% Save FRF data
 filedata = textscan(FILE, '%s', 'delimiter', '_');

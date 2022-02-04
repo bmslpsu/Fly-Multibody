@@ -77,6 +77,20 @@ fly_size_ratio = MODEL.morph.body.L / MODEL.morph.head.L;
 dS = fly_size_ratio - sys_data.fly.size_ratio;
 size_ratio = (tau_ratio).^(1/y);
 
+%% Critical size ratio
+f_crit = 10;
+[~,I] = min(abs(f_crit-fv));
+
+power_crit = power_ratio(I,:);
+I = find(power_crit > 0.99*max(power_crit), 1, 'first');
+size_ratio_crit = size_ratio(I);
+
+hold on ; cla
+plot(size_ratio, power_crit)
+plot(size_ratio_crit, power_crit(I), 'o')
+xline(size_ratio_crit, 'r--');
+title(size_ratio_crit)
+
 %% Find the time constant ratio correspondng to the morphology of a few animals
 animal = [];
 % animal.size_ratio.robot = (2.8) / (248e-3); % Iyer / Iyer
@@ -179,9 +193,9 @@ leg = legend([h.animal], [fnames ; {'fly'}], 'Interpreter', 'none');
 leg.Location = 'north';
 leg.Position = [0.2001    0.5552    0.1823    0.2240];
 
-delete(leg)
-delete(h.animal)
-delete(h.surf)
+% delete(leg)
+% delete(h.animal)
+% delete(h.surf)
 
 % set(ax, 'XColor', 'none', 'YColor', 'none', 'ZColor', 'none', 'XGrid', 'off', 'YGrid', 'off', 'ZGrid', 'off')
 % delete(leg)
