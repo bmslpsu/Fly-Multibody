@@ -76,6 +76,7 @@ for v = 1:N.freq
 leg = legend(h.line(end,:), T, 'Box', 'off', 'Location', 'east', 'Orientation', 'horizontal');
 leg.Position = [0.2 0.96 0.5 0.02];
 linkaxes(ax(:,2), 'y')
+% linkaxes(ax, 'x')
 set(ax(:,2), 'YLim', 1.3*[-1 1])
 set(ax(:,2), 'YTick', 1*[0 1])
 set(ax, 'Color', 'none', 'LineWidth', 0.75, 'FontSize', 8, 'XGrid', 'off', 'YGrid', 'off', 'Box', 'off')

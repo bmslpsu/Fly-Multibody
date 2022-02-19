@@ -123,11 +123,11 @@ XLabelHC = get(ax(end,:), 'XLabel');
 set([XLabelHC], 'String', 'Frequency (Hz)')
 
 YLabelHC = get(ax(1,1), 'YLabel');
-set([YLabelHC], 'String', 'Magnitude (°/s)')
+set([YLabelHC], 'String', 'Magnitude')
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (°/°)')
+set([YLabelHC], 'String', 'Gain (°)')
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (°)')
+set([YLabelHC], 'String', 'Phase (°)')
 YLabelHC = get(ax(4,1), 'YLabel');
 set([YLabelHC], 'String', 'Error')
 YLabelHC = get(ax(5,1), 'YLabel');
@@ -150,8 +150,11 @@ set(ax,'XScale','log')
 
 uistack(h.line(5,1,end), 'top')
 
-% delete(h.patch(:,:,4:7))
-% delete(h.line(:,:,4:7))
+% delete(h.patch(:,:,3:8))
+% delete(h.line(:,:,3:8))
+
+delete(h.patch(:,:,[2:3, 5:7, 10]))
+delete(h.line(:,:,[2:3, 5:7, 10]))
 
 %% Compare head free, head-fixed, body-fixed speeds
 clc

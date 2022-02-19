@@ -241,6 +241,4 @@ set(h.marker, 'Marker', '.', 'MarkerSize', 15, 'MarkerFaceColor', 'none', 'Marke
 set(h.gain, 'LineWidth', 1)
 set(ax, 'Color', 'none', 'LineWidth', 1, 'XScale', 'log', 'XLim', [0.08 50], 'YLim', [-0.05 1.05])
 
-
-
 end

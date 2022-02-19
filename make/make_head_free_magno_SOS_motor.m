@@ -10,12 +10,9 @@ function [] = make_head_free_magno_SOS_motor(rootdir)
 warning('off', 'signal:findpeaks:largeMinPeakHeight')
 
 clss = 'position';
-clss = 'velocity';
+% clss = 'velocity';
 
-% rootdir = 'S:\Restricted\BC\Backup\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2_motor';
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2_motor_passive';
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2_motor_dark';
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2_motor_bright';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2_motor_drum';
 
 [~,exp_name,~] = fileparts(rootdir);
 exp_name = textscan(char(exp_name), '%s', 'delimiter', '_');
@@ -25,8 +22,8 @@ filename = [exp_name '_' num2str(clss)];
 
 %% Setup Directories
 root.base = rootdir;
-root.body = fullfile(root.base,'tracked_body');
 root.reg = fullfile(root.base,'registered');
+root.body = fullfile(root.reg,'reg_angles');
 root.benifly = fullfile(root.reg ,'tracked_head_wing');
 root.head = fullfile(root.reg ,'tracked_head_tip');
 root.func = fullfile(root.base ,'function');
@@ -75,8 +72,8 @@ for n = 1:N.file
     %disp(kk)
     disp(basename{n})
     % Load DAQ, body, head, & wing data
-	data.daq = load(fullfile(root.base,  [basename{n} '.mat']),'data','t_p'); % load camera trigger & pattern x-position
-    data.body = load(fullfile(root.body, [basename{n} '.mat']),'bAngles','t_v'); % load body angles
+	data.daq = load(fullfile(root.base,  [basename{n} '.mat']),'data', 't_p', 't_v'); % load camera trigger & pattern x-position
+    data.body = load(fullfile(root.body, [basename{n} '.mat']),'angles'); % load body angles
     % data.head = load(fullfile(root.head, [basename{n} '.mat']),'hAngles'); % load head angles
     data.head = load(fullfile(root.head, [basename{n} '.mat']),'head_data'); % load head angles
     % data.benifly = ImportBenifly(fullfile(root.benifly, ...  % load head & wing angles from Benifly
@@ -85,8 +82,8 @@ for n = 1:N.file
     % Get start point
     % head = data.head.hAngles;
     head = data.head.head_data.angle;
-    body = data.body.bAngles;
-    [first_peak] = find_first_peak(body, data.body.t_v, 20, 20, false);
+    body = data.body.angles;
+    [first_peak] = find_first_peak(body, data.daq.t_v, 20, 20, false);
     
     % Put in DAQ reference frame
     daq_time = data.daq.t_p;
@@ -215,6 +212,10 @@ for v = 1:N{1,3}
 end
 
 %% Check
+
+SYS_body2_head = frf(tintrp, -BODY, IOFreq, true, median(squeeze(GRAND.all(1).State(:,1,:)),2));
+
+%%
 close all
 subplot(4,1,1) ; cla ; hold on
     body_all = squeeze(GRAND.all(1).refState(:,1,:));

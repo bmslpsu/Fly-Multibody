@@ -22,14 +22,18 @@ for v = 1:N.freq
         %plot(FUNC{v}.All.time, FUNC{v}.All.X, 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 1)
         %plot(Replay{1}.time, Replay{1}.pos.body_sine(:,v), 'k', 'LineWidth', 1)
         %plot(time, GRAND.all_trial(v).refState.median(:,1), 'm', 'LineWidth', 1)
-        [h.patch(1,v),h.line(1,v)] = PlotPatch(GRAND.all_trial(v).refState.median(:,1),...
-                  GRAND.all_trial(v).State.std(:,1), time, 0, 1, cc(1,:), 0.7*cc(1,:), 0.2, 1);     
-        [h.patch(2,v),h.line(2,v)] = PlotPatch(1*GRAND.fly_stats(v).mean.State.mean(:,1),...
+        %scale = max(GRAND.fly_stats(v).mean.State.mean(:,1)) / max(GRAND.all_trial(v).refState.mean(:,1));
+        scale = 1;
+        plot(time, squeeze(GRAND.all(v).State(:,1,:)), 'Color', [0.5 0.5 0.5 0.5], 'LineWidth', 1)
+%         [h.patch(1,v),h.line(1,v)] = PlotPatch(scale*GRAND.all_trial(v).refState.mean(:,1),...
+%                   GRAND.all_trial(v).State.std(:,1), time, 0, 1, cc(1,:), 0.7*cc(1,:), 0.2, 1);     
+        [h.patch(2,v),h.line(2,v)] = PlotPatch(GRAND.fly_stats(v).mean.State.mean(:,1),...
                   GRAND.fly_stats(v).mean.State.std(:,1), time, 1, 1, cc(2,:), 0.7*cc(2,:), 0.2, 1);
 %         set(ax(v), 'YLim', max(abs(ax(v).YLim))*[-1 1])
 end
 set(ax, 'Color', 'none', 'LineWidth', 1.5, 'FontSize', 10, 'XLim', [-0.2 10], 'XTick', 0:2:20)
 set(ax(1:end-1,:), 'XColor', 'none')
+set(ax, 'YLim', 10*[-1 1])
 
 % set(ax, 'YLim', 10*[-1 1])
 

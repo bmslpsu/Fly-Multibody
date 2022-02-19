@@ -8,8 +8,8 @@ function [] = make_head_free_magno_SOS_body()
 %       -
 %
 
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_add_mass';
-set_mass = 200;
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_52_add_mass';
+set_mass = 3300;
 root_set = fullfile(rootdir, num2str(set_mass));
 
 % rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_52';
@@ -18,7 +18,7 @@ root_set = fullfile(rootdir, num2str(set_mass));
 
 warning('off', 'signal:findpeaks:largeMinPeakHeight')
 
-% clss = 'position';
+clss = 'position';
 clss = 'velocity';
 
 filename = ['SOS_' num2str(set_mass) '_' num2str(clss)];
@@ -76,13 +76,13 @@ for n = 1:N.file
     %disp(kk)
     disp(basename{n})
     % Load DAQ, body, head, & wing data
-	data.daq = load(fullfile(root.base,  [basename{n} '.mat']),'data','t_p'); % load camera trigger & pattern x-position
-    data.body = load(fullfile(root.body, [basename{n} '.mat']),'bAngles'); % load body angles
+	%data.daq = load(fullfile(root.base,  [basename{n} '.mat']),'data','t_p'); % load camera trigger & pattern x-position
+    data.body = load(fullfile(root.body, [basename{n} '.mat']),'bAngles', 'data', 't_p'); % load body angles
     
     % Get synced frame times and pattern data
-    daq_time    = data.daq.t_p;
-    daq_pattern = data.daq.data(:,2);
-    trigger     = data.daq.data(:,1);
+    daq_time    = data.body.t_p;
+    daq_pattern = data.body.data(:,2);
+    trigger     = data.body.data(:,1);
     [TRIG,PAT]  = sync_pattern_trigger(daq_time, daq_pattern, func_length, ...
                         trigger, true, [], false, false);
     trig_time   = TRIG.time_sync;

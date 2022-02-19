@@ -1,7 +1,7 @@
 function [] = SS_frf_motor()
 %% SS_frf_motor:
 root = 'E:\DATA\Magno_Data\Multibody';
-[FILE,PATH] = uigetfile({'*.mat', 'DAQ-files'}, ...
+[FILE,PATH] = uigetfile({'*.mat'}, ...
     'Select head angle trials', root, 'MultiSelect','off');
 
 load(fullfile(PATH,FILE),'FUNC','GRAND','FLY','D','I','U','N')
@@ -12,8 +12,11 @@ clearvars -except FILE DATA ALL GRAND FLY FUNC D I U N root
 
 pI = [1];
 T = ["body2head"];
-shift_I = {1:3};
-phase_lim = {[0 0 0]};
+shift_I = {1:7};
+phase_lim = {[0 0 0 0 0 0 0]};
+
+shift_I = {1:7};
+phase_lim = {[50 50 50 50 50 50 50]};
 
 n_plot = length(pI);
 for n = 1:n_plot
@@ -178,11 +181,11 @@ end
 YLabelHC = get(ax(1,1), 'YLabel');
 set([YLabelHC], 'String', 'Magnitude (°)')
 YLabelHC = get(ax(2,1), 'YLabel');
-set([YLabelHC], 'String', 'Gain (°/°)')
+set([YLabelHC], 'String', 'Gain')
 YLabelHC = get(ax(3,1), 'YLabel');
-set([YLabelHC], 'String', 'Phase difference (°)')
+set([YLabelHC], 'String', 'Phase (°)')
 YLabelHC = get(ax(4,1), 'YLabel');
-set([YLabelHC], 'String', 'Time difference (ms)')
+set([YLabelHC], 'String', 'Time (ms)')
 YLabelHC = get(ax(5,1), 'YLabel');
 set([YLabelHC], 'String', 'Error')
 YLabelHC = get(ax(6,1), 'YLabel');

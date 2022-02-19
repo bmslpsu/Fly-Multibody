@@ -1,6 +1,6 @@
 function [] = SOS_frf_add_mass()
 %% SOS_frf_add_mass:
-root = 'E:\EXPERIMENTS\MAGNO\Experiment_add_mass\data';
+root = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_52_add_mass\data';
 [FILE,PATH] = uigetfile({'*.mat'}, 'Select file', root, 'MultiSelect','off');
 load(fullfile(PATH,FILE),'DATA','FUNC','GRAND','U','N')
 
@@ -11,17 +11,29 @@ clearvars -except FILE DATA ALL GRAND FLY FUNC D I U N root
 pI = [1 2];
 T = ["ref2body", "err2body"];
 
+% 3300
+shift_I = {6:9, 6:9};
+shift_I2 = {9, 9};
+phase_lim = [-150 -150];
+phase_lim2 = [-300 -300];
+
+% % 1600
+% shift_I = {8:9, 8:9};
+% shift_I2 = {6:7, 6:77};
+% phase_lim = [-200 -200];
+% phase_lim2 = [-50 -50];
+
 % % 900
 % shift_I = {8:9, 8:9};
 % shift_I2 = {7, 7};
 % phase_lim = [-200 -200];
 % phase_lim2 = [-50 -50];
 
-% 100
-shift_I = {8:9, 8:9};
-shift_I2 = {9, 9};
-phase_lim = [-50 -50];
-phase_lim2 = [-50 0];
+% % 100
+% shift_I = {8:9, 8:9};
+% shift_I2 = {9, 9};
+% phase_lim = [-50 -50];
+% phase_lim2 = [-50 0];
 
 fI = (1:9)';
 
@@ -201,7 +213,7 @@ set([YLabelHC], 'String', 'Coherence')
 
 % set(ax(1,1:end),'YLim',[0 3.2])
 % set(ax(2,1:end),'YLim',[0 1])
-set(ax(3,1:end),'YLim',[-300 200])
+set(ax(3,1:end),'YLim',[-600 100])
 % set(ax(4,1:end),'YLim',300*[-1 1])
 set(ax(4,1:end),'YLim',[0 1.5])
 set(ax(5,1:end),'YLim',[0 1])

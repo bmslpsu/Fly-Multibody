@@ -12,8 +12,10 @@ warning('off', 'signal:findpeaks:largeMinPeakHeight')
 
 clss = 'position';
 % clss = 'velocity';
+% 
+% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250_motor_drum';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250_motor_passive';
 
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250_motor_drum';
 
 [~,exp_name,~] = fileparts(rootdir);
 exp_name = textscan(char(exp_name), '%s', 'delimiter', '_');
@@ -242,7 +244,7 @@ for v = 1:N{1,3}
 end
 
 %% Check
-m = 3;
+m = 1;
 clf
 subplot(4,1,1) ; cla ; hold on
     body_all = squeeze(GRAND.all(m).refState(:,1,:));
@@ -260,15 +262,12 @@ subplot(4,1,3) ; cla ; hold on
         'Color', [0.5 0.5 0.5 0.2], 'LineWidth', 0.25)
     plot(GRAND.all_trial(m).Time.mean(:,1), GRAND.all_trial(m).State.mean(:,1), ...
         'Color', [0 0 1 1], 'LineWidth', 0.75)
-    ylim(10*[-1 1])
+    ylim(5*[-1 1])
     
 subplot(4,1,4) ; cla ; hold on
-
 %     plot(DATA.head{n}.Fv, Extra.Head_Freq, 'Color', [0.5 0.5 0.5 0.2], 'LineWidth', 0.25)
 %     plot(GRAND.all_trial(1).Fv.mean(:,1), GRAND.all_trial(1).Mag.mean(:,1), ...
 %         'Color', [0 0 1 1], 'LineWidth', 0.75)
-
-
     plot(squeeze(GRAND.all(m).Fv(:,1,:)), squeeze(GRAND.all(m).Mag(:,1,:)), ...
         'Color', [0.5 0.5 0.5 0.2], 'LineWidth', 0.25)
     plot(GRAND.all_trial(m).Fv.mean(:,1), GRAND.all_trial(m).Mag.mean(:,1), ...

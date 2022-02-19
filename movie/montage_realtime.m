@@ -17,6 +17,7 @@ function [MOV] = montage_realtime(rootdir,rootpat,vidFs,export)
 clear ; clc ; close all
 export = true;
 vidFs = 50;
+pat_ypos = 5;
 rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_reafferent';
 rootpat = 'C:\Users\boc5244\Documents\GitHub\Arena\Patterns';
 
@@ -55,36 +56,42 @@ mkdir(PATH.mov) % create directory for export images
 [~,FILE.basename,~] = fileparts(FILE.raw);
 FILE.montage    = [FILE.basename '_montage.mp4'];
 
-% % Get experiment attributes
-% temp = textscan(FILE.basename, '%s', 'delimiter', '_'); 
-% freq = str2double(temp{1}{6});
-% amp = str2double(temp{1}{8});
-
 % Load data
 disp('Loading Data ...')
 pattern_data = load(fullfile(PATH.pat,FILE.pat),'pattern');
 data = load(fullfile(PATH.raw,FILE.raw),'data','t_p','vidData','t_v','bAngles', 'feedback');
 disp('DONE')
 
-%% Get trigger times
-trig = data.data(:,3);
-trig = 0.1*round(trig ./ 0.1);
-trig(trig >= 2.85) = 3;
-trig(trig < 2.85) = 0;
-dxtrig = diff(trig);
-dxtrig = [dxtrig(1) ; dxtrig];
-[~,pks] = findpeaks(dxtrig, 'MinPeakHeight', 2);
-pks_time = data.t_p(pks);
-% pks_mag = trig(pks);
-time_sync = data.t_p - pks_time(1);
+%% Sync video & display data & filter
+fly_time = data.t_v;
+daq_time = data.t_p;
 
-n_frame = length(data.bAngles);
-trig_time = linspace(pks_time(1), pks_time(end), n_frame)' - pks_time(1);
-pat = data.data(:,1);
-pat = 3.75*round(96*(pat ./ 10));
-pat = rad2deg(unwrap(deg2rad(pat)));
-PAT.norm = interp1(time_sync, pat, trig_time , 'nearest');
-pat_ypos = round(12*( median(data.data(:,2)) / 10));
+body = data.bAngles;
+display = data.data(:,1);
+display = 3.75*(round(96*(display ./ 10)) - 1);
+display = rad2deg(unwrap(deg2rad(display)));
+
+dx_pat = diff(display);
+syncI = find(abs(dx_pat) > 5, 1, 'first') + 1;
+sync_time = daq_time(syncI);
+
+daq_time_sync = daq_time - sync_time;
+display_intrp = interp1(daq_time_sync, display, fly_time, 'nearest');
+% body_intrp = interp1(daq_time_sync, body, fly_time, 'nearest');
+
+% Filter
+Fs = 1 / mean(diff(fly_time));
+Fc_low = 3;
+[b_low,a_low] = butter(5, Fc_low/(Fs/2), 'low');
+% [b_high,a_high] = butter(5, 0.3/(Fs/2), 'high');
+display_filt = filtfilt(b_low, a_low, display_intrp);
+body_filt = filtfilt(b, a, body);
+
+%% Make perturbation function
+func = 37.5*sin(2*pi*0.5*fly_time);
+
+
+
 
 %% Get kinematics data
 FLY.time = trig_time; % video time
