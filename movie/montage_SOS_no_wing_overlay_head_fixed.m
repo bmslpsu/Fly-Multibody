@@ -1,5 +1,5 @@
-function [MOV] = montage_SOS_no_wing_overlay(rootdir,rootpat,vidFs,export)
-%% montage_SOS_no_wing_overlay: makes movie for fly in magnetic tether
+function [MOV] = montage_SOS_no_wing_overlay_head_fixed(rootdir,rootpat,vidFs,export)
+%% montage_SOS_no_wing_overlay_head_fixed: makes movie for fly in magnetic tether
 %
 % 	Includes fly video, registered video, body tracking, head tracking, 
 %   wing tracking,& pattern position
@@ -19,9 +19,6 @@ clear ; clc ; close all
 export = true;
 vidFs = 50;
 rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2_head_fixed';
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2';
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_vel_250';
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_amp_3.75';
 rootpat = 'C:\Users\boc5244\Documents\GitHub\Arena\Patterns';
 
 if ~isfolder(rootdir)
@@ -79,7 +76,7 @@ pattern_data    = load(fullfile(PATH.pat,FILE.pat),'pattern'); % load pattern
 benifly_data    = ImportBenifly(fullfile(PATH.beninfly_track,FILE.benifly)); % load Benifly tracked kinematics
 raw_data        = load(fullfile(PATH.raw,FILE.main),'data','t_p','vidData','t_v'); % load raw video & DAQ pattern positions
 reg_data        = load(fullfile(PATH.reg,FILE.main),'regvid','trf'); % load registered video
-head_data    	= load(fullfile(PATH.head_track,FILE.main),'head_data','head_mask'); % load head angles
+% head_data    	= load(fullfile(PATH.head_track,FILE.main),'head_data','head_mask'); % load head angles
 body_data    	= load(fullfile(PATH.body_track,FILE.main),'bAngles','imgstats','initframe'); % load body angles
 disp('DONE')
 
@@ -96,7 +93,7 @@ FLY.Fs      = round(1/mean(diff(FLY.time))); % video sampling rate
 FLY.Fc      = 20; % cut off frequency for lpf
 [b,a]       = butter(3, FLY.Fc/(FLY.Fs/2),'low'); % make lpf
 FLY.body    = body_data.bAngles; % body angles [°]
-FLY.head    = head_data.head_data.angle; % head angles [°]
+FLY.head    = 0*FLY.body; % head angles [°]
 FLY.head    = filtfilt(b,a,FLY.head); % head angles [°]
 FLY.lwing   = rad2deg(hampel(FLY.time,benifly_data.LWing)); % left wing angles [°]
 FLY.rwing   = rad2deg(hampel(FLY.time,benifly_data.RWing)); % right wing angles [°]
@@ -161,9 +158,9 @@ FLY.lwing_tip = FLY.lwing_hinge - FLY.wing_length*[cosd(FLY.int_lwing - FLY.body
 FLY.rwing_tip = FLY.rwing_hinge + FLY.wing_length*[cosd(FLY.int_rwing + FLY.body_reg), ...
                                                     -sind(FLY.int_rwing + FLY.body_reg)];
 
-FLY.body_glob = head_data.head_mask.global;
-FLY.head_length = 36;
-FLY.head_hinge = fliplr(fix(padsize)) + head_data.head_mask.move_points.rot + [0 0];
+FLY.body_glob = 0;
+FLY.head_length = 39;
+FLY.head_hinge = [params.gui.head.hinge.x params.gui.head.hinge.y];
 FLY.head_tip   = FLY.head_hinge + FLY.head_length*[sind(FLY.int_head + FLY.body_glob) , ...
                     -cosd(FLY.int_head + FLY.body_glob)];
 
@@ -240,7 +237,7 @@ set(ax(3:end), 'FontSize', 12, 'Color', 'k', 'YColor', 'w', 'XColor', 'w', 'Font
 set(ax(end),'XTick', 0:2:round(FLY.int_time(end)))
 set(ax(3:end-1), 'XTickLabel', [], 'XColor', 'none')
 % set(ax(5), 'YLim', 7*[-1 1], 'YTick', 5 *[-1 0 1])
-head_ylim = 5*ceil(max(abs(FLY.int_head - median(FLY.int_head)))./5);
+head_ylim = 5;
 set(ax(4), 'YLim', (head_ylim)*[-1 1], 'YTick', head_ylim*[-1 0 1])
 % set(ax(3), 'YLim', pat_ylim)
 set(ax(3), 'YLim', 100*[-1 1])
@@ -328,7 +325,7 @@ for jj = 1:FLY.nframe
 
     % Head plot
     set(FIG, 'CurrentAxes', ax(4))
-        addpoints(h.head, FLY.int_time(jj), 0*(FLY.int_head(jj) - median(FLY.int_head)))
+        addpoints(h.head, FLY.int_time(jj), FLY.int_head(jj) - median(FLY.int_head))
         
     drawnow
     
