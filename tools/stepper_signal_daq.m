@@ -99,7 +99,7 @@ if showplot
         
     ylim([-0.2 5.2])
     yticks([0 2.5 5])
+    linkaxes(ax, 'x')
 end
-linkaxes(ax, 'x')
 
 end

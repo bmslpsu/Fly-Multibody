@@ -1,0 +1,13 @@
+Stepper DAQ channels
+---------------------
+DAQ#1:
+	AO0: camera trigger signal
+	
+DAQ#2:
+	AO0: stepper step signal to Arduino pin #2 and DAQ#2 AI2
+	AO1: stepper direction signal to miotor driver and DAQ#2 AI3
+	
+	AI0: camera trigger signal from DAQ#1 AO0
+	AI1: controller x-position
+	AI2: stepper step signal from DAQ#2 AO0
+	AI3: 

@@ -2,7 +2,7 @@
 #include <Servo.h>
 
 #define daq_pin A1
-#define servo_pin 9
+#define servo_pin 3
 
 int daq_signal;
 float deg_val;

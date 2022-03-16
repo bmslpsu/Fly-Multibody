@@ -1,32 +1,28 @@
-function [] = Experiment_SOS_sweep_stepper_motor(Fn)
+function [] = Experiment_SS_sweep_stepper_motor(Fn)
 %% Experiment_SOS_sweep_motor: runs a experiment using the LED arena and fly panel
 % Fn is the fly number
 clc
 daqreset
 imaqreset
 % Fn = 0;
+
 %% Set directories & experimental parameters
-
 yPos = 5;
-
 switch yPos
     case 12
-        root = 'C:\BC\Experiment_SOS_vel_v2_motor_bright';
+        root = 'C:\BC\Experiment_SS_vel_250_motor_bright';
     case 1
-        root = 'C:\BC\Experiment_SOS_vel_v2_motor_dark';
+        root = 'C:\BC\Experiment_SS_vel_250_motor_dark';
     case 5
-        root = 'C:\BC\Experiment_SOS_vel_v2_motor_grating';
+        root = 'C:\BC\Experiment_SS_vel_250_motor_grating';
     otherwise
         error('must pick other y-position')
 end
 
-val = [70]'; % amplitude of each SOS function in order in PControl
-name = 'vel'; % name of identifier at end of file name
-
 step_size = 1.8/16;
 
 %% EXPERIMENTAL PARAMETERS
-n_tracktime = 20 + 1;     	% length(func)/fps; seconds for each EXPERIMENT
+n_tracktime = 10 + 1;     	% length(func)/fps; seconds for each EXPERIMENT
 n_pause = 0.2;              % seconds for each pause between panel commands
 n_rep = 20;                 % # of repetitions
 patID = 1;                  % pattern ID
@@ -53,6 +49,9 @@ TRIG(end-end_off:end) = 0;
 [vid,src] = Basler_acA640_750um(nFrame);
 
 %% Set variable to control position function
+val = [70]'; % amplitude of each SOS function in order in PControl
+name = 'vel'; % name of identifier at end of file name
+
 n_func = length(val); % # of functions
 func = (1:n_func)'; % position function indicies
 
@@ -68,56 +67,52 @@ val_all = val(func(func_all)); % true values (amplitude, velocity, etc.)
 n_trial = n_rep * n_func;
 
 %% Custom
-% servo_time = (0:(1/1000):(n_tracktime + off))';
-% servo_signal = 50*sin(2*pi*1*servo_time);
-% zeroI = round(1000*1);
-% servo_signal(1:zeroI) = servo_signal(zeroI);
-% % servo_signal = 30*servo_time;
-% [~, pulse_signal, dir_signal, ~] = stepper_signal_daq(s.Rate, servo_signal, servo_time, step_size, true);
-% AO = [pulse_signal , dir_signal, TRIG];
-
 % Replay
-replay_path = fullfile(root, 'replay', 'replay_SOS_HeadFree_vel_v2_position_02-12-2021.mat');
+replay_path = fullfile(root, 'replay', 'replay_SS_vel_250_position.mat');
 replay = load(replay_path);
-replay_body = replay.replay.pos.body(:,2);
 replay_time = replay.replay.time;
-
 replay_ts = mean(diff(replay_time));
 replay_fs = 1 / replay_ts;
 replay_time_new = (0:replay_ts:total_time)';
-start_pad = replay_body(1)*ones(round(0.5*replay_fs),1);
-replay_body_new = [start_pad ; replay_body];
-replay_body_new(end:length(replay_time_new)) = replay_body_new(end);
 
+replay_body = replay.replay.pos.body_sine;
+n_replay = size(replay_body,2);
+
+start_pad = replay_body(1)*ones(round(0.5*replay_fs),n_replay);
+replay_body_new = [start_pad ; replay_body];
+replay_body_new(end:length(replay_time_new),:) = replay_body_new(end);
 motor_signal = replay_body_new;
 motor_time = replay_time_new;
 
-% %% SOS
-% sos_path = fullfile(root, 'function', ...
-%     'ALL_position_function_SOS_Fs_400.63_T_20_vel_70_amp_1_1.54_2.38_3.67_5.66_8.72_13.45_20.75_32_freq_11.15_7.2_4.7_3.05_1.95_1.3_0.85_0.55_0.35.mat');
-% sos = load(sos_path);
-% sos_body = sos.All.X;
-% sos_time = sos.All.time;
-% 
-% replay_ts = mean(diff(replay_time));
-% replay_fs = 1 / replay_ts;
-% replay_time_new = (0:replay_ts:total_time)';
-% start_pad = replay_body(1)*ones(round(0.5*replay_fs),1);
-% replay_body_new = [start_pad ; replay_body];
-% replay_body_new(end:length(replay_time_new)) = replay_body_new(end);
-% 
-% motor_signal = replay_body_new;
-% motor_time = replay_time_new;
+% clear pulse_signal dir_signal
+for n = 1:n_replay
+    [~, pulse_signal(:,n), dir_signal(:,n), ~] = stepper_signal_daq(s.Rate, ...
+        motor_signal(:,n), motor_time, step_size, false);
+end
 
-%% Set stepper motor control signal
-[~, pulse_signal, dir_signal, ~] = stepper_signal_daq(s.Rate, motor_signal, motor_time, step_size, false);
-AO = [pulse_signal , dir_signal, TRIG];
+%% Set variable to control position function
+val = [replay.replay.IOFreq{:}]'; % amplitude of each SOS function in order in PControl
+name = 'freq'; % name of identifier at end of file name
+
+n_func = length(val); % # of functions
+func = (1:n_func)'; % position function indicies
+
+% Create sequence of randomly shuffled functions
+func_all = nan(n_func*n_rep,1);
+pp = 0;
+for kk = 1:n_rep
+    func_rand = func(randperm(n_func),:);    % reshuffle randomly
+    func_all(pp+1:pp+n_func,1) = func_rand;  % add rep
+    pp = kk*n_func;
+end
+val_all = val(func(func_all)); % true values (amplitude, velocity, etc.)
+n_trial = n_rep * n_func;
 
 %% EXPERIMENT LOOP
 clc
 disp('Start Experiment:')
 for ii = 1:n_trial
-    fprintf('Trial: %i   Amp = %i \n', ii, val_all(ii))
+    fprintf('Trial: %i   Freq = %f \n', ii, val_all(ii))
     preview(vid) % open video preview window
     
     Panel_com('stop')
@@ -134,7 +129,7 @@ for ii = 1:n_trial
     pause(n_pause)
     Panel_com('set_position', [1, yPos]); % set starting position (xpos,ypos)
     pause(n_pause)
-    Panel_com('set_posfunc_id',[1,func_all(ii)]); % arg1 = channel (x=1,y=2); arg2 = funcID
+    %Panel_com('set_posfunc_id',[1,func_all(ii)]); % arg1 = channel (x=1,y=2); arg2 = funcID
     pause(n_pause)
 	Panel_com('set_funcX_freq', xUpdate); % update rate for x-channel
     pause(n_pause)
@@ -144,6 +139,8 @@ for ii = 1:n_trial
     pause(n_pause)
     Panel_com('send_gain_bias', [0 0 0 0])
 	
+    AO = [pulse_signal(:, func_all(ii)), dir_signal(:, func_all(ii)), TRIG]; % set stepper motor control signal
+    
     % START EXPERIMENT & DATA COLLECTION
     start(vid) % start video buffer
     queueOutputData(s, AO) % set stepper AO signal

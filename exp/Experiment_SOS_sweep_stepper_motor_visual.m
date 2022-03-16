@@ -1,10 +1,11 @@
-function [] = Experiment_SOS_sweep_stepper_motor(Fn)
-%% Experiment_SOS_sweep_motor: runs a experiment using the LED arena and fly panel
+function [] = Experiment_SOS_sweep_stepper_motor_visual(Fn)
+%% Experiment_SOS_sweep_stepper_motor_visual: runs a experiment using the LED arena and fly panel
 % Fn is the fly number
 clc
 daqreset
 imaqreset
 % Fn = 0;
+
 %% Set directories & experimental parameters
 
 yPos = 5;
@@ -37,8 +38,7 @@ Fs = 10000;              	% DAQ sampling rate [Hz]
 
 %% Set up data acquisition on MCC (session mode)
 % DAQ Setup
-[s,~] = MC_USB_1208FS_PLUS_motor_all(Fs);
-% [s.camera,~] = NI_USB_6212_motor(Fs,[],0);
+[s,~] = MC_USB_1208FS_PLUS_motor_panel(Fs);
 
 %% Camera Trigger Signal
 off = 0.1;
@@ -67,51 +67,42 @@ end
 val_all = val(func(func_all)); % true values (amplitude, velocity, etc.)
 n_trial = n_rep * n_func;
 
-%% Custom
-% servo_time = (0:(1/1000):(n_tracktime + off))';
-% servo_signal = 50*sin(2*pi*1*servo_time);
-% zeroI = round(1000*1);
-% servo_signal(1:zeroI) = servo_signal(zeroI);
-% % servo_signal = 30*servo_time;
-% [~, pulse_signal, dir_signal, ~] = stepper_signal_daq(s.Rate, servo_signal, servo_time, step_size, true);
-% AO = [pulse_signal , dir_signal, TRIG];
-
 % Replay
 replay_path = fullfile(root, 'replay', 'replay_SOS_HeadFree_vel_v2_position_02-12-2021.mat');
 replay = load(replay_path);
-replay_body = replay.replay.pos.body(:,2);
-replay_time = replay.replay.time;
+motor_pos = replay.replay.pos.body(:,2);
+motor_time = replay.replay.time;
 
-replay_ts = mean(diff(replay_time));
-replay_fs = 1 / replay_ts;
-replay_time_new = (0:replay_ts:total_time)';
-start_pad = replay_body(1)*ones(round(0.5*replay_fs),1);
-replay_body_new = [start_pad ; replay_body];
-replay_body_new(end:length(replay_time_new)) = replay_body_new(end);
+%% SOS
+sos_path = fullfile(root, 'function', ...
+    'ALL_position_function_SOS_Fs_400.63_T_20_vel_70_amp_1_1.54_2.38_3.67_5.66_8.72_13.45_20.75_32_freq_11.15_7.2_4.7_3.05_1.95_1.3_0.85_0.55_0.35.mat');
+sos = load(sos_path);
+% motor_pos = sos.All.X;
+% motor_time = sos.All.time;
 
-motor_signal = replay_body_new;
-motor_time = replay_time_new;
-
-% %% SOS
-% sos_path = fullfile(root, 'function', ...
-%     'ALL_position_function_SOS_Fs_400.63_T_20_vel_70_amp_1_1.54_2.38_3.67_5.66_8.72_13.45_20.75_32_freq_11.15_7.2_4.7_3.05_1.95_1.3_0.85_0.55_0.35.mat');
-% sos = load(sos_path);
-% sos_body = sos.All.X;
-% sos_time = sos.All.time;
-% 
-% replay_ts = mean(diff(replay_time));
-% replay_fs = 1 / replay_ts;
-% replay_time_new = (0:replay_ts:total_time)';
-% start_pad = replay_body(1)*ones(round(0.5*replay_fs),1);
-% replay_body_new = [start_pad ; replay_body];
-% replay_body_new(end:length(replay_time_new)) = replay_body_new(end);
-% 
-% motor_signal = replay_body_new;
-% motor_time = replay_time_new;
+%% Visual input
+ttt = (0:(1/s.Rate):total_time)';
+test = 2 + 1.5*sin(2*pi*0.5*ttt);
 
 %% Set stepper motor control signal
-[~, pulse_signal, dir_signal, ~] = stepper_signal_daq(s.Rate, motor_signal, motor_time, step_size, false);
-AO = [pulse_signal , dir_signal, TRIG];
+clc
+pad_time = 0.5;
+
+motor_ts = mean(diff(motor_time));
+motor_fs = 1 / motor_ts;
+motor_time_new = (0:motor_ts:total_time)';
+
+d_off = motor_time_new(end) - total_time;
+if d_off < 0
+    motor_time_new(end+1) = total_time;
+end
+
+start_pad = motor_pos(1)*ones(round(pad_time*motor_fs),1);
+motor_new = [start_pad ; motor_pos];
+motor_new(end:length(motor_time_new)) = motor_new(end);
+
+[~, pulse_signal, dir_signal, ~] = stepper_signal_daq(s.Rate, motor_new, motor_time_new, step_size, true);
+AO = [pulse_signal , dir_signal, TRIG, test];
 
 %% EXPERIMENT LOOP
 clc
@@ -123,7 +114,7 @@ for ii = 1:n_trial
     Panel_com('stop')
     
     % Set AO trigger to 0
-    queueOutputData(s,zeros(s.Rate,3))
+    queueOutputData(s,zeros(s.Rate,size(AO,2)))
     [data, t_p] = s.startForeground;
     
     pause(1) % pause between buffer & experiment
@@ -140,9 +131,10 @@ for ii = 1:n_trial
     pause(n_pause)
     Panel_com('set_funcY_freq', 50); % update rate for y-channel
     pause(n_pause)
-    Panel_com('set_mode', [4,0]); % 0=open,1=closed,2=fgen,3=vmode,4=pmode
+    Panel_com('set_mode', [3,0]); % 0=open,1=closed,2=fgen,3=vmode,4=pmode
     pause(n_pause)
     Panel_com('send_gain_bias', [0 0 0 0])
+    Panel_com('start')
 	
     % START EXPERIMENT & DATA COLLECTION
     start(vid) % start video buffer
@@ -167,7 +159,7 @@ for ii = 1:n_trial
     fname = ['fly_' num2str(Fn) '_trial_' num2str(ii) '_' name '_' ...
         num2str(val_all(ii)) '.mat'];
     save(fullfile(root,fname), '-v7.3', 'data', 't_p', 'vidData', 't_v',...
-        'step_size', 'AO', 'yPos', 'motor_signal', 'motor_time');
+        'step_size', 'AO', 'yPos', 'motor_new', 'motor_time_new');
 end
 
 delete(vid)
