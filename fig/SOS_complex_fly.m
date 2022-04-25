@@ -8,12 +8,12 @@ load(fullfile(PATH,FILE),'ALL')
 clearvars -except ALL FUNC U N
 clc
 
-set_names = ["HeadFree", "BodyFixed", "HeadFree"];
-trf_names = ["ref2body", "ref2head", "ref2head"];
+set_names = ["BodyFixed"];
+trf_names = ["ref2head"];
 yL = [1 1 1];
 n_set = length(trf_names);
-cond = ALL.HeadFree.U.vel{1};
-n_cond = length(cond);
+cond = ALL.BodyFixed.U.vel{1};
+n_cond = 1;
 % cc = [0.9 0 0 ; 1 0.6 0.1 ; 0.5 0.3 1 ; 0 0.4 1 ; 0 0.8 0.2 ; 0.2 0.8 1];
 
 fig = figure (1) ; clf
@@ -28,8 +28,8 @@ leg = gobjects(1, n_cond);
 % v = 2;
 for n = 1:n_set
     FRF = ALL.(set_names(n)).FRF_data.(trf_names(n));
-    for v = 1:n_cond
-        IOFv = ALL.(set_names(n)).FRF_data.IOFv{v};
+    for v = 1
+        IOFv = ALL.(set_names(n)).FRF_data.IOFv
         cmplx = FRF.fly(v).complex;
         R = real(cmplx(:));
         I = imag(cmplx(:));
