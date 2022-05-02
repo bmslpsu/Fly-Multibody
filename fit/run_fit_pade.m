@@ -28,6 +28,8 @@ tffit = [];
 tffit{end+1} = tfest(data, 1, 0, 0.02, opt);
 tffit{end+1} = tfest(data, 1, 1, 0.02, opt);
 
+[model, h] = fit_complex(Cn, IOFv, [1 0], [1 1], 0.02, 'GP', 'lsqcurvefit', false);
+tffit{end+1} = model.G;
 % [model, h] = fit_complex(Cn, IOFv, 1, [1 1], 0.02, 'GP', 'lsqcurvefit', true);
 % [model, h] = fit_tf(Cn, IOFv, [1], [1 1], 0.02, 'GP', 'lsqnonlin', true);
 
@@ -62,11 +64,12 @@ tffit = [];
 % [tffit{end+1}, sys_list, fitpercent, delay_sort] = tfest_delay(data, 1, 1, opt, delay);
 
 tffit{end+1} = tfest(data, 1, 1, 0.02, opt);
+tffit{end+1} = tfest(data, 1, 1, 0.02, opt);
 tffit{end+1} = tfest(data, 1, 0, 0.02, opt);
 tffit{end+1} = tfest(data, 2, 1, 0.02, opt);
 % tffit{1} = tf([tffit{1}.Numerator(1) 0], tffit{1}.Denominator, 'IODelay', 0.02);
 tffit{1}.Numerator = [tffit{1}.Numerator(1) 0];
-tffit{3}.Numerator = [tffit{3}.Numerator(1) 0];
+% tffit{3}.Numerator = [tffit{3}.Numerator(1) 0];
 % tffit{end+1} = tfest(data, 2, 1, 0.02, opt);
 % tffit{end+1} = tfest(data, 2, 2, [], opt);
 

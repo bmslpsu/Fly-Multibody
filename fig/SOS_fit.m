@@ -35,37 +35,39 @@ for m = 1:n_plot
     D = MODEL.(clss(m)).data.(trf(m));
     ax(1,m) = subplot(4,n_plot,sI(1)); cla ; hold on ; box on; set(ax(1), 'DataAspectRatio', [1 1 1])
         title('Nyquist')
-        xline(0, '--k')
-        yline(0, '--k')
+        %xline(0, '--k')
+        %yline(0, '--k')
         h.data(1,m,:) = gscatter(D.real(:), D.imag(:), D.freq_all(:), ...
             cc_data, '.', 10, false);
         h.sys(1,m) = plot(M(n).real, M(n).imag, 'Color', cc_fit(m,:));
-        h.sys_freq(1,m) = plot(M(n).real_freq, M(n).imag_freq, ...
-            '.', 'Color', cc_fit(m,:), 'MarkerSize', 15);
+        h.bad_sys(1,m) = plot(M(n+1).real, M(n+1).imag, 'Color', 'g');
+        h.bad_sys2(1,m) = plot(M(n+2).real, M(n+2).imag, 'Color', 'c');
         plot(M(n).real(1), M(n).imag(1), '.', 'Color', 'm', 'MarkerSize', 15)
+        
         
     ax(2,m) = subplot(4,n_plot,sI(2)); cla ; hold on ; box on
         h.data(2,m,:) = gscatter(D.freq_all(:), D.gain(:), D.freq_all(:), ...
             cc_data, '.', 10, false);
         h.sys(2,m) = plot(M(n).fv_bode, M(n).gain, 'Color', cc_fit(m,:));
-        h.sys_freq(2,m) = plot(D.freq, M(n).gain_freq, ...
-            '.', 'Color', cc_fit(m,:), 'MarkerSize', 15);
+     	h.bad_sys(2,m) = plot(M(n+1).fv_bode, M(n+1).gain, 'Color', 'g');
+        h.bad_sys2(2,m) = plot(M(n+2).fv_bode, M(n+2).gain, 'Color', 'c');
         
     ax(3,m) = subplot(4,n_plot,sI(3)); cla ; hold on ; box on
-        yline(0, '--k')
+        %yline(0, '--k')
         h.data(3,m,:) = gscatter(D.freq_all(:), D.phase(:), D.freq_all(:), ...
             cc_data, '.', 10, false);
         h.sys(3,m) = plot(M(n).fv_bode, M(n).phase, 'Color', cc_fit(m,:));
-        h.sys_freq(3,m) = plot(D.freq, M(n).phase_freq, ...
-            '.', 'Color', cc_fit(m,:), 'MarkerSize', 15);
+        h.bad_sys(3,m) = plot(M(n+1).fv_bode, M(n+1).phase, 'Color', 'g');
+        h.bad_sys2(3,m) = plot(M(n+2).fv_bode, M(n+2).phase, 'Color', 'c');
 
     ax(4,m) = subplot(4,n_plot,sI(4)); cla ; hold on ; box on
-        yline(1, '--k')
+        %yline(1, '--k')
         h.data(4,m,:) = gscatter(D.freq_all(:), D.error(:), D.freq_all(:), ...
             cc_data, '.', 10, false);
         h.sys(4,m) = plot(M(n).fv_bode, M(n).error, 'Color', cc_fit(m,:));
-        h.sys_freq(4,m) = plot(D.freq, M(n).error_freq, ...
-            '.', 'Color', cc_fit(m,:), 'MarkerSize', 15);
+        h.bad_sys(4,m) = plot(M(n+1).fv_bode, M(n+1).error, 'Color', 'g');
+        h.bad_sys2(4,m) = plot(M(n+2).fv_bode, M(n+2).error, 'Color', 'c');
+        
         ax(4).YLim(1) = 0;
 end
 set(ax, 'Color', 'none', 'LineWidth', 0.5)
@@ -78,7 +80,9 @@ set(ax(2,2), 'YLim', [0 1])
 set(ax(3,:), 'YLim', [-250 150])
 linkaxes(ax(2:end,:), 'x')
 set(h.data, 'MarkerSize', 4)
-set(h.sys_freq, 'MarkerSize', 6)
+% set(h.sys_freq, 'MarkerSize', 6, 'Marker', 'none')
+set(h.bad_sys, 'LineStyle', '--', 'Color', 'k')
+set(h.bad_sys2, 'LineStyle', '--', 'Color', 'c')
 
 set(ax(2:end-1,:), 'XTickLabel', [])
 % set(ax(2:end,2:end), 'YTickLabel', [])
@@ -166,7 +170,7 @@ set(ax(2,2), 'YLim', [0 1.2])
 set(ax(3,:), 'YLim', [-250 150])
 linkaxes(ax(2:end,:), 'x')
 set(h.data, 'MarkerSize', 4)
-set(h.sys_freq, 'MarkerSize', 6)
+set(h.sys_freq, 'MarkerSize', 6, 'Marker', 'none')
 
 set(ax(2:end-1,:), 'XTickLabel', [])
 % set(ax(2:end,2:end), 'YTickLabel', [])

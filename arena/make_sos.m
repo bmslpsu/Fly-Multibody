@@ -6,29 +6,16 @@ function [All] = make_sos(T, Fs, res, F, A, norm_vel, cent, Phase, showplot, roo
 %     	Fs          :   sampling frequency [Hz]
 %     	res         :   arena resolution [°/pixel]
 %     	F           :   vector containg frequencies in signal [Hz]
-%      	A           :   amplitude vector (+/-), can be salar for all frequencies with same amplitude [°]
+%      	A           :   amplitude vector (+/-), can be scalar for all frequencies with same amplitude [°]
 %    	norm_vel   	:   peak velocity of each frequency component. "A" must be empty to set this. [°/s]
 %    	cent        :   center pixel on arena
-%     	showplot  	:   boolean (1= show time & freuency domain of signal)
+%      	Phase      	:   [°] phase vector, randomized if empty
+%     	showplot  	:   boolean (1= show time & frequency domain of signal)
 %   	root:       :   root directory to save position function file. Don't save if empty.
 %
 %   OUTPUT:
 %       All         :   structure containing singal attributes
 %
-
-% % DEBUGGING 
-% % clear ; close all ; clc
-% root        = [];
-% F          	= [0.7 1.3 2.5 3.75 5.3 9];
-% % F           = [];
-% T           = 20;
-% Fs          = 500;
-% A           = [];
-% norm_vel    = 250;
-% res         = 3.75;
-% cent        = 45;
-% phase       = [];
-% showplot    = true;
 
 if nargin < 10
     root = [];

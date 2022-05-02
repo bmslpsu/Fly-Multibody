@@ -1,5 +1,5 @@
-function [] = make_head_free_magno_SOS_body_fixed_replay(rootdir)
-%% make_head_free_magno_SOS_body_fixed_replay:
+function [] = make_head_free_magno_SOS_body()
+%% make_head_free_magno_SOS_body:
 %
 %   INPUTS:
 %       rootdir    	:   root directory
@@ -7,27 +7,31 @@ function [] = make_head_free_magno_SOS_body_fixed_replay(rootdir)
 %   OUTPUTS:
 %       -
 %
+
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_52_add_mass';
+set_mass = 3300;
+root_set = fullfile(rootdir, num2str(set_mass));
+
+% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_52';
+% set_mass = 100;
+% root_set = rootdir;
+
 warning('off', 'signal:findpeaks:largeMinPeakHeight')
 
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2_body_fixed_replay';
-exp_name = textscan(char(rootdir), '%s', 'delimiter', '_');
-exp_typ = exp_name{1}{end-3}; % version of experiment (v1, v2, ...)
-exp_ver = exp_name{1}{end-2}; % % type of stimuli (vel or pos)
-
-% clss = 'position';
+clss = 'position';
 clss = 'velocity';
-filename = ['SOS_BodyFixed_Replay_' exp_typ '_' exp_ver '_' num2str(clss)];
 
-%% Setup Directories %%
-root.base = rootdir; clear rootdir
-root.benifly = fullfile(root.base ,'tracked_head_wing');
-root.head = fullfile(root.base ,'tracked_head_tip');
+filename = ['SOS_' num2str(set_mass) '_' num2str(clss)];
+
+%% Setup Directories
+root.base = root_set;
+root.body = fullfile(root.base,'tracked_body');
 root.func = fullfile(root.base ,'function');
 
 % Load function files
 func_list = dir(root.func);
 func_list = func_list(~[func_list.isdir]);
-n_cond = length(func_list); % number of stimuli (functions) used in experiment
+n_cond = length(func_list);
 FUNC = cell(n_cond,1);
 for f = 1:n_cond
     FUNC{f} = load(fullfile(root.func, func_list(f).name));
@@ -35,14 +39,28 @@ for f = 1:n_cond
 end
 
 % Select files
-[D,I,N,U,T,~,~,basename] = GetFileData(root.head,'*.mat',false);
-% [D,I,N,U,T,~,~,basename] = GetFileData(root.benifly,'*.csv',false);
+[D,I,N,U,T,~,~,basename] = GetFileData(root.body,'*.mat',false);
 
 %% Get Data
 close all
 clc
 
-vI = 2;
+% Body saccade detection parameters
+scd.threshold = [20, 1, 3, 0];
+scd.true_thresh = 220;
+scd.Fc_detect = [40 nan];
+scd.Fc_ss = [20 nan];
+scd.amp_cut = 5;
+scd.dur_cut = 1;
+scd.direction = 0;
+scd.direction = 0;
+scd.pks = [];
+scd.sacd_length = nan;
+scd.min_pkdist = 0.2;
+scd.min_pkwidth = 0.02;
+scd.min_pkprom = 50;
+scd.min_pkthresh = 0;
+scd.boundThresh = [0.2 40];
 
 Fs = 100;
 Fc = 40;
@@ -51,37 +69,27 @@ tintrp = (0:(1/Fs):func_length)';
 debug = false;
 [b,a] = butter(3, Fc/(Fs/2),'low');
 ALL = cell(N.fly,N{1,3});
-DATA = [D , splitvars(table(num2cell(zeros(N.file,9))))];
+DATA = [D , splitvars(table(num2cell(zeros(N.file,8))))];
 DATA.Properties.VariableNames(4:end) = {'reference','body','head','error',...
-    'dwba','lwing','rwing','body_saccade','fictive_reference'};
+    'dwba','lwing','rwing','body_saccade'};
 for n = 1:N.file
     %disp(kk)
     disp(basename{n})
     % Load DAQ, body, head, & wing data
-	data.daq = load(fullfile(root.base,  [basename{n} '.mat']),'data','t_p'); % load camera trigger & pattern x-position
-	data.head = load(fullfile(root.head, [basename{n} '.mat']),'head_data'); % load head angles
- 	%data.benifly = ImportBenifly(fullfile(root.benifly, ...  % load head & wing angles from Benifly
-                            %[basename{n} '.csv']));
+	%data.daq = load(fullfile(root.base,  [basename{n} '.mat']),'data','t_p'); % load camera trigger & pattern x-position
+    data.body = load(fullfile(root.body, [basename{n} '.mat']),'bAngles', 'data', 't_p'); % load body angles
     
     % Get synced frame times and pattern data
-    daq_time    = data.daq.t_p;
-    daq_pattern = data.daq.data(:,2);
-    trigger     = data.daq.data(:,1);
+    daq_time    = data.body.t_p;
+    daq_pattern = data.body.data(:,2);
+    trigger     = data.body.data(:,1);
     [TRIG,PAT]  = sync_pattern_trigger(daq_time, daq_pattern, func_length, ...
                         trigger, true, [], false, false);
     trig_time   = TRIG.time_sync;
     
-  	% Filter wing angles
-    %lwing = rad2deg(data.benifly.LWing);
-    %rwing = rad2deg(data.benifly.RWing);
-    %lwing = hampel(data.benifly.Time, lwing);
-    %%rwing = hampel(data.benifly.Time, rwing);
-	%lwing = filtfilt(b,a,lwing);
-    %rwing = filtfilt(b,a,rwing);
-    
     % Get pattern, head, & body anlges
     pat = 3.75*PAT.pos;
-	head = -data.head.head_data.angle;
+    body = data.body.bAngles;
     
     % Interpolate so all signals have the same times
     [b_pat, a_pat] = butter(3, 20 / (Fs/2), 'low');
@@ -90,31 +98,31 @@ for n = 1:N.file
     Reference = Reference - mean(Reference);
     Reference = 3.75*(round(Reference/3.75));
     
-    fictive_Reference = FUNC{1}.replay.pos.ref(:,vI);
+    Body = interp1(trig_time, body,  tintrp, 'pchip');
+    Body = Body - mean(Body);
     
-    Head    = interp1(trig_time, head,  tintrp, 'pchip');
-    Head    = filtfilt(b, a, Head);
-    %LWing   = interp1(trig_time, lwing, tintrp, 'pchip');
-    %RWing   = -interp1(trig_time, rwing, tintrp, 'pchip');
-    %dWBA    = interp1(trig_time, lwing-rwing, tintrp, 'pchip');
+    % Detect & remove saccades
+    body_scd = saccade_v1(Body, tintrp, scd, false);
     
     % Store signals
-    n_detrend = 1;
-    DATA.body_saccade{n}    = [];
+    n_detrend = 5;
+    DATA.body_saccade{n}    = body_scd;
     DATA.reference{n}       = singal_attributes(Reference, tintrp);
-    DATA.body{n}            = [];
-    DATA.head{n}            = singal_attributes(Head, tintrp, [], n_detrend);
+    DATA.body{n}            = singal_attributes(body_scd.shift.IntrpPosition, tintrp, [], n_detrend);
     
-    Error                   = DATA.reference{n}.position - DATA.head{n}.position;
+    Error                   = DATA.reference{n}.position - DATA.body{n}.position;
 	DATA.error{n}           = singal_attributes(Error, tintrp);
-    
-    %DATA.dwba{n}            = singal_attributes(dWBA, tintrp, [], n_detrend);
-    %DATA.dwba{n}            = singal_attributes(DATA.dwba{n}.detrend, tintrp, [], []);
-    %DATA.lwing{n}           = singal_attributes(LWing, tintrp, []);
-    %DATA.rwing{n}           = singal_attributes(RWing, tintrp, []);
-    
-    DATA.fictive_reference{n} = singal_attributes(fictive_Reference, tintrp);
-        
+
+%     hold on
+%     plot(tintrp, body_scd.shift.IntrpPosition, 'b', 'LineWidth', 1)
+%     plot(tintrp, DATA.body{n}.trend, 'g--', 'LineWidth', 1)
+%     plot(tintrp, DATA.body{n}.position, 'r', 'LineWidth', 1)
+%     %plot(tintrp, Head, 'k', 'LineWidth', 1)
+%     %plot(tintrp, DATA.head{n}.trend, 'g--', 'LineWidth', 1)
+%     %plot(tintrp, DATA.head{n}.position, 'r', 'LineWidth', 1)
+%     pause
+%     cla
+
     % Debug plot
     if debug
         figure (100)
@@ -122,34 +130,29 @@ for n = 1:N.file
         ax(1) = subplot(1,1,1) ; cla ; hold on
             plot(tintrp, DATA.reference{n}.position, 'k', 'LineWidth', 1)
             %plot(tintrp, DATA.error{kk}.detrend, 'g', 'LineWidth', 1)
+            plot(tintrp, DATA.body{n}.position, 'r', 'LineWidth', 1)
             plot(tintrp, DATA.head{n}.position, 'b', 'LineWidth', 1)
-            %plot(tintrp, DATA.dwba{n}.position_lpf, 'm', 'LineWidth', 1)
-            leg = legend('Reference','Head','\DeltaWBA', 'Orientation', 'horizontal');
+            plot(tintrp, 5*DATA.dwba{n}.position_lpf, 'm', 'LineWidth', 1)
+            leg = legend('Reference','Body','Head','\DeltaWBA', 'Orientation', 'horizontal');
             xlabel('Time (s)')
             ylabel('(°)')
-                   
-       	set(gcf, 'Color', 'w')
-       	set(ax, 'Linewidth', 2)
+           	
+       	set_mass(gcf, 'Color', 'w')
+       	set_mass(ax, 'Linewidth', 2)
         linkaxes(ax,'x')
         pause
     end
     
-    IOFreq = sort(FUNC{1}.FUNC{vI}.All.Freq, 'ascend');
+    IOFreq = sort(FUNC{I{n,3}}.All.Freq, 'ascend');
+    IOFreq = IOFreq(1:end-1);
     REF = DATA.reference{n}.(clss);
-    FREF = DATA.fictive_reference{n}.(clss);
-    HEAD = DATA.head{n}.(clss);
+    BODY = DATA.body{n}.(clss);
     ERROR = DATA.error{n}.(clss);
-    %dWBA = DATA.dwba{n}.(clss);
-    %LWING = DATA.lwing{n}.(clss);
-    %RWING = DATA.rwing{n}.(clss);
+
+    SYS_ref2_body = frf(tintrp, REF , IOFreq, false, BODY);
+ 	SYS_err2_body = frf(tintrp, ERROR, IOFreq, false, BODY);
     
-    SYS_ref2_head = frf(tintrp, REF , IOFreq, false, HEAD);
-    %SYS_ref2_wing = frf(tintrp, REF, IOFreq, false, dWBA);
-    %SYS_wing2_body = frf(tintrp, dWBA, IOFreq, false, BODY);
-    SYS_err2_head = frf(tintrp, ERROR, IOFreq, false, HEAD);
-    SYS_fref2_head = frf(tintrp, FREF , IOFreq, false, HEAD);
-    
-	SYS_all = CatStructFields(2, SYS_ref2_head, SYS_err2_head, SYS_fref2_head);
+	SYS_all = CatStructFields(2, SYS_ref2_body, SYS_err2_body);
     
     ALL{I.fly(n),I{n,3}}(end+1,1) = SYS_all;
 end
@@ -195,7 +198,7 @@ fig = figure (1) ; clf
 set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 3 8])
 movegui(fig, 'center')
 
-pI = 2;
+pI = 1;
 clear ax h
 ax(1) = subplot(4,1,1); cla ; hold on ; ylim([0 1])
     plot(squeeze(GRAND.all.IOFv(:,1,:)), squeeze(GRAND.all.IOGain(:,pI,:)), ...
@@ -203,7 +206,7 @@ ax(1) = subplot(4,1,1); cla ; hold on ; ylim([0 1])
     plot(GRAND.fly_stats(1).mean.IOFv.mean(:,1), GRAND.fly_stats(1).mean.IOGain.mean(:,pI), ...
         '.-k', 'MarkerSize', 17, 'LineWidth', 2)
     
-ax(2) = subplot(4,1,2); cla ; hold on ; ylim([-200 100])
+ax(2) = subplot(4,1,2); cla ; hold on ; ylim([-300 150])
     yline(0, '--');
     plot(squeeze(GRAND.all.IOFv(:,1,:)), rad2deg(squeeze(GRAND.all.IOPhaseDiff(:,pI,:))), ...
         '.-', 'MarkerSize', 10, 'Color', [0.5 0.5 0.5 0.3], 'LineWidth', 0.25)
@@ -224,49 +227,13 @@ ax(4) = subplot(4,1,4); cla ; hold on ; ylim([0 1])
         '-k', 'MarkerSize', 17, 'LineWidth', 2)
     xlabel('Frequency (hz)')
     
-set(ax, 'Color', 'none', 'LineWidth', 1, 'XScale', 'log', 'XLim', [0.3 12])
+set(ax, 'Color', 'none', 'LineWidth', 1, 'XScale', 'log', 'XLim', [0.2 25])
 linkaxes(ax, 'x')
 
-%% Complex
-pI = 3;
-
-fig = figure (2);
-set(fig, 'Color', 'w', 'Units', 'inches')
-fig.Position(3:4) = [4 4];
-movegui(fig, 'center')
-clear ax h
-ax(1) = subplot(1,1,1); cla ; hold on
-    xline(0, '--k');
-    yline(0, '--k');
-    
-    cmplx = squeeze(GRAND.all.IOFRF(:,pI,:));
-    R = real(cmplx);
-    I = imag(cmplx);
-    n_freq = size(cmplx,1);
-    fI = (1:n_freq)';
-    n_trial = size(cmplx,2);
-    G = repmat(fI, [n_trial, 1]);
-    h.trial = gscatter(R(:), I(:), G, [], '.', 8, true);
-    
-    cmplx = GRAND.fly_stats(1).mean.IOFRF.mean(:,pI);
-    R = real(cmplx);
-    I = imag(cmplx);
-    %h.med = gscatter(R(:), I(:), fI, 'k', '.', 15, true);
-    h.med = plot(R(:), I(:), 'k.-', 'MarkerFaceColor', 'none', ...
-        'MarkerEdgeColor', 'k', 'MarkerSize', 15);
-%     for f = 1:n_freq
-%        h.trial(f).Color = [h.trial(f).Color 0.1]; 
-%     end
-    
-%     plot(squeeze(GRAND.all.IOFv(:,1,:)), squeeze(GRAND.all.IOGain(:,pI,:)), ...
-%         '.-', 'MarkerSize', 10, 'Color', [0.5 0.5 0.5 0.3], 'LineWidth', 0.25)
-    
-set(ax, 'Color', 'none', 'LineWidth', 1, 'Box', 'on', 'XLim', [-1 1], 'YLim', [-1 1])
-set(ax, 'XGrid', 'on', 'YGrid', 'on')
 
 %% SAVE
 disp('Saving...')
-savedir = 'E:\DATA\Magno_Data\Multibody';
+savedir = fullfile(rootdir, 'data'); mkdir(savedir)
 save(fullfile(savedir, [filename '_' datestr(now,'mm-dd-yyyy') '.mat']), ...
     'FUNC', 'DATA', 'GRAND', 'FLY', 'D', 'I', 'U', 'N', 'T', '-v7.3')
 disp('SAVING DONE')

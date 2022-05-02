@@ -1,56 +1,42 @@
-function [] = SOS_frf()
-%% SOS_frf:
-root = 'E:\DATA\Magno_Data\Multibody';
+function [] = SOS_frf_add_mass()
+%% SOS_frf_add_mass:
+root = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_52_add_mass\data';
 [FILE,PATH] = uigetfile({'*.mat'}, 'Select file', root, 'MultiSelect','off');
-
 load(fullfile(PATH,FILE),'DATA','FUNC','GRAND','U','N')
 
 %%
 clc
 clearvars -except FILE DATA ALL GRAND FLY FUNC D I U N root
 
-% % Head-free
-% pI = [1 2 3 4 5 6 7 8];
-% T = ["ref2body", "ref2head", "ref2gaze", "body2head", "ref2wing", "wing2body", ...
-%     "err2body", "err2head"];
-% shift_I = {7:10, 9, 9, 9, 7:9, 9, 9  9};
-% phase_lim = [0 nan nan nan 0 nan 20 nan];
-% fI = (1:9)';
+pI = [1 2];
+T = ["ref2body", "err2body"];
 
-% Head-fixed
-% pI = [1 2 3 4];
-% T = ["ref2body", "ref2wing", "wing2body", "err2body"];
-% shift_I = {7:10, 1:9, 1:9, 9};
-% phase_lim = [0 nan -25 0];
-% fI = (1:9)';
+% 3300
+shift_I = {6:9, 6:9};
+shift_I2 = {9, 9};
+phase_lim = [-150 -150];
+phase_lim2 = [-300 -300];
 
-% % Body-fixed
-% pI = [1 2];
-% T = ["ref2head", "err2head"];
-% shift_I = {7:10, 1:9};
-% phase_lim = [nan nan];
-% fI = (1:9)';
+% % 1600
+% shift_I = {8:9, 8:9};
+% shift_I2 = {6:7, 6:77};
+% phase_lim = [-200 -200];
+% phase_lim2 = [-50 -50];
 
-% % Body-fixed replay
-% pI = [1 2 3];
-% T = ["ref2head", "err2head", "fref2head"];
-% shift_I = {7:9, 1:9, 1:9};
-% phase_lim = [nan nan nan];
-% fI = (1:9)';
+% % 900
+% shift_I = {8:9, 8:9};
+% shift_I2 = {7, 7};
+% phase_lim = [-200 -200];
+% phase_lim2 = [-50 -50];
 
-% % Body-free haltere cut
-% pI = [1 2 3 4 5 6];
-% T = ["ref2body", "ref2head", "ref2gaze", "body2head", "err2body", "err2head"];
-% shift_I = {7:10, 9, 9, 9, 7:9, 9, 9  9};
-% phase_lim = [0 nan nan nan 0 nan 20 nan];
-% fI = (1:9)';
+% % 100
+% shift_I = {8:9, 8:9};
+% shift_I2 = {9, 9};
+% phase_lim = [-50 -50];
+% phase_lim2 = [-50 0];
 
-% pI = [1 2 3];
-% T = ["ref2body", "ref2head", "ref2gaze"];
+fI = (1:9)';
 
-% shift_I = {3:7, 5, 6, 3:7, 9};
-% phase_lim = [0 nan nan 0 0];
-% fI = (1:7)';
 FRF_data = [];
 FRF_data.Fv = DATA.reference{1}.Fv;
 n_plot = length(pI);
@@ -78,11 +64,16 @@ for v = 1:N{1,3}
         phase_all = rad2deg(squeeze(GRAND.fly_all(v).circ_mean.IOPhaseDiff(:,pI(n),:)));
         shift_all = any((1:n_freq)' == shift_I{n},2) & (phase_all > phase_lim(n));
         phase_all(shift_all) = phase_all(shift_all) - 360;
+        
+        shift_all = any((1:n_freq)' == shift_I2{n},2) & (phase_all > phase_lim2(n));
+        phase_all(shift_all) = phase_all(shift_all) - 360;
         phase_all = phase_all(fI,:);
 
         phase_med = rad2deg(GRAND.fly_stats(v).circ_mean.IOPhaseDiff.circ_mean(:,pI(n)));
         phase_std = rad2deg(GRAND.fly_stats(v).circ_mean.IOPhaseDiff.circ_std(:,pI(n)));
         shift_all = any((1:n_freq)'==shift_I{n},2) & (phase_med > phase_lim(n));
+        phase_med(shift_all) = phase_med(shift_all) - 360;
+        shift_all = any((1:n_freq)'==shift_I2{n},2) & (phase_med > phase_lim2(n));
         phase_med(shift_all) = phase_med(shift_all) - 360;
         phase_med = phase_med(fI,:);
         phase_std = phase_std(fI,:);
@@ -222,7 +213,7 @@ set([YLabelHC], 'String', 'Coherence')
 
 % set(ax(1,1:end),'YLim',[0 3.2])
 % set(ax(2,1:end),'YLim',[0 1])
-set(ax(3,1:end),'YLim',[-300 200])
+set(ax(3,1:end),'YLim',[-600 100])
 % set(ax(4,1:end),'YLim',300*[-1 1])
 set(ax(4,1:end),'YLim',[0 1.5])
 set(ax(5,1:end),'YLim',[0 1])
@@ -338,10 +329,10 @@ set(ax,'XScale','log')
 %% Save FRF data
 filedata = textscan(FILE, '%s', 'delimiter', '_');
 dataset_name = [];
-for n = 1:6
+for n = 1:length(filedata{1})-1
     dataset_name = [dataset_name '_' char(filedata{1}(n))];
 end
-fname = ['FRF_mod' dataset_name];
+fname = ['FRF' dataset_name];
 savedir = fullfile(root,'processed');
 mkdir(savedir)
 save(fullfile(savedir, [fname '.mat']), 'FRF_data', 'FUNC', 'U', 'N');

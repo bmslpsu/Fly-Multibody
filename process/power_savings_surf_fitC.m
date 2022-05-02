@@ -19,7 +19,7 @@ P_head = minreal(MODEL.HeadFree.P.head);
 
 % fv_all = (0:0.5:20)';
 fv_all = [0.0 , 1:1:20]';
-fv_all = (0.1:0.05:50)';
+fv_all = (0.1:0.05:20)';
 [sys_data.fly, data.fly, ~] = plant_power(P_body, P_head, true, fv_all); % simulate power savings for head in place of body
 sys_data.fly.tau_ratio = (1 / P_body.Denominator{1}(2)) / (1 / P_head.Denominator{1}(2));
 sys_data.fly.size_ratio = sys_data.fly.tau_ratio^(1/y);
@@ -76,6 +76,20 @@ fly_size_ratio = MODEL.morph.body.L / MODEL.morph.head.L;
 % can predict power savings
 dS = fly_size_ratio - sys_data.fly.size_ratio;
 size_ratio = (tau_ratio).^(1/y);
+
+%% Critical size ratio
+f_crit = 10;
+[~,I] = min(abs(f_crit-fv));
+
+power_crit = power_ratio(I,:);
+I = find(power_crit > 0.99*max(power_crit), 1, 'first');
+size_ratio_crit = size_ratio(I);
+
+hold on ; cla
+plot(size_ratio, power_crit)
+plot(size_ratio_crit, power_crit(I), 'o')
+xline(size_ratio_crit, 'r--');
+title(size_ratio_crit)
 
 %% Find the time constant ratio correspondng to the morphology of a few animals
 animal = [];
@@ -182,7 +196,7 @@ leg.Position = [0.2001    0.5552    0.1823    0.2240];
 % delete(leg)
 % delete(h.animal)
 % delete(h.surf)
-% 
+
 % set(ax, 'XColor', 'none', 'YColor', 'none', 'ZColor', 'none', 'XGrid', 'off', 'YGrid', 'off', 'ZGrid', 'off')
 % delete(leg)
 
@@ -226,7 +240,5 @@ set(h.marker, 'Marker', '.', 'MarkerSize', 15, 'MarkerFaceColor', 'none', 'Marke
 
 set(h.gain, 'LineWidth', 1)
 set(ax, 'Color', 'none', 'LineWidth', 1, 'XScale', 'log', 'XLim', [0.08 50], 'YLim', [-0.05 1.05])
-
-
 
 end

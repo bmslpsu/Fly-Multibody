@@ -161,6 +161,7 @@ if showplot
     set(ax(2:end), 'XLim', [0.1 20])
     set(ax(2:end), 'XScale', 'log')
     linkaxes(ax(2:end), 'x')
+    set(h.sys_freq, 'Marker', 'none')
 
     h.fig = fig;
     h.ax = ax;

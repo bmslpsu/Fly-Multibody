@@ -112,8 +112,8 @@ clc
 clearvars -except ALL FILE PATH
 
 set_names = ["BodyFixed", "HeadFree"];
-state_names = ["head", "head"];
-idx_state = [5 2];
+state_names = ["dwba", "dwba"];
+idx_state = [2 5];
 cc = [0 0.8 0.2 ; 0 0.4 1];
 
 n_set = length(state_names);
@@ -130,7 +130,7 @@ start_time = (start_cycle ./ freq);
 time_range = [start_time.*ones(n_cond,1) , start_time.*ones(n_cond,1) + (4./freq)];
 time_range = Ts*round(time_range./Ts);
 
-plot_fly = false;
+plot_fly = true;
 
 fig = figure (1) ; clf
 set(fig, 'Color', 'w', 'Units', 'inches', 'Position', [2 2 3 n_cond*1.2])
@@ -155,9 +155,10 @@ for v = 1:n_cond
     title([num2str(freq(v)) 'Hz'], 'interpreter', 'none')
     
     axis tight
-  	set(ax(v,1), 'YTick', ALL.HeadFree.FUNC{v}.All.Amp*[0 1])
-    set(ax(v,1), 'YLim', ALL.HeadFree.FUNC{v}.All.Amp*[-1.3 1.3])
-    %plot(func_time_span, ALL.HeadFree.FUNC{v}.All.X(func_span), 'k', 'LineWidth', 0.5)
+  	%set(ax(v,1), 'YTick', ALL.HeadFree.FUNC{v}.All.Amp*[0 1])
+    %set(ax(v,1), 'YLim', ALL.HeadFree.FUNC{v}.All.Amp*[-1 1])
+    %set(ax(v,1), 'YLim', 15*[-1 1])
+    plot(func_time_span, 0.2*ALL.HeadFree.FUNC{v}.All.X(func_span), 'k', 'LineWidth', 0.5)
     
     for n = 1:n_set
         if plot_fly
@@ -187,6 +188,6 @@ set(h.line, 'Marker', 'none','MarkerFaceColor', 'none', 'MarkerSize', 10, 'LineW
 set(ax(1:end-1,:), 'XColor', 'none')
 set(ax(end,:), 'XTick', [])
 
-set(ax, 'YLim', 15*[-1 1])
+% set(ax, 'YLim', 15*[-1 1])
 
 end

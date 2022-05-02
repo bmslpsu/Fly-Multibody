@@ -1,5 +1,5 @@
-function [MOV] = montage_SOS_no_wing(rootdir,rootpat,vidFs,export)
-%% montage_SOS_no_wing: makes movie for fly in magnetic tether
+function [MOV] = montage_SOS(rootdir,rootpat,vidFs,export)
+%% montage_SOS: makes movie for fly in magnetic tether
 %
 % 	Includes fly video, registered video, body tracking, head tracking, 
 %   wing tracking,& pattern position
@@ -18,9 +18,7 @@ function [MOV] = montage_SOS_no_wing(rootdir,rootpat,vidFs,export)
 clear ; clc ; close all
 export = true;
 vidFs = 50;
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2';
-rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2_motor_passive';
-% rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SS_amp_3.75';
+rootdir = 'E:\EXPERIMENTS\MAGNO\Experiment_SOS_vel_v2';
 rootpat = 'C:\Users\boc5244\Documents\GitHub\Arena\Patterns';
 
 if ~isfolder(rootdir)
@@ -68,7 +66,7 @@ mkdir(PATH.mov) % create directory for export images
 [~,FILE.basename,~] = fileparts(FILE.raw);
 FILE.main       = [FILE.basename '.mat'];
 FILE.benifly   	= [FILE.basename '.csv'];
-FILE.montage    = [FILE.basename '_montage_no_wing.mp4'];
+FILE.montage    = [FILE.basename '_montage.mp4'];
 FILE.mask       = [FILE.basename '.json'];
 
 % Load data
@@ -83,7 +81,7 @@ body_data    	= load(fullfile(PATH.body_track,FILE.main),'bAngles','imgstats','i
 disp('DONE')
 
 %% Get pattern data & sync with start of visual stimulus
-func_time = round(func_data.All.time(end));
+func_time = 20;
 startI = round(5000*0.5);
 [TRIG,PAT] = sync_pattern_trigger(raw_data.t_p, raw_data.data(:,2), func_time, ...
                         raw_data.data(:,1), true, startI, false, false);
@@ -160,8 +158,8 @@ FLY.rwing_tip = FLY.rwing_hinge + FLY.wing_length*[cosd(FLY.int_rwing + FLY.body
                                                     -sind(FLY.int_rwing + FLY.body_reg)];
 
 FLY.body_glob = head_data.head_mask.global;
-FLY.head_length = 33;
-FLY.head_hinge = fliplr(fix(padsize)) + head_data.head_mask.move_points.rot + [0 0];
+FLY.head_length = 38;
+FLY.head_hinge = fliplr(fix(padsize)) + head_data.head_mask.move_points.rot;
 FLY.head_tip   = FLY.head_hinge + FLY.head_length*[sind(FLY.int_head + FLY.body_glob) , ...
                     -cosd(FLY.int_head + FLY.body_glob)];
 
@@ -182,49 +180,46 @@ MOV(1:FLY.nframe) = struct('cdata', [], 'colormap',[]);
 if export
     VID = VideoWriter(fullfile(PATH.mov,FILE.montage),'MPEG-4');
     VID.FrameRate = vidFs;
-    VID.Quality = 100;
     open(VID)
 end
 
 FIG = figure (1); clf % main figure window for display & export
-set(FIG, 'Color', 'k', 'Renderer', 'OpenGL','Position', 0.7*[100, 100, 1.75*16*40, 1.4*16*50]);
+set(FIG, 'Color', 'k', 'Renderer', 'OpenGL','Position', 0.8*[100, 100, 1.75*16*40, 1.4*16*50]);
 % set(FIG, 'Visible','off');
 linewidth = 1.25; % displayed line width
 fontsize = 12;
-ph = 12;
+    
 clear ax ax_pat
-ax(1) = subplot(ph,2,1:2:(ph-1)) ; cla; hold on; axis image % for raw fly & pattern vid
+ax(1) = subplot(16,2,1:2:15) ; cla; hold on; axis square % for raw fly & pattern vid
         title('Arena Frame','Color','w','FontSize', 1.2*fontsize)
         ax(1).XLim = [-pat_win(1) pat_win(1)+FLY.raw_xP];
         ax(1).YLim = [-pat_win(2) pat_win(2)+FLY.raw_yP];
-        H.raw = imshow(FLY.raw(:,:,1));
-        H.heading = {};
-        colormap(ax(1), gray)
-        freezeColors
-        ax(1).Title.Position(2) = 0.9*ax(1).Title.Position(2);
+        %imshow(FLY.raw(:,:,1)) ; hold on
+        %ax(1).Title.Position(2) = 1.1*ax(1).Title.Position(2);
         ax_pat(1) = axes; axis image
-        set(ax_pat(1), 'Position', ax(1).Position, 'XLim', ax(1).XLim, 'YLim', ax(1).XLim, 'Color', 'none')
-ax(2) = subplot(ph,2,2:2:ph) ; cla; hold on; axis image % for registered fly & pattern vid
+        set(ax_pat(1), 'Position', ax(1).Position, 'XLim', ax(1).XLim, 'YLim', ax(1).XLim)
+ax(2) = subplot(16,2,2:2:16) ; cla; hold on; axis square % for registered fly & pattern vid
         title('Body Frame','Color','w','FontSize', 1.2*fontsize)
         ax(2).XLim = [-pat_win(1) pat_win(1)+FLY.raw_xP];
         ax(2).YLim = [-pat_win(2) pat_win(2)+FLY.raw_yP];
-        H.reg = imshow(FLY.reg(:,:,1));
-        H.head = [];
-        colormap(ax(2), gray)
-        freezeColors
-        ax(2).Title.Position(2) = ax(1).Title.Position(2);
+        %imshow(FLY.reg(:,:,1)) ; hold on
+        %ax(2).Title.Position(2) = 1.1*ax(2).Title.Position(2);
         ax_pat(2) = axes; axis image
-        set(ax_pat(2), 'Position', ax(2).Position, 'XLim', ax(2).XLim, 'YLim', ax(2).XLim, 'Color', 'none')
-ax(3) = subplot(ph,2,(ph+1):(ph+4))  ; cla ; hold on
+        set(ax_pat(2), 'Position', ax(2).Position, 'XLim', ax(2).XLim, 'YLim', ax(2).XLim)
+ax(3) = subplot(16,2,(16+1):(16+4))  ; cla ; hold on
         ylabel('Stimulus (°)','Color','w','FontSize',fontsize)
      	h.pat = animatedline('Color','g','LineWidth',linewidth); % for pattern angle
-ax(4) = subplot(ph,2,(ph+4+1):(ph+2*4)) ; cla; hold on
+ax(4) = subplot(16,2,(16+4+1):(16+2*4)) ; cla; hold on
         ylabel('Body (°)','Color','w','FontSize',fontsize)
+    	xlabel('Time (s)','Color','w','FontSize',fontsize)
         h.body = animatedline('Color','r','LineWidth',linewidth); % for body angle
-ax(5) = subplot(ph,2,(ph+2*4+1):(ph+3*4)) ; cla; hold on
+ax(5) = subplot(16,2,(16+2*4+1):(16+3*4)) ; cla; hold on
         ylabel('Head (°)','Color','w','FontSize',fontsize)
         h.head = animatedline('Color','c','LineWidth',linewidth); % for head angle
-        xlabel('Time (s)','Color','w','FontSize',fontsize)
+ax(6) = subplot(16,2,(16+3*4+1):(16+4*4)) ; cla; hold on
+        ylabel('\DeltaWBA (°)','Color','w','FontSize',fontsize)
+    	xlabel('Time (s)','Color','w','FontSize',fontsize)
+        h.wba = animatedline('Color','m','LineWidth',linewidth); % for dWBA angle
         
 set(ax_pat, 'Color', 'none', 'XColor', 'none', 'YColor', 'none')
 set(ax(3:end), 'FontSize', 12, 'Color', 'k', 'YColor', 'w', 'XColor', 'w', 'FontWeight', 'bold',...
@@ -232,7 +227,10 @@ set(ax(3:end), 'FontSize', 12, 'Color', 'k', 'YColor', 'w', 'XColor', 'w', 'Font
 set(ax(end),'XTick', 0:2:round(FLY.int_time(end)))
 set(ax(3:end-1), 'XTickLabel', [], 'XColor', 'none')
 % set(ax(5), 'YLim', 7*[-1 1], 'YTick', 5 *[-1 0 1])
-head_ylim = 5*ceil(max(abs(FLY.int_head - median(FLY.int_head)))./5);
+% set(ax(6), 'YLim', 7*[-1 1], 'YTick', 5 *[-1 0 1])
+dwba_ylim = 5*ceil(max(abs(FLY.int_wba - median(FLY.int_wba)))./5);
+head_ylim = 5*ceil(max(abs(FLY.int_head - median(FLY.int_wba)))./5);
+set(ax(6), 'YLim', dwba_ylim*[-1 1], 'YTick', (dwba_ylim)*[-1 0 1])
 set(ax(5), 'YLim', (head_ylim)*[-1 1], 'YTick', head_ylim*[-1 0 1])
 set(ax(3), 'YLim', pat_ylim)
 
@@ -242,39 +240,37 @@ align_Ylabels_ax(ax(3:end)')
 
 gs = pattern_data.pattern.gs_val + 1;
 cmap = [zeros(gs,1), linspace(0,1,gs)', zeros(gs,1)];
-colormap(ax_pat(1), cmap)
-colormap(ax_pat(2), cmap)
+colormap(cmap)
 
 iter = round(FLY.Fs/vidFs); % # of frames to skip per iteration to acheive desired frame rate
 expframe = circshift(mod(1:FLY.nframe,iter)==1,0); % which frames to export
 pat_image = 255*pattern_data.pattern.Pats(1,:,1,pat_ypos);
 bright_scale = 1.25;
-fig_sz = FIG.Position(3:4);
-
 disp('Exporting Video...')
 tic
 for jj = 1:FLY.nframe
     if expframe(jj)
         % Get frames
-        %disp(jj)
+        disp(jj)
         if jj >= iter
             win = jj-(iter-1):jj;
         else
             win = jj;
         end
+        %Frame.raw = uint8(round(bright_scale*mean(FLY.raw(:,:,win), 3))); % raw frame
+        %Frame.reg = uint8(round(1*mean(FLY.reg(:,:,win), 3))); % registered frame
         Frame.raw = bright_scale*imadjust(median(FLY.raw(:,:,win), 3)); % raw frame
         Frame.reg = bright_scale*imadjust(median(FLY.reg(:,:,win), 3)); % registered frame
         pat_pos = 3.75*(mean(PAT.pos_intrp_exp(win)));
         
         % Display raw video
-        set(FIG, 'CurrentAxes', ax(1)); hold on
-            set(H.raw, 'CData', Frame.raw)
-            cellfun(@(x) delete(x), H.heading)
-            H.heading = semi_ellipse(mean(FLY.body_centroid(win,:),1), mean(FLY.body_length(win))/2, 0.5, 0.90, ...
+        set(FIG, 'CurrentAxes', ax(1)); cla; hold on; axis image
+            imshow(Frame.raw)
+            h.heading = semi_ellipse(mean(FLY.body_centroid(win,:),1), mean(FLY.body_length(win))/2, 0.5, 0.90, ...
                                             180 - mean(FLY.int_body(win)), 'r');
-            delete([H.heading{2:4}])
-            alpha(H.heading{1},0.3)
-            H.heading{1}.LineStyle = 'none';
+            delete([h.heading{2:4}])
+            alpha(h.heading{1},0.3)
+            h.heading{1}.LineStyle = 'none';
         
             if pat_ypos ~= 1
                 % Make pattern ring
@@ -287,20 +283,37 @@ for jj = 1:FLY.nframe
                 hs = surface(ax_pat(1),[x;x],[y;y],[z;z],[pat_image;pat_image], ...
                     'FaceColor', 'none', 'EdgeColor', 'interp', 'LineWidth', thickness);
             end
-     	   
+     	
+            if jj == find(expframe,1,'first')
+                ax(1).Title.Position(2) = -20;
+            end
+            
         % Display registered video
-        set(FIG, 'CurrentAxes', ax(2)); hold on
-            set(H.reg, 'CData', Frame.reg)
-            delete(H.head)
-          	H.head = plot([FLY.head_hinge(1), mean(FLY.head_tip(win,1))], ... % update line drawn to head
-                 [FLY.head_hinge(2), mean(FLY.head_tip(win,2))], 'Color', 'c', 'LineWidth', 2);
-            plot(FLY.head_hinge(1), FLY.head_hinge(2), 'c.', 'MarkerSize', 5)
+        set(FIG, 'CurrentAxes', ax(2)); cla; hold on; axis image
+            imshow(Frame.reg)
+            
+          	plot([FLY.head_hinge(1), mean(FLY.head_tip(win,1))], ... % update line drawn to head
+                 [FLY.head_hinge(2), mean(FLY.head_tip(win,2))], 'Color', 'c', 'LineWidth', 1.5)
+            %plot(FLY.head_hinge(1), FLY.head_hinge(2), 'c.', 'MarkerSize', 5)
+                         
+          	plot([FLY.lwing_hinge(1) , mean(FLY.lwing_tip(win,1))], ... % update line drawn to left wing
+                [FLY.lwing_hinge(2) , mean(FLY.lwing_tip(win,2))], 'Color', 'm', 'LineWidth', 1.5)
+            
+        	plot([FLY.rwing_hinge(1) , mean(FLY.rwing_tip(win,1))], ... % update line drawn to right wing
+                [FLY.rwing_hinge(2) , mean(FLY.rwing_tip(win,2))], 'Color', 'm', 'LineWidth', 1.5)
+            
+            plot(FLY.lwing_hinge(1), FLY.lwing_hinge(2),'m.','MarkerSize',10)
+            plot(FLY.rwing_hinge(1), FLY.rwing_hinge(2),'m.','MarkerSize',10)
             
             if pat_ypos ~= 1
                 % Make pattern ring
                 set(FIG, 'CurrentAxes', ax_pat(2)); cla
                 hs = surface(ax_pat(2),[x;x],[y;y],[z;z],[pat_image;pat_image], ...
                     'FaceColor', 'none', 'EdgeColor', 'interp', 'LineWidth', thickness);
+            end
+
+            if jj == find(expframe,1,'first')
+                ax(2).Title.Position(2) = ax(1).Title.Position(2);
             end
     end
     
@@ -314,7 +327,11 @@ for jj = 1:FLY.nframe
         
     % Head plot
     set(FIG, 'CurrentAxes', ax(5))
-        addpoints(h.head, FLY.int_time(jj), FLY.int_head(jj) - median(FLY.int_head))
+        addpoints(h.head, FLY.int_time(jj), FLY.int_head(jj))
+        
+   	% WBA plot
+	set(FIG, 'CurrentAxes', ax(6))
+        addpoints(h.wba, FLY.int_time(jj), FLY.int_wba(jj) - median(FLY.int_wba))
         
     drawnow
     
@@ -327,12 +344,10 @@ for jj = 1:FLY.nframe
     if export
         if expframe(jj)
             fig_frame = getframe(FIG);
-            fig_frame.cdata = fig_frame.cdata(...
-                round(0.07*fig_sz(2)):end-round(0.05*fig_sz(2)), ...
-                round(0.03*fig_sz(1)):end-round(0.08*fig_sz(1)), :);
-         	writeVideo(VID, fig_frame);
+         	writeVideo(VID,fig_frame);
         end
     end
+    pause(0.001)
 end
 toc
 
