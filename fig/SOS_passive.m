@@ -19,28 +19,27 @@ movegui(fig, 'center')
 clear ax h
 
 cc.body = [0.9 0 0];
-cc.head = [ 0 0.4 1];
+cc.head = [0 0.4 1];
 vI = 2;
 ax(1) = subplot(2,1,1); cla ; hold on ; ylabel('Body (°)')
-    % plot(ALL.HeadFree.GRAND.fly_stats(vI).mean.Time.mean(:,1), ...
-    %     ALL.HeadFree.GRAND.fly_stats(vI).mean.State.mean(:,1), ...
-    %     'r', 'LineWidth', 1)
+    plot(ALL.HeadFree.GRAND.fly_stats(vI).mean.Time.mean(:,1), ...
+        ALL.HeadFree.GRAND.fly_stats(vI).mean.State.mean(:,1), ...
+        'r--', 'LineWidth', 1)
     
     all_body = squeeze(ALL.Passive.GRAND.all.refState);
     all_body = all_body - mean(all_body(1,:)) + ALL.Passive.Replay{1}.pos.body(1,vI);
     plot(squeeze(ALL.Passive.GRAND.all.Time), all_body, ...
-        'Color', [cc.body 0.2], 'LineWidth', 0.25)
-    plot(ALL.Passive.Replay{1}.time, ALL.Passive.Replay{1}.vel.body(:,vI), '--k', 'LineWidth', 0.5)
+        'Color', [0.5 0.5 0.5 0.2], 'LineWidth', 0.5)
     
 ax(2) = subplot(2,1,2); cla ; hold on ; ylabel('Head (°)')
     plot(ALL.HeadFree.GRAND.fly_stats(2).mean.Time.mean(:,1), ...
         ALL.HeadFree.GRAND.fly_stats(2).mean.State.mean(:,2), ...
-        'k', 'LineWidth', 0.5)
+        'Color', cc.head, 'LineWidth', 0.5)
     plot(squeeze(ALL.Passive.GRAND.all.Time), squeeze(ALL.Passive.GRAND.all.State), ...
         'Color', [0.5 0.5 0.5 0.2], 'LineWidth', 0.25)
     plot(ALL.Passive.GRAND.fly_stats(1).mean.Time.mean(:,1), ...
         ALL.Passive.GRAND.fly_stats(1).mean.State.mean(:,1), ...
-        'Color', cc.head, 'LineWidth', 0.5)
+        'Color', 'k', 'LineWidth', 0.5)
     
     xlabel('Time (s)')
 

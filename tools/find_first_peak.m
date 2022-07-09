@@ -34,7 +34,7 @@ end
 % first_peak = locs(1);
 first_peak = find(signal_vel > thresh, 1, 'first');
 
-% Find where efirst peak starts
+% Find where first peak starts
 start_thresh = 0.10*signal_vel(first_peak);
 search_signal = signal_vel(1:first_peak);
 search_time = time(1:first_peak);
